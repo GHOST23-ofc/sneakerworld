@@ -396,6 +396,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <div class="product-badges">
               <span class="category-tag">${p.category}</span>
               <span class="sku-tag">${colorCount > 1 ? `🎨 ${colorCount} Colores` : p.sku}</span>
+              ${p.campaignBadge ? `<span class="campaign-badge-pill" style="background: linear-gradient(135deg, #e6192e, #b91c1c); color: #fff; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 999px; box-shadow: 0 2px 8px rgba(230,25,46,0.35);">${p.campaignBadge}</span>` : ''}
             </div>
           </div>
           <div class="product-body">
@@ -919,25 +920,146 @@ document.addEventListener("DOMContentLoaded", () => {
   // VISTA 3: PANEL BODEGA CENTRAL (VANESSA CASTELLAR SHOES)
   // =========================================================================
   function renderSupplierAdmin() {
-    const products = db.getMasterProducts(true);
+    const products = db.getMasterProducts(false);
     const orders = db.getOrders();
 
     document.getElementById("stat-supplier-total-prods").textContent = products.length;
 
-    // Tabla de Pedidos B2B
+    // 1. Tabla de Catálogo Maestro & Precios en Caliente
+    const masterTbody = document.getElementById("supplier-master-products-table");
+    if (masterTbody) {
+      masterTbody.innerHTML = products.map(p => {
+        const campaign = p.campaignBadge || "";
+        return `
+          <tr>
+            <td>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <img src="${p.image}" alt="${p.name}" style="width: 44px; height: 44px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border-subtle);">
+                <div>
+                  <div style="font-weight: 800; color: var(--text-primary); font-size: 13px;">${p.name}</div>
+                  <div style="font-size: 10px; color: var(--text-muted); font-family: monospace;">SKU: ${p.sku}</div>
+                </div>
+              </div>
+            </td>
+            <td><span class="badge-verified" style="background: var(--bg-surface-elevated); color: var(--text-secondary); border-color: var(--border-subtle);">${p.category}</span></td>
+            <td>
+              <div style="display: flex; align-items: center; gap: 4px;">
+                <span style="font-size: 11px; color: var(--text-muted);">$</span>
+                <input type="number" class="form-input supplier-wholesale-input" data-prod-id="${p.id}" value="${p.wholesalePrice}" style="width: 100px; padding: 4px 6px; font-weight: 700; font-size: 12px;" step="1000">
+              </div>
+            </td>
+            <td>
+              <div style="display: flex; align-items: center; gap: 4px;">
+                <span style="font-size: 11px; color: var(--text-muted);">$</span>
+                <input type="number" class="form-input supplier-retail-input" data-prod-id="${p.id}" value="${p.suggestedRetailPrice}" style="width: 100px; padding: 4px 6px; font-weight: 800; color: var(--primary-red); font-size: 12px;" step="1000">
+              </div>
+            </td>
+            <td>
+              <select class="form-select supplier-campaign-select" data-prod-id="${p.id}" style="font-size: 11px; padding: 4px 8px; font-weight: 700; max-width: 140px;">
+                <option value="" ${campaign === "" ? "selected" : ""}>Precio Regular</option>
+                <option value="🔥 Promo Fin de Semana" ${campaign.includes("Promo") ? "selected" : ""}>🔥 Promo Fin de Semana</option>
+                <option value="⚡ Liquidación Tallas" ${campaign.includes("Liquidación") ? "selected" : ""}>⚡ Liquidación Tallas</option>
+                <option value="🌟 Nuevo Drop 2026" ${campaign.includes("Drop") ? "selected" : ""}>🌟 Nuevo Drop</option>
+                <option value="👑 Más Vendido" ${campaign.includes("Vendido") ? "selected" : ""}>👑 Más Vendido</option>
+              </select>
+            </td>
+            <td>
+              <span style="font-size: 11px; font-weight: 600; color: var(--text-secondary);">${p.sizes.join(", ")}</span>
+            </td>
+            <td>
+              <div style="display: flex; gap: 6px;">
+                <button type="button" class="btn-action-sm btn-edit-master-modal" data-prod-id="${p.id}" style="font-size: 11px; padding: 5px 10px; font-weight: 700;" title="Editar Ficha Completa">
+                  ✏️ Ficha
+                </button>
+                <button type="button" class="btn-action-sm btn-save-single-master" data-prod-id="${p.id}" style="font-size: 11px; padding: 5px 10px; font-weight: 700; color: #16a34a; border-color: #86efac; background: #f0fdf4;" title="Guardar Cambios">
+                  💾
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      // Handlers de Guardar Individual
+      masterTbody.querySelectorAll(".btn-save-single-master").forEach(btn => {
+        btn.onclick = () => {
+          const prodId = btn.dataset.prodId;
+          const wholesale = Number(masterTbody.querySelector(`.supplier-wholesale-input[data-prod-id="${prodId}"]`)?.value) || 120000;
+          const retail = Number(masterTbody.querySelector(`.supplier-retail-input[data-prod-id="${prodId}"]`)?.value) || 190000;
+          const campaign = masterTbody.querySelector(`.supplier-campaign-select[data-prod-id="${prodId}"]`)?.value || "";
+
+          db.updateMasterProduct(prodId, {
+            wholesalePrice: wholesale,
+            suggestedRetailPrice: retail,
+            campaignBadge: campaign
+          });
+
+          showToast("✅ Referencia actualizada en tiempo real.");
+        };
+      });
+
+      // Handlers de Editar Ficha Completa en Modal
+      masterTbody.querySelectorAll(".btn-edit-master-modal").forEach(btn => {
+        btn.onclick = () => {
+          const prodId = btn.dataset.prodId;
+          const prod = products.find(p => p.id === prodId);
+          if (!prod) return;
+
+          document.getElementById("modal-product-title").textContent = "Editar Referencia de Catálogo";
+          document.getElementById("btn-submit-product-form").textContent = "Guardar Modificaciones";
+          document.getElementById("add-prod-id").value = prod.id;
+          document.getElementById("add-prod-name").value = prod.name;
+          document.getElementById("add-prod-cat").value = prod.category;
+          document.getElementById("add-prod-wholesale").value = prod.wholesalePrice;
+          document.getElementById("add-prod-retail").value = prod.suggestedRetailPrice;
+          document.getElementById("add-prod-sizes").value = prod.sizes.join(", ");
+          document.getElementById("add-prod-desc").value = prod.description || "";
+          document.getElementById("add-prod-campaign").value = prod.campaignBadge || "";
+
+          document.getElementById("modal-add-product").classList.add("open");
+        };
+      });
+    }
+
+    // Botón Guardar Todos los Cambios en Lote
+    const btnSaveAll = document.getElementById("btn-save-all-supplier-prices");
+    if (btnSaveAll) {
+      btnSaveAll.onclick = () => {
+        const rows = masterTbody.querySelectorAll("tr");
+        rows.forEach(tr => {
+          const wholesaleInput = tr.querySelector(".supplier-wholesale-input");
+          const retailInput = tr.querySelector(".supplier-retail-input");
+          const campaignSelect = tr.querySelector(".supplier-campaign-select");
+
+          if (wholesaleInput && retailInput) {
+            const prodId = wholesaleInput.dataset.prodId;
+            db.updateMasterProduct(prodId, {
+              wholesalePrice: Number(wholesaleInput.value),
+              suggestedRetailPrice: Number(retailInput.value),
+              campaignBadge: campaignSelect?.value || ""
+            });
+          }
+        });
+        showToast("✅ Todos los precios y campañas guardados para la red SNEAKER WORLD.");
+      };
+    }
+
+    // 2. Tabla de Pedidos B2B
     const tbody = document.getElementById("supplier-orders-table");
-    tbody.innerHTML = orders.map(ord => `
-      <tr>
-        <td style="font-family: monospace; font-weight: 700; color: var(--primary-red);">#${ord.id}</td>
-        <td>${ord.date}</td>
-        <td style="font-weight: 700; color: var(--text-primary);">${ord.storeName}</td>
-        <td>${ord.productName}</td>
-        <td><span class="table-size-tag active">${ord.size}</span></td>
-        <td style="font-weight: 800;">${ord.units} pares</td>
-        <td style="font-weight: 800; color: var(--primary-red);">${db.formatCOP(ord.totalWholesale)}</td>
-        <td><span class="badge-verified">${ord.status}</span></td>
-      </tr>
-    `).join("");
+    if (tbody) {
+      tbody.innerHTML = orders.map(ord => `
+        <tr>
+          <td style="font-family: monospace; font-weight: 700; color: var(--primary-red);">#${ord.id}</td>
+          <td>${ord.date}</td>
+          <td style="font-weight: 700; color: var(--text-primary);">${ord.storeName}</td>
+          <td>${ord.productName}</td>
+          <td><span class="table-size-tag active">${ord.size}</span></td>
+          <td style="font-weight: 800;">${ord.units} pares</td>
+          <td style="font-weight: 800; color: var(--primary-red);">${db.formatCOP(ord.totalWholesale)}</td>
+          <td><span class="badge-verified">${ord.status}</span></td>
+        </tr>
+      `).join("");
+    }
   }
 
   function setupAddProductModal() {
@@ -947,33 +1069,58 @@ document.addEventListener("DOMContentLoaded", () => {
     const btnCancel = document.getElementById("btn-cancel-add-product");
     const form = document.getElementById("form-add-product");
 
-    btnOpen.onclick = () => modal.classList.add("open");
+    btnOpen.onclick = () => {
+      document.getElementById("modal-product-title").textContent = "Publicar Nueva Referencia en Bodega";
+      document.getElementById("btn-submit-product-form").textContent = "Publicar a Todas las Tiendas";
+      form.reset();
+      document.getElementById("add-prod-id").value = "";
+      modal.classList.add("open");
+    };
+
     btnClose.onclick = () => modal.classList.remove("open");
     btnCancel.onclick = () => modal.classList.remove("open");
 
     form.onsubmit = (e) => {
       e.preventDefault();
+      const prodId = document.getElementById("add-prod-id").value;
       const name = document.getElementById("add-prod-name").value.trim();
       const cat = document.getElementById("add-prod-cat").value;
       const wholesale = document.getElementById("add-prod-wholesale").value;
       const retail = document.getElementById("add-prod-retail").value;
       const sizesStr = document.getElementById("add-prod-sizes").value;
       const desc = document.getElementById("add-prod-desc").value.trim();
+      const campaign = document.getElementById("add-prod-campaign").value;
 
       const sizes = sizesStr.split(",").map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n));
 
-      db.addMasterProduct({
-        name,
-        category: cat,
-        wholesalePrice: wholesale,
-        suggestedRetailPrice: retail,
-        sizes,
-        description: desc
-      });
+      if (prodId) {
+        // Modo Edición
+        db.updateMasterProduct(prodId, {
+          name,
+          category: cat,
+          wholesalePrice: wholesale,
+          suggestedRetailPrice: retail,
+          sizes,
+          description: desc,
+          campaignBadge: campaign
+        });
+        showToast(`✅ Referencia ${name} modificada con éxito.`);
+      } else {
+        // Modo Creación
+        db.addMasterProduct({
+          name,
+          category: cat,
+          wholesalePrice: wholesale,
+          suggestedRetailPrice: retail,
+          sizes,
+          description: desc,
+          campaignBadge: campaign
+        });
+        showToast(`✅ ¡Nueva referencia ${name} publicada a toda la red!`);
+      }
 
       modal.classList.remove("open");
       form.reset();
-      showToast(`¡Nueva referencia ${name} publicada a toda la red!`);
       renderSupplierAdmin();
     };
   }

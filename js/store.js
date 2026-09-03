@@ -276,6 +276,39 @@ class ShoesStoreManager {
     return newProduct;
   }
 
+  updateMasterProduct(productId, updatedFields) {
+    const products = this.getMasterProducts(false);
+    const index = products.findIndex(p => p.id === productId);
+    if (index === -1) return null;
+
+    products[index] = {
+      ...products[index],
+      ...updatedFields,
+      wholesalePrice: updatedFields.wholesalePrice !== undefined ? Number(updatedFields.wholesalePrice) : products[index].wholesalePrice,
+      suggestedRetailPrice: updatedFields.suggestedRetailPrice !== undefined ? Number(updatedFields.suggestedRetailPrice) : products[index].suggestedRetailPrice,
+      updatedAt: new Date().toISOString().split("T")[0]
+    };
+
+    localStorage.setItem(DB_KEYS.MASTER_PRODUCTS, JSON.stringify(products));
+
+    // Sincronizar badges de campaña o tallas en las tiendas asociadas
+    const stores = this.getStores();
+    stores.forEach(st => {
+      const pIdx = st.products.findIndex(sp => sp.productId === productId);
+      if (pIdx !== -1) {
+        if (updatedFields.campaignBadge !== undefined) {
+          st.products[pIdx].campaignBadge = updatedFields.campaignBadge;
+        }
+        if (updatedFields.sizes) {
+          st.products[pIdx].availableSizes = [...updatedFields.sizes];
+        }
+      }
+    });
+    localStorage.setItem(DB_KEYS.STORES, JSON.stringify(stores));
+
+    return products[index];
+  }
+
   // =========================================================================
   // GESTIÓN DE TIENDAS Y VITRINAS
   // =========================================================================
