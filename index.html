@@ -76,42 +76,60 @@
   </svg>
 
   <div class="app-wrapper">
-    <!-- TOP HUD: NAVEGADOR MULTI-ROL Y SELECTOR DE TIENDA -->
-    <header class="top-demo-hud">
+    <!-- 1. BARRA SUPREMA DE CONTROL (SOLO DUEÑO DEL SAAS / SUPER-ADMIN O ?demo=true) -->
+    <header class="top-demo-hud" id="master-admin-hud" style="display: none; background: #0b0f19; border-bottom: 2px solid #e6192e; color: #fff;">
       <div class="hud-container">
         <div class="hud-brand">
           <img src="assets/images/sneaker_world_logo_transparent.png" alt="SNEAKER WORLD MLS" class="hud-logo-img">
           <div>
-            <div class="hud-title">SNEAKER WORLD <span>MLS</span></div>
-            <div style="font-size: 10px; color: var(--text-muted); letter-spacing: 0.5px;">Bolsa Compartida Cali</div>
+            <div class="hud-title" style="color: #fff;">SNEAKER WORLD <span style="color: #e6192e;">MLS</span></div>
+            <div style="font-size: 10px; color: #e3c274; font-weight: 800; letter-spacing: 0.8px;">⚡ PANEL SUPREMO BASTION AI (GHOST)</div>
           </div>
         </div>
 
-        <nav class="role-switcher-tabs" aria-label="Cambio de Rol">
-          <button class="role-tab-btn active" data-view="storefront" id="tab-storefront">
-            🛒 Tu Tienda
+        <nav class="role-switcher-tabs" aria-label="Cambio de Rol" style="background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15);">
+          <button class="role-tab-btn active" data-view="storefront" id="tab-storefront" style="color: #fff;">
+            🛒 Vitrina Pública
           </button>
-          <button class="role-tab-btn" data-view="store-admin" id="tab-store-admin">
-            🏪 Panel de Mi Tienda
+          <button class="role-tab-btn" data-view="store-admin" id="tab-store-admin" style="color: #fff;">
+            🏪 Panel Sneaker Partner
           </button>
-          <button class="role-tab-btn" data-view="supplier" id="tab-supplier">
-            📦 Panel Bodega / Mayorista
+          <button class="role-tab-btn" data-view="supplier" id="tab-supplier" style="color: #fff;">
+            📦 Panel Bodega Matriz
           </button>
-          <button class="role-tab-btn" data-view="directory" id="tab-directory">
-            📍 Directorio Tiendas
+          <button class="role-tab-btn" data-view="directory" id="tab-directory" style="color: #fff;">
+            📍 Directorio & ROI
           </button>
         </nav>
 
         <div class="hud-actions">
-          <div class="store-selector-wrapper" id="store-selector-box">
-            <span style="font-size: 11px; color: var(--text-muted);">Tienda:</span>
-            <select id="hud-store-select" class="hud-select" aria-label="Seleccionar Tienda Activa">
+          <div class="store-selector-wrapper" id="store-selector-box" style="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2);">
+            <span style="font-size: 11px; color: #cbd5e1;">Comercio:</span>
+            <select id="hud-store-select" class="hud-select" aria-label="Seleccionar Tienda Activa" style="background: transparent; color: #fff; border: none;">
               <!-- Renderizado dinámico de tiendas -->
             </select>
           </div>
-          <button id="btn-open-account-settings" class="btn-action-sm" title="Configurar Cuenta & Seguridad" style="font-size: 11px; padding: 4px 10px; font-weight: 700;">⚙️ Cuenta</button>
-          <a href="admin.html" class="btn-action-sm" style="font-size: 11px; padding: 4px 10px; text-decoration: none; font-weight: 700; color: var(--primary-red); border-color: rgba(230,25,46,0.3);">🔐 Portal B2B</a>
-          <button id="btn-reset-demo" class="btn-reset-demo" title="Restaurar datos de ejemplo">↺ Reset</button>
+          <button id="btn-open-account-settings" class="btn-action-sm" title="Configurar Cuenta & Seguridad" style="font-size: 11px; padding: 5px 12px; font-weight: 700; background: rgba(255,255,255,0.1); color: #fff; border-color: rgba(255,255,255,0.2);">⚙️ Seguridad</button>
+          <button id="btn-logout-hud" class="btn-action-sm" style="font-size: 11px; padding: 5px 12px; text-decoration: none; font-weight: 700; color: #f87171; border-color: rgba(239,68,68,0.3); background: rgba(239,68,68,0.1);">🚪 Salir</button>
+          <button id="btn-reset-demo" class="btn-reset-demo" title="Restaurar datos de fábrica">↺ Reset</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- 2. BARRA PRIVADA DE CLIENTE AUTENTICADO (VANESSA O SNEAKER PARTNER) -->
+    <header class="client-auth-hud" id="client-auth-hud" style="display: none;">
+      <div class="client-auth-container">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 18px;" id="client-role-icon">📦</span>
+          <div>
+            <div style="font-size: 13px; font-weight: 800; color: var(--text-primary);" id="client-hud-title">Vanessa Castellar Shoes (Bodega Matriz)</div>
+            <div style="font-size: 11px; color: #16a34a; font-weight: 700;" id="client-hud-subtitle">🟢 Sesión Privada y Segura Activa</div>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <button id="btn-client-toggle-view" class="btn-action-sm" style="font-size: 11px; padding: 6px 14px; font-weight: 700;">🛒 Ver Mi Vitrina</button>
+          <button id="btn-client-open-account" class="btn-action-sm" style="font-size: 11px; padding: 6px 14px; font-weight: 700;">⚙️ Mi Cuenta</button>
+          <button id="btn-client-logout" class="btn-action-sm" style="font-size: 11px; padding: 6px 14px; font-weight: 700; color: var(--primary-red); border-color: rgba(230,25,46,0.3);">🚪 Cerrar Sesión</button>
         </div>
       </div>
     </header>
@@ -347,6 +365,63 @@
               </thead>
               <tbody id="supplier-orders-table">
                 <!-- Renderizado dinámico -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Tabla de Sneaker Partners Conectados de Vanessa -->
+        <div class="table-container-card" style="margin-top: 24px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+            <div>
+              <h2 style="font-size: 16px; font-weight: 800; color: var(--text-primary);">🤝 Mis Sneaker Partners Conectados (2 Tiendas Satélites)</h2>
+              <p style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">Comercios y tiendas aliadas autorizadas para vender tu catálogo con su propio margen comercial.</p>
+            </div>
+            <button type="button" id="btn-copy-partner-link" class="btn-action-sm" style="font-size: 12px; padding: 6px 14px; font-weight: 800; color: var(--primary-red); border-color: rgba(230,25,46,0.3); background: #fff0f1; cursor: pointer;">
+              🔗 Copiar Link de Invitación para Nuevos Partners
+            </button>
+          </div>
+          <div class="table-responsive-box">
+            <table class="mls-data-table">
+              <thead>
+                <tr>
+                  <th>Sneaker Partner</th>
+                  <th>Zona / Cobertura</th>
+                  <th>Responsable</th>
+                  <th>WhatsApp</th>
+                  <th>Modelos Sincronizados</th>
+                  <th>Pares Vendidos (Mes)</th>
+                  <th>Facturación Generada a Bodega</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    <strong>Cali Shoes Distribuidora</strong><br>
+                    <span style="font-size: 11px; color: var(--text-muted);">Boutique Multimarca</span>
+                  </td>
+                  <td>Ciudad Jardín / Valle del Lili (Sur)</td>
+                  <td>Carlos Mario Restrepo</td>
+                  <td>+57 315 555 1234</td>
+                  <td><strong>8 de 18 modelos</strong></td>
+                  <td><span class="badge-stock in-stock">42 pares</span></td>
+                  <td><strong style="color: var(--primary-red);">$5.040.000 COP</strong></td>
+                  <td><span style="color: #16a34a; font-weight: 700;">🟢 Activo</span></td>
+                </tr>
+                <tr>
+                  <td>
+                    <strong>Valle Kicks Palmira</strong><br>
+                    <span style="font-size: 11px; color: var(--text-muted);">Streetwear & Sneakers</span>
+                  </td>
+                  <td>Palmira Urbano & Comuna 2 (Norte)</td>
+                  <td>Andrés Felipe Soto</td>
+                  <td>+57 318 777 9900</td>
+                  <td><strong>12 de 18 modelos</strong></td>
+                  <td><span class="badge-stock in-stock">38 pares</span></td>
+                  <td><strong style="color: var(--primary-red);">$4.560.000 COP</strong></td>
+                  <td><span style="color: #16a34a; font-weight: 700;">🟢 Activo</span></td>
+                </tr>
               </tbody>
             </table>
           </div>

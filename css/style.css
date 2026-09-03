@@ -140,6 +140,29 @@ body {
   gap: 4px;
 }
 
+/* ==========================================================================
+   BARRA DE CLIENTE B2B PRIVADO (VANESSA / SNEAKER PARTNER)
+   ========================================================================== */
+.client-auth-hud {
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
+  position: sticky;
+  top: 0;
+  z-index: 99;
+  padding: 8px 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.client-auth-container {
+  max-width: 1300px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
 .role-tab-btn {
   background: transparent;
   border: none;

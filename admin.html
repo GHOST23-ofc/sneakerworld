@@ -138,22 +138,38 @@
         <h1 style="font-size: 24px; font-weight: 900; color: var(--text-primary); margin-bottom: 6px;">Iniciar Sesión</h1>
         <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.4;">Acceso privado e independiente para bodegas matrices y tiendas satélites.</p>
 
-        <!-- 2 Escenarios Demo con 1 Clic -->
-        <div class="scenario-quick-grid">
-          <!-- Escenario 1: Vanessa Castellar -->
+        <!-- 4 Escenarios de Negocio con 1 Clic -->
+        <div class="scenario-quick-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
+          <!-- Escenario 1: Vanessa Castellar (Bodega Matriz 1) -->
           <button type="button" class="scenario-btn" id="btn-quick-vanessa">
-            <span class="scenario-badge">👑 Escenario 1 (Cierre)</span>
+            <span class="scenario-badge">👑 Bodega Matriz 1</span>
             <span class="scenario-title">Vanessa Castellar</span>
             <span class="scenario-meta">vanessa@castellarshoes.com</span>
-            <span style="font-size: 10px; color: var(--primary-red); font-weight: 700;">Bodega Matriz Cali →</span>
+            <span style="font-size: 10px; color: var(--primary-red); font-weight: 700;">Panel Bodega & 10 WhatsApps →</span>
           </button>
 
-          <!-- Escenario 2: Cali Shoes Satélite -->
+          <!-- Sneaker Partner 1: Cali Shoes -->
           <button type="button" class="scenario-btn" id="btn-quick-calishoes">
-            <span class="scenario-badge" style="color: var(--accent-blue);">👟 Escenario 2 (Sneaker Partner)</span>
+            <span class="scenario-badge" style="color: var(--accent-blue);">👟 Partner 1 (Vanessa)</span>
             <span class="scenario-title">Cali Shoes Distribuidora</span>
             <span class="scenario-meta">contacto@calishoes.com</span>
-            <span style="font-size: 10px; color: var(--accent-blue); font-weight: 700;">Sneaker Partner Aliado →</span>
+            <span style="font-size: 10px; color: var(--accent-blue); font-weight: 700;">Ciudad Jardín / Sur Cali →</span>
+          </button>
+
+          <!-- Sneaker Partner 2: Valle Kicks -->
+          <button type="button" class="scenario-btn" id="btn-quick-vallekicks">
+            <span class="scenario-badge" style="color: #16a34a;">👟 Partner 2 (Vanessa)</span>
+            <span class="scenario-title">Valle Kicks Palmira</span>
+            <span class="scenario-meta">vallekicks@gmail.com</span>
+            <span style="font-size: 10px; color: #16a34a; font-weight: 700;">Palmira & Norte Cali →</span>
+          </button>
+
+          <!-- Escenario 2: Calzado Imperial (Bodega Matriz 2 Aislada) -->
+          <button type="button" class="scenario-btn" id="btn-quick-imperial">
+            <span class="scenario-badge" style="color: #9333ea;">📦 Bodega Matriz 2</span>
+            <span class="scenario-title">Calzado Imperial Cali</span>
+            <span class="scenario-meta">imperial@calzadoimperial.com</span>
+            <span style="font-size: 10px; color: #9333ea; font-weight: 700;">Comercio Aislado Independiente →</span>
           </button>
         </div>
 
@@ -253,12 +269,28 @@
       showToast("Credenciales de Vanessa Castellar cargadas.");
     };
 
-    // 1-Click: Escenario 2 Cali Shoes
+    // 1-Click: Escenario 2 Cali Shoes (Partner 1)
     document.getElementById("btn-quick-calishoes").onclick = () => {
       emailInput.value = "contacto@calishoes.com";
       passInput.value = "Calishoes2026";
       errorMsg.style.display = "none";
       showToast("Credenciales de Cali Shoes Distribuidora cargadas.");
+    };
+
+    // 1-Click: Sneaker Partner 2 Valle Kicks
+    document.getElementById("btn-quick-vallekicks").onclick = () => {
+      emailInput.value = "vallekicks@gmail.com";
+      passInput.value = "Calishoes2026";
+      errorMsg.style.display = "none";
+      showToast("Credenciales de Valle Kicks Palmira cargadas.");
+    };
+
+    // 1-Click: Comercio 2 Calzado Imperial (Bodega Matriz 2 Aislada)
+    document.getElementById("btn-quick-imperial").onclick = () => {
+      emailInput.value = "imperial@calzadoimperial.com";
+      passInput.value = "Calishoes2026";
+      errorMsg.style.display = "none";
+      showToast("Credenciales de Calzado Imperial cargadas.");
     };
 
     // Botón de Rescate Super-Admin para Vanessa

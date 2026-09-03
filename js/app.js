@@ -26,6 +26,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const paramStore = urlParams.get("store");
     const paramView = urlParams.get("view");
     const paramSupplier = urlParams.get("supplier");
+    const paramRole = urlParams.get("role");
+    const paramDemo = urlParams.get("demo");
 
     if (paramStore) {
       db.setCurrentStoreId(paramStore);
@@ -33,11 +35,19 @@ document.addEventListener("DOMContentLoaded", () => {
     if (paramSupplier) {
       localStorage.setItem("sneakerworld_active_supplier_id", paramSupplier);
     }
+    if (paramRole === "super-admin") {
+      const current = db.getAuthSession();
+      if (!current.authenticated || current.role !== "super-admin") {
+        db.loginWithCredentials(SUPER_ADMIN_CONFIG.masterUsername, SUPER_ADMIN_CONFIG.masterKey);
+      }
+    }
+
     if (paramView && ["storefront", "store-admin", "supplier", "directory"].includes(paramView)) {
       currentView = paramView;
     }
 
     renderHudStores();
+    setupHeadersAndRoleIsolation(paramDemo);
     setupNavigation();
     setupFilters();
     setupAuthModal();
@@ -46,6 +56,99 @@ document.addEventListener("DOMContentLoaded", () => {
     setupRoiCalculator();
     setupAccountSettingsModal();
     switchView(currentView);
+  }
+
+  // =========================================================================
+  // GESTIÓN DE BARRAS DE NAVEGACIÓN PRIVADAS vs PANEL SUPREMO (ISOLATION)
+  // =========================================================================
+  function setupHeadersAndRoleIsolation(paramDemo) {
+    const session = db.getAuthSession();
+    const masterHud = document.getElementById("master-admin-hud");
+    const clientHud = document.getElementById("client-auth-hud");
+    const isSuperAdmin = session.role === "super-admin" || paramDemo === "true";
+
+    if (masterHud) masterHud.style.display = "none";
+    if (clientHud) clientHud.style.display = "none";
+
+    if (isSuperAdmin) {
+      // SOLO EL DUEÑO DEL SAAS (GHOST / BASTION AI) VE EL PANEL SUPREMO COMPLETO
+      if (masterHud) masterHud.style.display = "block";
+    } else if (session.authenticated && (session.role === "supplier" || session.role === "store-admin")) {
+      // EL CLIENTE (VANESSA O SNEAKER PARTNER) VE SOLO SU BARRA CORPORATIVA PRIVADA
+      if (clientHud) {
+        clientHud.style.display = "block";
+        const titleEl = document.getElementById("client-hud-title");
+        const subtitleEl = document.getElementById("client-hud-subtitle");
+        const iconEl = document.getElementById("client-role-icon");
+        const toggleBtn = document.getElementById("btn-client-toggle-view");
+
+        if (session.role === "supplier") {
+          if (iconEl) iconEl.textContent = "📦";
+          if (titleEl) titleEl.textContent = (session.user?.businessName || "Vanessa Castellar Shoes") + " (Bodega Matriz)";
+          if (subtitleEl) subtitleEl.textContent = "🟢 Panel Privado B2B • Inventario & Sneaker Partners";
+          if (toggleBtn) toggleBtn.textContent = currentView === "storefront" ? "📦 Volver al Panel Bodega" : "🛒 Ver Mi Vitrina Pública";
+        } else {
+          if (iconEl) iconEl.textContent = "🏪";
+          if (titleEl) titleEl.textContent = (session.user?.name || "Cali Shoes") + " (Sneaker Partner)";
+          if (subtitleEl) subtitleEl.textContent = "🟢 Margen Propio & Catálogo Sincronizado";
+          if (toggleBtn) toggleBtn.textContent = currentView === "storefront" ? "🏪 Volver a Mi Panel Tienda" : "🛒 Ver Mi Vitrina con Margen";
+        }
+
+        // Toggle entre panel privado y vitrina
+        if (toggleBtn) {
+          toggleBtn.onclick = () => {
+            if (currentView === "storefront") {
+              switchView(session.role);
+            } else {
+              switchView("storefront");
+            }
+          };
+        }
+
+        const clientAccountBtn = document.getElementById("btn-client-open-account");
+        if (clientAccountBtn) {
+          clientAccountBtn.onclick = () => {
+            const accModal = document.getElementById("modal-account-settings");
+            if (accModal) accModal.classList.add("open");
+          };
+        }
+
+        const clientLogoutBtn = document.getElementById("btn-client-logout");
+        if (clientLogoutBtn) {
+          clientLogoutBtn.onclick = () => {
+            if (confirm("¿Deseas cerrar tu sesión segura?")) {
+              db.logout();
+              window.location.href = "index.html?view=storefront";
+            }
+          };
+        }
+      }
+    }
+    // SI ES UN COMPRADOR O VISITANTE PÚBLICO: AMBAS BARRAS PERMANECEN OCULTAS (100% LIMPIO)
+
+    // Handler botón copiar link partner en el panel bodega
+    const btnCopyPartner = document.getElementById("btn-copy-partner-link");
+    if (btnCopyPartner) {
+      btnCopyPartner.onclick = () => {
+        const link = window.location.origin + "/admin.html?partner=vanessa";
+        navigator.clipboard?.writeText(link).then(() => {
+          showToast("🔗 Enlace copiado: " + link);
+        }).catch(() => {
+          prompt("Copia este enlace de invitación para tu nuevo Sneaker Partner:", link);
+        });
+      };
+    }
+
+    // Handler botón logout en master HUD
+    const btnLogoutHud = document.getElementById("btn-logout-hud");
+    if (btnLogoutHud) {
+      btnLogoutHud.onclick = () => {
+        if (confirm("¿Cerrar sesión de Super-Admin?")) {
+          db.logout();
+          window.location.href = "index.html?view=storefront";
+        }
+      };
+    }
   }
 
   // =========================================================================
@@ -99,6 +202,17 @@ document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll(".view-panel").forEach(panel => {
       panel.style.display = panel.id === `view-${viewName}` ? "block" : "none";
     });
+
+    // Actualizar texto del botón de vitrina en la barra del cliente
+    const toggleBtn = document.getElementById("btn-client-toggle-view");
+    const session = db.getAuthSession();
+    if (toggleBtn && session.authenticated) {
+      if (session.role === "supplier") {
+        toggleBtn.textContent = currentView === "storefront" ? "📦 Volver al Panel Bodega" : "🛒 Ver Mi Vitrina Pública";
+      } else {
+        toggleBtn.textContent = currentView === "storefront" ? "🏪 Volver a Mi Panel Tienda" : "🛒 Ver Mi Vitrina con Margen";
+      }
+    }
 
     window.scrollTo({ top: 0, behavior: "smooth" });
     renderCurrentView();
