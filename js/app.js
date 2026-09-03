@@ -56,6 +56,7 @@ document.addEventListener("DOMContentLoaded", () => {
     setupRoiCalculator();
     setupAccountSettingsModal();
     setupQuoteGenerator();
+    setupInventoryStockMatrix();
     switchView(currentView);
   }
 
@@ -499,6 +500,10 @@ document.addEventListener("DOMContentLoaded", () => {
       const formattedPrice = db.formatCOP(product.storeRetailPrice);
       const cm = db.getSizeCm(selectedSize);
 
+      const colorName = selectedColorway ? selectedColorway.name : "Estándar";
+      const stock = db.getProductStock(product.id, colorName, selectedSize);
+      const isAgotado = stock <= 0;
+
       const colorChips = (product.colorways || []).map((cw, idx) => `
         <button type="button" class="colorway-badge-chip ${selectedColorway && selectedColorway.sku === cw.sku ? 'active' : ''}" data-index="${idx}">
           <span class="colorway-dot"></span>
@@ -506,11 +511,15 @@ document.addEventListener("DOMContentLoaded", () => {
         </button>
       `).join("");
 
-      const sizePills = (product.storeAvailableSizes || []).map(sz => `
-        <button type="button" class="size-pill-btn ${selectedSize === sz ? 'active' : ''}" data-size="${sz}">
-          ${sz} (${db.getSizeCm(sz)})
-        </button>
-      `).join("");
+      const sizePills = (product.storeAvailableSizes || []).map(sz => {
+        const szStock = db.getProductStock(product.id, colorName, sz);
+        const szSoldOut = szStock <= 0;
+        return `
+          <button type="button" class="size-pill-btn ${selectedSize === sz ? 'active' : ''} ${szSoldOut ? 'sold-out' : ''}" data-size="${sz}" style="${szSoldOut ? 'opacity: 0.45; text-decoration: line-through;' : ''}">
+            ${sz} (${db.getSizeCm(sz)}) ${szSoldOut ? '❌' : ''}
+          </button>
+        `;
+      }).join("");
 
       body.innerHTML = `
         <div style="display: flex; gap: 20px; margin-bottom: 20px; flex-wrap: wrap;">
@@ -519,8 +528,19 @@ document.addEventListener("DOMContentLoaded", () => {
           </div>
           <div style="flex: 1.2; min-width: 240px; display: flex; flex-direction: column; justify-content: center;">
             <div style="font-size: 11px; font-weight: 800; color: var(--primary-red); text-transform: uppercase;">${product.category} • SKU: ${product.sku}</div>
-            <h4 style="font-size: 18px; font-weight: 900; color: var(--text-primary); margin: 4px 0 8px;">${product.name}</h4>
-            <div style="font-size: 22px; font-weight: 900; color: var(--primary-red); margin-bottom: 8px;">${formattedPrice}</div>
+            <h4 style="font-size: 18px; font-weight: 900; color: var(--text-primary); margin: 4px 0 6px;">${product.name}</h4>
+            <div style="font-size: 22px; font-weight: 900; color: var(--primary-red); margin-bottom: 6px;">${formattedPrice}</div>
+            
+            <div style="margin-bottom: 8px;">
+              ${isAgotado 
+                ? `<span class="badge-verified" style="background: #fef2f2; color: #dc2626; border-color: #fca5a5; font-size: 11px; font-weight: 800;">🔴 TALLA AGOTADA (${colorName} - Talla ${selectedSize})</span>`
+                : (stock <= 3 
+                    ? `<span class="badge-verified" style="background: #fffbeb; color: #d97706; border-color: #fcd34d; font-size: 11px; font-weight: 800;">⚡ ¡ÚLTIMOS ${stock} PARES DISPONIBLES EN BODEGA!</span>`
+                    : `<span class="badge-verified" style="background: #f0fdf4; color: #16a34a; border-color: #86efac; font-size: 11px; font-weight: 800;">🟢 ${stock} PARES EN STOCK (BODEGA CALI)</span>`
+                  )
+              }
+            </div>
+
             <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.4;">${product.description || product.tagline}</p>
           </div>
         </div>
@@ -538,11 +558,11 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
 
         <div style="display: flex; gap: 10px; margin-top: 24px;">
-          <button type="button" class="btn-secondary" id="btn-add-to-cart" style="flex: 1; justify-content: center;">
-            🛍️ Agregar a la Bolsa
+          <button type="button" class="btn-secondary" id="btn-add-to-cart" style="flex: 1; justify-content: center; ${isAgotado ? 'opacity: 0.5; cursor: not-allowed;' : ''}">
+            ${isAgotado ? '❌ Talla Agotada' : '🛍️ Agregar a la Bolsa'}
           </button>
-          <a href="#" id="btn-modal-wa-direct" target="_blank" rel="noopener" class="btn-primary" style="flex: 1.2; justify-content: center; background: #25d366;">
-            💬 Pedir 1 Par por WhatsApp
+          <a href="#" id="btn-modal-wa-direct" target="_blank" rel="noopener" class="btn-primary" style="flex: 1.2; justify-content: center; background: #25d366; ${isAgotado ? 'opacity: 0.5; pointer-events: none;' : ''}">
+            ${isAgotado ? '❌ Agotado en Bodega' : '💬 Pedir 1 Par por WhatsApp'}
           </a>
         </div>
       `;
@@ -566,13 +586,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Agregar al carrito
       body.querySelector("#btn-add-to-cart").addEventListener("click", () => {
+        if (isAgotado) {
+          showToast("Esta talla y color están agotados temporalmente.");
+          return;
+        }
         addToCart(product, selectedColorway, selectedSize);
         modal.classList.remove("open");
       });
 
-      // WhatsApp directo
+      // WhatsApp directo con auto-descuento de inventario
+      const btnDirectWa = body.querySelector("#btn-modal-wa-direct");
       const directWaUrl = db.buildSingleProductWhatsAppUrl(store, product, selectedColorway, selectedSize);
-      body.querySelector("#btn-modal-wa-direct").href = directWaUrl;
+      btnDirectWa.href = directWaUrl;
+      btnDirectWa.onclick = () => {
+        if (!isAgotado) {
+          db.decrementStock(product.id, colorName, selectedSize, 1);
+          showToast("⚡ Inventario actualizado en tiempo real (-1 par despachado).");
+        }
+      };
     }
 
     renderModalContent();
@@ -698,8 +729,9 @@ document.addEventListener("DOMContentLoaded", () => {
         dispatchMode
       );
 
-      // Registrar pedido B2B en la bodega
+      // Registrar pedido B2B en la bodega y descontar inventario en tiempo real
       cart.forEach(item => {
+        const prodId = item.productId || item.id;
         db.addB2BOrder({
           storeName: store.name,
           productName: item.name,
@@ -708,6 +740,7 @@ document.addEventListener("DOMContentLoaded", () => {
           units: item.quantity,
           totalWholesale: item.price * item.quantity * 0.65 // aproximación mayorista
         });
+        db.decrementStock(prodId, item.colorway, item.size, item.quantity);
       });
 
       window.open(waUrl, "_blank");
@@ -862,6 +895,11 @@ document.addEventListener("DOMContentLoaded", () => {
             <span class="margin-badge ${marginClass}">+${db.formatCOP(margin)}</span>
           </td>
           <td>
+            <button type="button" class="btn-action-sm btn-open-stock-modal" data-prod-id="${mp.id}" style="font-size: 11px; padding: 4px 8px; font-weight: 800; color: #15803d; background: #f0fdf4; border-color: #86efac; border-radius: 6px; white-space: nowrap; cursor: pointer;" title="Ver y Editar Stock por Color y Talla">
+              📊 ${db.getProductTotalStock(mp.id)} pares
+            </button>
+          </td>
+          <td>
             <div class="table-sizes-list">${sizeBadges}</div>
           </td>
           <td>
@@ -1006,6 +1044,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 <option value="🌟 Nuevo Drop 2026" ${campaign.includes("Drop") ? "selected" : ""}>🌟 Nuevo Drop</option>
                 <option value="👑 Más Vendido" ${campaign.includes("Vendido") ? "selected" : ""}>👑 Más Vendido</option>
               </select>
+            </td>
+            <td>
+              <button type="button" class="btn-action-sm btn-open-stock-modal" data-prod-id="${p.id}" style="font-size: 11px; padding: 4px 8px; font-weight: 800; color: #15803d; background: #f0fdf4; border-color: #86efac; border-radius: 6px; white-space: nowrap; cursor: pointer;" title="Ver y Editar Stock por Color y Talla">
+                📊 ${db.getProductTotalStock(p.id)} pares
+              </button>
             </td>
             <td>
               <span style="font-size: 11px; font-weight: 600; color: var(--text-secondary);">${p.sizes.join(", ")}</span>
@@ -1180,6 +1223,11 @@ document.addEventListener("DOMContentLoaded", () => {
       const activeCount = s.products.filter(p => p.active).length;
       return `
         <div class="store-directory-card">
+          <div style="margin-bottom: 8px;">
+            <span class="badge-verified" style="${s.isSupplierStore ? 'background: #fef2f2; color: #dc2626; border-color: #fca5a5;' : 'background: #eff6ff; color: #2563eb; border-color: #bfdbfe;'} font-size: 10px; font-weight: 800;">
+              ${s.isSupplierStore ? '🏢 BODEGA MATRIZ (CLIENTE DIRECTO SAAS)' : '🏪 SNEAKER PARTNER (REVENDEDOR AFILIADO)'}
+            </span>
+          </div>
           <div class="store-card-header">
             <div class="store-card-avatar">${s.name.split(" ").map(w => w[0]).slice(0, 2).join("")}</div>
             <div>
@@ -1616,6 +1664,167 @@ ${itemsText}
         }
 
         previewModal.classList.add("open");
+      };
+    }
+  }
+
+  // =========================================================================
+  // CONTROL DE INVENTARIO Y STOCK EN TIEMPO REAL (POR COLOR Y TALLA)
+  // =========================================================================
+  function setupInventoryStockMatrix() {
+    const modal = document.getElementById("modal-inventory-matrix");
+    const btnClose = document.getElementById("btn-close-stock-modal");
+    const btnCancel = document.getElementById("btn-cancel-stock-modal");
+    const btnSave = document.getElementById("btn-save-stock-matrix");
+    const btnQuickAdd = document.getElementById("btn-stock-quick-add-all");
+    const btnQuickClear = document.getElementById("btn-stock-quick-clear-all");
+
+    if (!modal) return;
+
+    let currentProdId = null;
+
+    // Delegación para abrir modal desde cualquier tabla
+    document.addEventListener("click", (e) => {
+      const btn = e.target.closest(".btn-open-stock-modal");
+      if (!btn) return;
+
+      const prodId = btn.dataset.prodId;
+      openStockMatrixModal(prodId);
+    });
+
+    if (btnClose) btnClose.onclick = () => modal.classList.remove("open");
+    if (btnCancel) btnCancel.onclick = () => modal.classList.remove("open");
+
+    function openStockMatrixModal(productId) {
+      currentProdId = productId;
+      const products = db.getMasterProducts(false);
+      const prod = products.find(p => p.id === productId);
+      if (!prod) return;
+
+      document.getElementById("matrix-prod-img").src = prod.image;
+      document.getElementById("matrix-prod-name").textContent = prod.name;
+      document.getElementById("matrix-prod-sku").textContent = `SKU: ${prod.sku} • ${prod.category}`;
+
+      renderMatrixTable(prod);
+      modal.classList.add("open");
+    }
+
+    function renderMatrixTable(prod) {
+      const table = document.getElementById("matrix-stock-table");
+      const matrix = db.getProductStockMatrix(prod.id);
+      const colorways = prod.colorways && prod.colorways.length > 0 ? prod.colorways : [{ name: "Estándar", image: prod.image }];
+      const sizes = prod.sizes && prod.sizes.length > 0 ? prod.sizes : [36, 37, 38, 39, 40, 41, 42];
+
+      const headerCells = sizes.map(sz => `<th style="text-align: center; padding: 8px 6px;">Talla ${sz}</th>`).join("");
+      
+      const rowsHtml = colorways.map(cw => {
+        const rowCells = sizes.map(sz => {
+          const key = `${cw.name}_${sz}`;
+          const val = matrix[key] !== undefined ? matrix[key] : 5;
+          return `
+            <td style="text-align: center; padding: 6px 4px;">
+              <input type="number" min="0" max="999" class="form-input matrix-cell-input" 
+                     data-color="${cw.name}" data-size="${sz}" value="${val}" 
+                     style="width: 58px; text-align: center; padding: 4px 2px; font-weight: 800; font-size: 13px;">
+            </td>
+          `;
+        }).join("");
+
+        const rowTotal = sizes.reduce((acc, sz) => acc + (Number(matrix[`${cw.name}_${sz}`]) || 0), 0);
+
+        return `
+          <tr>
+            <td style="padding: 8px 10px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <img src="${cw.image || prod.image}" alt="${cw.name}" style="width: 32px; height: 32px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border-subtle);">
+                <div>
+                  <strong style="font-size: 12px; color: var(--text-primary);">${cw.name}</strong>
+                  <div style="font-size: 10px; color: var(--text-muted);">${cw.sku || prod.sku}</div>
+                </div>
+              </div>
+            </td>
+            ${rowCells}
+            <td style="text-align: center; padding: 8px 6px; font-weight: 800; color: var(--primary-red);" class="matrix-color-row-total">
+              ${rowTotal} pares
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      table.innerHTML = `
+        <thead>
+          <tr style="background: #f8fafc;">
+            <th style="padding: 8px 10px; text-align: left;">Colorway / Edición</th>
+            ${headerCells}
+            <th style="text-align: center; padding: 8px 6px;">Total Color</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rowsHtml}
+        </tbody>
+      `;
+
+      updateGrandTotalBadge();
+
+      // Listener de inputs para recalcular en vivo
+      table.querySelectorAll(".matrix-cell-input").forEach(input => {
+        input.addEventListener("input", () => {
+          updateGrandTotalBadge();
+        });
+      });
+    }
+
+    function updateGrandTotalBadge() {
+      const inputs = document.querySelectorAll("#matrix-stock-table .matrix-cell-input");
+      let grandTotal = 0;
+      inputs.forEach(inp => {
+        grandTotal += (parseInt(inp.value, 10) || 0);
+      });
+      document.getElementById("matrix-grand-total-badge").textContent = `${grandTotal} pares`;
+    }
+
+    if (btnQuickAdd) {
+      btnQuickAdd.onclick = () => {
+        document.querySelectorAll("#matrix-stock-table .matrix-cell-input").forEach(inp => {
+          inp.value = (parseInt(inp.value, 10) || 0) + 5;
+        });
+        updateGrandTotalBadge();
+        showToast("➕ Curva de +5 pares agregada a cada talla.");
+      };
+    }
+
+    if (btnQuickClear) {
+      btnQuickClear.onclick = () => {
+        if (confirm("¿Seguro que deseas poner en 0 el stock de este modelo?")) {
+          document.querySelectorAll("#matrix-stock-table .matrix-cell-input").forEach(inp => {
+            inp.value = 0;
+          });
+          updateGrandTotalBadge();
+        }
+      };
+    }
+
+    if (btnSave) {
+      btnSave.onclick = () => {
+        if (!currentProdId) return;
+
+        const newMatrix = {};
+        document.querySelectorAll("#matrix-stock-table .matrix-cell-input").forEach(inp => {
+          const color = inp.dataset.color;
+          const size = inp.dataset.size;
+          const val = Math.max(0, parseInt(inp.value, 10) || 0);
+          newMatrix[`${color}_${size}`] = val;
+        });
+
+        db.saveProductStockMatrix(currentProdId, newMatrix);
+        const grandTotal = Object.values(newMatrix).reduce((a, b) => a + b, 0);
+
+        modal.classList.remove("open");
+        showToast(`✅ Stock guardado: ${grandTotal} pares registrados en bodega.`);
+
+        // Refrescar vistas para actualizar los badges
+        renderSupplierAdmin();
+        renderStoreAdmin(db.getCurrentStore());
       };
     }
   }

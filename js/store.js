@@ -10,7 +10,8 @@ const DB_KEYS = {
   ORDERS: "sneakerworld_orders_v8",
   AUTH_SESSION: "sneakerworld_auth_session_v8",
   LINE_ROTATION_INDEX: "sneakerworld_line_rotation_v8",
-  ACCOUNTS: "sneakerworld_accounts_v8"
+  ACCOUNTS: "sneakerworld_accounts_v8",
+  STOCK: "sneakerworld_inventory_stock_v8"
 };
 
 class ShoesStoreManager {
@@ -578,6 +579,106 @@ ${dispatchText}
 ⚡ *Reserva de bodega activa (20 min):* Por favor confirmar disponibilidad para preparar en bodega de San Andresito Cali. ¡Gracias! ✨`;
 
     return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+  }
+
+  // =========================================================================
+  // CONTROL DE STOCK EN TIEMPO REAL (POR COLOR Y TALLA)
+  // =========================================================================
+  getStockData() {
+    const raw = localStorage.getItem(DB_KEYS.STOCK);
+    return raw ? JSON.parse(raw) : {};
+  }
+
+  saveStockData(stockData) {
+    localStorage.setItem(DB_KEYS.STOCK, JSON.stringify(stockData));
+  }
+
+  getProductStockMatrix(productId) {
+    const stockData = this.getStockData();
+    const master = this.getMasterProducts(false);
+    const prod = master.find(p => p.id === productId);
+    if (!prod) return {};
+
+    if (!stockData[productId]) {
+      stockData[productId] = {};
+      const colorways = prod.colorways && prod.colorways.length > 0 ? prod.colorways : [{ name: "Estándar" }];
+      const sizes = prod.sizes && prod.sizes.length > 0 ? prod.sizes : [36, 37, 38, 39, 40, 41, 42];
+
+      colorways.forEach(cw => {
+        sizes.forEach(sz => {
+          const key = `${cw.name}_${sz}`;
+          stockData[productId][key] = Math.floor(4 + (parseInt(sz, 10) % 5));
+        });
+      });
+
+      this.saveStockData(stockData);
+    }
+
+    return stockData[productId];
+  }
+
+  getProductStock(productId, colorwayName, size) {
+    const matrix = this.getProductStockMatrix(productId);
+    const colorKey = colorwayName || "Estándar";
+    const key = `${colorKey}_${size}`;
+    
+    if (matrix[key] !== undefined) {
+      return Number(matrix[key]);
+    }
+
+    const sizeKeys = Object.keys(matrix).filter(k => k.endsWith(`_${size}`));
+    if (sizeKeys.length > 0) {
+      return Number(matrix[sizeKeys[0]]) || 0;
+    }
+
+    return 5;
+  }
+
+  getProductTotalStock(productId) {
+    const matrix = this.getProductStockMatrix(productId);
+    return Object.values(matrix).reduce((acc, qty) => acc + (Number(qty) || 0), 0);
+  }
+
+  updateProductStockCell(productId, colorwayName, size, newQty) {
+    const stockData = this.getStockData();
+    const currentMatrix = this.getProductStockMatrix(productId);
+    const key = `${colorwayName}_${size}`;
+    currentMatrix[key] = Math.max(0, parseInt(newQty, 10) || 0);
+    stockData[productId] = currentMatrix;
+    this.saveStockData(stockData);
+    return currentMatrix[key];
+  }
+
+  saveProductStockMatrix(productId, newMatrix) {
+    const stockData = this.getStockData();
+    stockData[productId] = newMatrix;
+    this.saveStockData(stockData);
+  }
+
+  decrementStock(productId, colorwayName, size, count = 1) {
+    const stockData = this.getStockData();
+    const currentMatrix = this.getProductStockMatrix(productId);
+    const colorKey = colorwayName || "Estándar";
+    let key = `${colorKey}_${size}`;
+
+    if (currentMatrix[key] === undefined) {
+      const fallbackKey = Object.keys(currentMatrix).find(k => k.endsWith(`_${size}`));
+      if (fallbackKey) key = fallbackKey;
+    }
+
+    const currentQty = currentMatrix[key] !== undefined ? Number(currentMatrix[key]) : 5;
+    const newQty = Math.max(0, currentQty - Number(count));
+    currentMatrix[key] = newQty;
+    stockData[productId] = currentMatrix;
+    this.saveStockData(stockData);
+
+    return {
+      productId,
+      colorway: colorKey,
+      size,
+      remaining: newQty,
+      isSoldOut: newQty <= 0
+    };
   }
 }
 
