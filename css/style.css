@@ -57,25 +57,8 @@ body {
 }
 
 /* ==========================================================================
-   GRID & DOT PATTERN BACKGROUND (MODO CLARO SHADCN / LINEAR STYLE)
+   DOT PATTERN BACKGROUND (MODO CLARO SHADCN STYLE)
    ========================================================================== */
-.light-grid-bg {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: -2;
-  pointer-events: none;
-  background-color: var(--bg-main);
-  background-image: 
-    linear-gradient(to right, rgba(15, 23, 42, 0.065) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(15, 23, 42, 0.065) 1px, transparent 1px);
-  background-size: 32px 32px;
-  mask-image: radial-gradient(ellipse at 50% 35%, rgba(0, 0, 0, 1) 45%, rgba(0, 0, 0, 0.15) 90%);
-  -webkit-mask-image: radial-gradient(ellipse at 50% 35%, rgba(0, 0, 0, 1) 45%, rgba(0, 0, 0, 0.15) 90%);
-}
-
 .dot-pattern-overlay {
   position: fixed;
   top: 0;
