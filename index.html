@@ -420,6 +420,7 @@
                   <th>Pares</th>
                   <th>Total Bodega</th>
                   <th>Estado</th>
+                  <th>Gestión de Cambios</th>
                 </tr>
               </thead>
               <tbody id="supplier-orders-table">
@@ -1139,7 +1140,7 @@
         </div>
 
         <!-- Botones de Exportación Excel y PDF -->
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; padding-top: 12px; border-top: 1px solid var(--border-subtle);">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: gap; gap: 10px; padding-top: 12px; border-top: 1px solid var(--border-subtle);">
           <div style="font-size: 11px; color: var(--text-muted);">
             💡 Los archivos exportados son compatibles con <strong>Microsoft Excel, Numbers y Google Sheets</strong>.
           </div>
@@ -1152,6 +1153,136 @@
             </button>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- =========================================================================
+         MODAL: GESTIÓN DE CAMBIOS, GARANTÍAS & DEVOLUCIONES
+         ========================================================================= -->
+    <div class="modal-backdrop" id="modal-return-exchange" role="dialog" aria-modal="true">
+      <div class="modal-dialog" style="max-width: 620px; width: 95%;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 12px;">
+          <div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 22px;">🔄</span>
+              <h3 style="font-size: 18px; font-weight: 900; color: var(--text-primary); margin: 0;">Gestión de Cambios, Garantías & Retornos</h3>
+            </div>
+            <p style="font-size: 12px; color: var(--text-secondary); margin: 4px 0 0;">
+              Ajuste automático de stock en Bodega Central y generación de comanda WhatsApp para mensajería.
+            </p>
+          </div>
+          <button type="button" class="btn-close-modal" id="btn-close-exchange-modal" style="font-size: 24px; background: none; border: none; cursor: pointer; color: var(--text-muted); line-height: 1;">&times;</button>
+        </div>
+
+        <!-- Banner de la Orden Seleccionada -->
+        <div style="background: #f8fafc; border: 1px solid var(--border-subtle); border-radius: 8px; padding: 12px; margin-bottom: 16px; display: flex; gap: 12px; align-items: center;">
+          <div style="font-size: 28px;">👟</div>
+          <div style="flex: 1;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <strong style="font-size: 13px; color: var(--text-primary);" id="exchange-order-product-name">Cargando...</strong>
+              <span style="font-family: monospace; font-weight: 800; color: var(--primary-red); font-size: 12px;" id="exchange-order-id">#ORD-0000</span>
+            </div>
+            <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">
+              Tienda: <span id="exchange-order-store" style="font-weight: 600;">-</span> • Talla Original: <span id="exchange-order-original-size" style="font-weight: 700; color: #0f172a;">-</span> • Color: <span id="exchange-order-colorway">-</span>
+            </div>
+          </div>
+        </div>
+
+        <form id="form-return-exchange">
+          <!-- 1. Tipo de Transacción (Detal vs Mayorista) -->
+          <div class="form-group" style="margin-bottom: 14px;">
+            <label class="form-label" style="font-size: 12px; font-weight: 700;">Canal / Tipo de Cliente:</label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+              <label style="display: flex; align-items: center; gap: 8px; background: white; border: 1px solid var(--border-subtle); padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600;">
+                <input type="radio" name="exchange-channel" value="retail" checked>
+                <span>🛍️ Venta al Detal (Cliente Final)</span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 8px; background: white; border: 1px solid var(--border-subtle); padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600;">
+                <input type="radio" name="exchange-channel" value="wholesale">
+                <span>📦 Al por Mayor (Sneaker Partner)</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- 2. Motivo de la Gestión -->
+          <div class="form-group" style="margin-bottom: 14px;">
+            <label class="form-label" style="font-size: 12px; font-weight: 700;">Motivo de la Incidencia:</label>
+            <select class="form-select" id="exchange-action-type" style="font-size: 12px; padding: 8px; font-weight: 700;">
+              <option value="size_exchange">👟 Cambio de Talla por Calce (Cliente)</option>
+              <option value="warranty">🛡️ Garantía de Fábrica (Defecto de Pegue / Costura)</option>
+              <option value="stock_rotation">📦 Rotación de Inventario Frío (Partner a Bodega)</option>
+              <option value="refund_return">❌ Devolución Definitiva (Retorno de Pares a Stock)</option>
+            </select>
+          </div>
+
+          <!-- 3. Grilla de Tallas (Intercambio) -->
+          <div id="exchange-sizes-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+            <div>
+              <label class="form-label" style="font-size: 11px; font-weight: 700; color: #b91c1c;">📥 Talla que REINGRESA a Bodega:</label>
+              <select class="form-select" id="exchange-return-size" style="font-size: 12px; padding: 7px; font-weight: 700;">
+                <option value="35">Talla 35 (22.5 cm)</option>
+                <option value="36">Talla 36 (23.0 cm)</option>
+                <option value="37">Talla 37 (23.8 cm)</option>
+                <option value="38" selected>Talla 38 (24.5 cm)</option>
+                <option value="39">Talla 39 (25.0 cm)</option>
+                <option value="40">Talla 40 (25.8 cm)</option>
+                <option value="41">Talla 41 (26.5 cm)</option>
+                <option value="42">Talla 42 (27.2 cm)</option>
+                <option value="43">Talla 43 (28.0 cm)</option>
+                <option value="44">Talla 44 (28.8 cm)</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label" style="font-size: 11px; font-weight: 700; color: #15803d;">📤 Nueva Talla que SALE de Bodega:</label>
+              <select class="form-select" id="exchange-new-size" style="font-size: 12px; padding: 7px; font-weight: 700;">
+                <option value="35">Talla 35 (22.5 cm)</option>
+                <option value="36">Talla 36 (23.0 cm)</option>
+                <option value="37">Talla 37 (23.8 cm)</option>
+                <option value="38">Talla 38 (24.5 cm)</option>
+                <option value="39" selected>Talla 39 (25.0 cm)</option>
+                <option value="40">Talla 40 (25.8 cm)</option>
+                <option value="41">Talla 41 (26.5 cm)</option>
+                <option value="42">Talla 42 (27.2 cm)</option>
+                <option value="43">Talla 43 (28.0 cm)</option>
+                <option value="44">Talla 44 (28.8 cm)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- 4. Flete y Logística de Moto en Cali -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+            <div>
+              <label class="form-label" style="font-size: 11px; font-weight: 700;">🛵 Logística / Flete en Moto:</label>
+              <select class="form-select" id="exchange-shipping-mode" style="font-size: 11px; padding: 7px; font-weight: 600;">
+                <option value="10000_cliente">Flete $10.000 COP (Cobra al Cliente)</option>
+                <option value="0_tienda">Garantía / Asumido por Tienda ($0 COP)</option>
+                <option value="0_bodega">Cambio presencial en Bodega San Andresito ($0)</option>
+                <option value="15000_nacional">Envío Nacional Interrapidísimo ($15.000)</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label" style="font-size: 11px; font-weight: 700;">Pares a Gestionar:</label>
+              <input type="number" min="1" max="50" value="1" class="form-input" id="exchange-units" style="font-size: 12px; padding: 6px; font-weight: 800; text-align: center;">
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 14px;">
+            <label class="form-label" style="font-size: 11px; font-weight: 700;">Dirección de Recogida / Entrega en Cali:</label>
+            <input type="text" class="form-input" id="exchange-address" placeholder="Ej: Carrera 100 # 16-20 Apto 402, Ciudad Jardín" style="font-size: 12px; padding: 7px;">
+          </div>
+
+          <!-- Impacto en Inventario en Vivo -->
+          <div style="background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; padding: 10px 14px; margin-bottom: 18px; font-size: 11px; color: #15803d; line-height: 1.4;">
+            <strong>⚡ Impacto Inmediato en Bodega:</strong> <span id="exchange-stock-impact-text">La Talla 38 sumará +1 par al stock y la Talla 39 restará -1 par. No descuadra la caja.</span>
+          </div>
+
+          <div style="display: flex; justify-content: flex-end; gap: 10px;">
+            <button type="button" class="btn-secondary" id="btn-cancel-exchange-modal">Cancelar</button>
+            <button type="submit" class="btn-primary" id="btn-submit-exchange" style="background: #b45309; border-color: #92400e; cursor: pointer;">
+              ✅ Procesar Cambio & Actualizar Stock
+            </button>
+          </div>
+        </form>
       </div>
     </div>
 

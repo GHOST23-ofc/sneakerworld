@@ -59,6 +59,7 @@ document.addEventListener("DOMContentLoaded", () => {
     setupInventoryStockMatrix();
     setupDirectoryFilters();
     setupAccountingReports();
+    setupReturnExchangeModal();
     switchView(currentView);
   }
 
@@ -1156,6 +1157,11 @@ document.addEventListener("DOMContentLoaded", () => {
               <option value="Cancelado" ${ord.status === 'Cancelado' ? 'selected' : ''}>❌ Cancelado</option>
             </select>
           </td>
+          <td>
+            <button type="button" class="btn-action-sm btn-open-exchange-modal" data-order-id="${ord.id}" style="font-size: 11px; padding: 4px 8px; font-weight: 700; color: #b45309; background: #fffbeb; border-color: #fcd34d; border-radius: 6px; cursor: pointer; white-space: nowrap;" title="Gestionar Cambio de Talla, Garantía o Devolución">
+              🔄 Cambio / Retorno
+            </button>
+          </td>
         </tr>
       `).join("");
 
@@ -2239,6 +2245,129 @@ ${itemsText}
       </html>
     `);
     printWindow.document.close();
+  }
+
+  // =========================================================================
+  // GESTIÓN DE CAMBIOS, GARANTÍAS Y DEVOLUCIONES (DETAL & MAYORISTA)
+  // =========================================================================
+  function setupReturnExchangeModal() {
+    const modal = document.getElementById("modal-return-exchange");
+    const btnClose = document.getElementById("btn-close-exchange-modal");
+    const btnCancel = document.getElementById("btn-cancel-exchange-modal");
+    const form = document.getElementById("form-return-exchange");
+    const actionSelect = document.getElementById("exchange-action-type");
+    const returnSizeSelect = document.getElementById("exchange-return-size");
+    const newSizeSelect = document.getElementById("exchange-new-size");
+    const unitsInput = document.getElementById("exchange-units");
+    const impactText = document.getElementById("exchange-stock-impact-text");
+    const sizesRow = document.getElementById("exchange-sizes-row");
+
+    if (!modal || !form) return;
+
+    let currentOrderId = null;
+    let currentOrder = null;
+
+    document.addEventListener("click", (e) => {
+      const btn = e.target.closest(".btn-open-exchange-modal");
+      if (!btn) return;
+
+      currentOrderId = btn.dataset.orderId;
+      const orders = db.getOrders();
+      currentOrder = orders.find(o => o.id === currentOrderId);
+      if (!currentOrder) return;
+
+      openExchangeModal(currentOrder);
+    });
+
+    if (btnClose) btnClose.onclick = () => modal.classList.remove("open");
+    if (btnCancel) btnCancel.onclick = () => modal.classList.remove("open");
+
+    function openExchangeModal(ord) {
+      document.getElementById("exchange-order-product-name").textContent = ord.productName;
+      document.getElementById("exchange-order-id").textContent = `#${ord.id}`;
+      document.getElementById("exchange-order-store").textContent = ord.storeName;
+      document.getElementById("exchange-order-original-size").textContent = ord.size;
+      document.getElementById("exchange-order-colorway").textContent = ord.colorway || "Estándar";
+
+      if (returnSizeSelect) returnSizeSelect.value = String(ord.size);
+      if (newSizeSelect) {
+        const nextSize = Number(ord.size) + 1;
+        newSizeSelect.value = String(nextSize <= 44 ? nextSize : ord.size);
+      }
+      if (unitsInput) unitsInput.value = "1";
+
+      updateImpactText();
+      modal.classList.add("open");
+    }
+
+    function updateImpactText() {
+      const action = actionSelect.value;
+      const retSz = returnSizeSelect.value;
+      const newSz = newSizeSelect.value;
+      const units = Number(unitsInput.value) || 1;
+
+      if (action === "size_exchange") {
+        sizesRow.style.display = "grid";
+        impactText.innerHTML = `Bodega sumará <strong>+${units} par(es) Talla ${retSz}</strong> (reingreso) y restará <strong>-${units} par(es) Talla ${newSz}</strong> (salida).`;
+      } else if (action === "warranty") {
+        sizesRow.style.display = "grid";
+        impactText.innerHTML = `Bodega despachará <strong>-${units} par(es) nuevos Talla ${newSz}</strong> por garantía de fábrica.`;
+      } else if (action === "stock_rotation") {
+        sizesRow.style.display = "grid";
+        impactText.innerHTML = `Rotación Mayorista: Reingresan <strong>+${units} pares Talla ${retSz}</strong> y salen <strong>-${units} pares comerciales Talla ${newSz}</strong>.`;
+      } else if (action === "refund_return") {
+        sizesRow.style.display = "none";
+        impactText.innerHTML = `Retorno a Stock: <strong>+${units} par(es) Talla ${retSz}</strong> se reintegran al inventario disponible.`;
+      }
+    }
+
+    actionSelect.addEventListener("change", updateImpactText);
+    returnSizeSelect.addEventListener("change", updateImpactText);
+    newSizeSelect.addEventListener("change", updateImpactText);
+    unitsInput.addEventListener("input", updateImpactText);
+
+    form.onsubmit = (e) => {
+      e.preventDefault();
+      if (!currentOrderId || !currentOrder) return;
+
+      const channel = form.querySelector("input[name='exchange-channel']:checked")?.value || "retail";
+      const actionType = actionSelect.value;
+      const returnSize = parseInt(returnSizeSelect.value, 10);
+      const newSize = parseInt(newSizeSelect.value, 10);
+      const units = parseInt(unitsInput.value, 10) || 1;
+      const shippingVal = document.getElementById("exchange-shipping-mode").value;
+      const [shippingCostStr, shippingPayer] = shippingVal.split("_");
+      const shippingCost = parseInt(shippingCostStr, 10) || 0;
+      const clientAddress = document.getElementById("exchange-address").value.trim();
+
+      const result = db.processReturnOrExchange(currentOrderId, {
+        channel,
+        actionType,
+        returnSize,
+        newSize,
+        units,
+        shippingCost,
+        shippingPayer: shippingPayer === "cliente" ? "Cliente" : (shippingPayer === "tienda" ? "Tienda" : "Bodega"),
+        clientAddress
+      });
+
+      modal.classList.remove("open");
+      showToast("✅ Incidencia procesada e inventario actualizado en tiempo real.");
+
+      renderSupplierAdmin();
+      renderStoreAdmin(db.getCurrentStore());
+
+      if (result.whatsappText) {
+        const encoded = encodeURIComponent(result.whatsappText);
+        const waUrl = `https://wa.me/573157489201?text=${encoded}`;
+        
+        setTimeout(() => {
+          if (confirm("¿Deseas enviar la Guía de Cambio/Recogida al WhatsApp del motorizado ahora mismo?")) {
+            window.open(waUrl, "_blank");
+          }
+        }, 300);
+      }
+    };
   }
 
   // =========================================================================

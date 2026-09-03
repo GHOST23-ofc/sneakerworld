@@ -759,6 +759,131 @@ ${dispatchText}
       isSoldOut: newQty <= 0
     };
   }
+
+  incrementStock(productId, colorwayName, size, count = 1) {
+    const stockData = this.getStockData();
+    const currentMatrix = this.getProductStockMatrix(productId);
+    const colorKey = colorwayName || "Estándar";
+    let key = `${colorKey}_${size}`;
+
+    if (currentMatrix[key] === undefined) {
+      const fallbackKey = Object.keys(currentMatrix).find(k => k.endsWith(`_${size}`));
+      if (fallbackKey) key = fallbackKey;
+    }
+
+    const currentQty = currentMatrix[key] !== undefined ? Number(currentMatrix[key]) : 5;
+    const newQty = currentQty + Number(count);
+    currentMatrix[key] = newQty;
+    stockData[productId] = currentMatrix;
+    this.saveStockData(stockData);
+
+    return {
+      productId,
+      colorway: colorKey,
+      size,
+      remaining: newQty
+    };
+  }
+
+  processReturnOrExchange(orderId, data) {
+    const orders = this.getOrders();
+    const order = orders.find(o => o.id === orderId);
+    if (!order) return { success: false, message: "Orden no encontrada" };
+
+    const products = this.getMasterProducts(false);
+    const product = products.find(p => p.id === order.productId || p.name === order.productName) || products[0];
+    const prodId = product ? product.id : (order.productId || "prod-001");
+
+    const actionType = data.actionType; // 'size_exchange', 'warranty', 'stock_rotation', 'refund_return'
+    const units = Number(data.units) || 1;
+    const returnSize = data.returnSize || order.size;
+    const newSize = data.newSize || order.size;
+    const colorway = data.colorway || order.colorway || "Estándar";
+    const shippingCost = Number(data.shippingCost) || 0;
+    const shippingPayer = data.shippingPayer || "Cliente";
+    const notes = data.notes || "";
+
+    if (actionType === "size_exchange") {
+      this.incrementStock(prodId, colorway, returnSize, units);
+      this.decrementStock(prodId, colorway, newSize, units);
+      order.status = `🔄 Cambio Talla (${returnSize} ➔ ${newSize})`;
+      order.exchangeInfo = {
+        actionType,
+        returnSize,
+        newSize,
+        units,
+        date: new Date().toISOString().replace("T", " ").substring(0, 16),
+        shippingCost,
+        shippingPayer,
+        notes
+      };
+    } else if (actionType === "warranty") {
+      this.decrementStock(prodId, colorway, newSize, units);
+      order.status = `🛡️ Garantía de Fábrica`;
+      order.exchangeInfo = {
+        actionType,
+        defectReason: data.defectReason || "Defecto de fábrica",
+        newSize,
+        units,
+        date: new Date().toISOString().replace("T", " ").substring(0, 16),
+        notes
+      };
+    } else if (actionType === "stock_rotation") {
+      this.incrementStock(prodId, colorway, returnSize, units);
+      this.decrementStock(prodId, colorway, newSize, units);
+      order.status = `📦 Rotación Stock (${returnSize} ➔ ${newSize})`;
+      order.exchangeInfo = {
+        actionType,
+        returnSize,
+        newSize,
+        units,
+        date: new Date().toISOString().replace("T", " ").substring(0, 16),
+        notes
+      };
+    } else if (actionType === "refund_return") {
+      this.incrementStock(prodId, colorway, returnSize, units);
+      order.status = `❌ Devolución a Bodega (+${units} Stock)`;
+      order.isRefunded = true;
+      order.exchangeInfo = {
+        actionType,
+        returnSize,
+        units,
+        date: new Date().toISOString().replace("T", " ").substring(0, 16),
+        notes
+      };
+    }
+
+    localStorage.setItem(DB_KEYS.ORDERS, JSON.stringify(orders));
+
+    let waText = "";
+    if (actionType === "size_exchange") {
+      waText = `🛵 *GUÍA DE SERVICIO: CAMBIO DE TALLA EN CALI*\n` +
+        `📦 *Orden:* #${order.id}\n` +
+        `🏪 *Tienda / Solicitante:* ${order.storeName}\n` +
+        `👟 *Modelo:* ${order.productName} (${colorway})\n` +
+        `🔄 *ENTREGAR AL CLIENTE:* Talla ${newSize}\n` +
+        `📥 *RECOGER DEL CLIENTE:* Talla ${returnSize} (caja y suela sin pisadas)\n` +
+        `🛵 *Flete Mensajero:* ${shippingCost > 0 ? this.formatCOP(shippingCost) + ` (Cobra a: ${shippingPayer})` : 'CUBIERTO POR GARANTÍA (GRATIS)'}\n` +
+        `📍 *Dirección:* ${data.clientAddress || 'Confirmar con cliente en WhatsApp'}\n` +
+        `✨ *Despacho:* Vanessa Castellar Shoes (Bodega San Andresito de la 38)`;
+    } else if (actionType === "warranty") {
+      waText = `🛡️ *GUÍA DE SERVICIO: GARANTÍA DE FÁBRICA*\n` +
+        `📦 *Orden:* #${order.id}\n` +
+        `👟 *Modelo:* ${order.productName} (${colorway}) Talla ${newSize}\n` +
+        `⚠️ *Motivo Garantía:* ${data.defectReason || 'Defecto de costura / pegue'}\n` +
+        `🛵 *Flete:* $0 COP (Asumido por Bodega Central)\n` +
+        `✨ *Despacho asegurado:* Vanessa Castellar Shoes`;
+    } else {
+      waText = `📦 *REPORTE DE INVENTARIO BODEGA: RETORNO DE STOCK*\n` +
+        `Orden #${order.id} procesada con reingreso de ${units} par(es) Talla ${returnSize} a bodega central.`;
+    }
+
+    return {
+      success: true,
+      order,
+      whatsappText: waText
+    };
+  }
 }
 
 // Instancia global del manejador
