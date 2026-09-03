@@ -464,6 +464,85 @@ class ShoesStoreManager {
     return newOrder;
   }
 
+  updateOrderStatus(orderId, newStatus) {
+    const orders = this.getOrders();
+    const order = orders.find(o => o.id === orderId);
+    if (order) {
+      order.status = newStatus;
+      if (newStatus === "Entregado y Cobrado") {
+        order.isPaid = true;
+      }
+      localStorage.setItem(DB_KEYS.ORDERS, JSON.stringify(orders));
+      return order;
+    }
+    return null;
+  }
+
+  getFinancialSummary(period = "month", storeNameFilter = null) {
+    const allOrders = this.getOrders();
+    const now = new Date();
+    
+    // Filtrar por tienda si aplica
+    let filtered = allOrders;
+    if (storeNameFilter) {
+      filtered = filtered.filter(o => o.storeName && o.storeName.toLowerCase().includes(storeNameFilter.toLowerCase()));
+    }
+
+    // Filtrar por período de tiempo (day, week, month, year)
+    filtered = filtered.filter(o => {
+      if (!o.date) return true;
+      const orderDate = new Date(o.date.replace(" ", "T"));
+      if (isNaN(orderDate.getTime())) return true;
+
+      const diffMs = now - orderDate;
+      const diffDays = diffMs / (1000 * 60 * 60 * 24);
+
+      if (period === "day") {
+        return orderDate.toDateString() === now.toDateString() || diffDays <= 1;
+      } else if (period === "week") {
+        return diffDays <= 7;
+      } else if (period === "month") {
+        return diffDays <= 31;
+      } else if (period === "year") {
+        return diffDays <= 365;
+      }
+      return true;
+    });
+
+    let totalGross = 0;
+    let totalWholesale = 0;
+    let totalPairs = 0;
+    let paidOrdersCount = 0;
+
+    filtered.forEach(o => {
+      const units = Number(o.units) || 1;
+      const wholesale = Number(o.totalWholesale) || 0;
+      const retail = Number(o.totalRetail) || (wholesale * 1.55);
+      
+      totalGross += retail;
+      totalWholesale += wholesale;
+      totalPairs += units;
+
+      if (o.status === "Entregado y Cobrado" || o.isPaid) {
+        paidOrdersCount++;
+      }
+    });
+
+    const netProfit = totalGross - totalWholesale;
+
+    return {
+      period,
+      orders: filtered,
+      totalOrders: filtered.length,
+      totalPairs,
+      totalGross,
+      totalWholesale,
+      netProfit,
+      paidOrdersCount,
+      collectionRate: filtered.length > 0 ? Math.round((paidOrdersCount / filtered.length) * 100) : 100
+    };
+  }
+
   formatCOP(value) {
     return new Intl.NumberFormat("es-CO", {
       style: "currency",

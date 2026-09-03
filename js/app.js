@@ -57,6 +57,8 @@ document.addEventListener("DOMContentLoaded", () => {
     setupAccountSettingsModal();
     setupQuoteGenerator();
     setupInventoryStockMatrix();
+    setupDirectoryFilters();
+    setupAccountingReports();
     switchView(currentView);
   }
 
@@ -1131,7 +1133,7 @@ document.addEventListener("DOMContentLoaded", () => {
       };
     }
 
-    // 2. Tabla de Pedidos B2B
+    // 2. Tabla de Pedidos B2B con Cambio de Estado en Vivo
     const tbody = document.getElementById("supplier-orders-table");
     if (tbody) {
       tbody.innerHTML = orders.map(ord => `
@@ -1139,13 +1141,40 @@ document.addEventListener("DOMContentLoaded", () => {
           <td style="font-family: monospace; font-weight: 700; color: var(--primary-red);">#${ord.id}</td>
           <td>${ord.date}</td>
           <td style="font-weight: 700; color: var(--text-primary);">${ord.storeName}</td>
-          <td>${ord.productName}</td>
+          <td>
+            <div style="font-weight: 700; font-size: 12px;">${ord.productName}</div>
+            <div style="font-size: 10px; color: var(--text-muted);">${ord.colorway || 'Estándar'}</div>
+          </td>
           <td><span class="table-size-tag active">${ord.size}</span></td>
           <td style="font-weight: 800;">${ord.units} pares</td>
           <td style="font-weight: 800; color: var(--primary-red);">${db.formatCOP(ord.totalWholesale)}</td>
-          <td><span class="badge-verified">${ord.status}</span></td>
+          <td>
+            <select class="form-select order-status-select" data-order-id="${ord.id}" style="font-size: 11px; padding: 4px 6px; font-weight: 700; border-radius: 6px; ${ord.status === 'Entregado y Cobrado' ? 'background: #f0fdf4; color: #16a34a; border-color: #86efac;' : ''}">
+              <option value="En Alistamiento" ${ord.status === 'En Alistamiento' ? 'selected' : ''}>📦 En Alistamiento</option>
+              <option value="Despachado en Moto" ${ord.status === 'Despachado en Moto' ? 'selected' : ''}>🛵 Despachado en Moto</option>
+              <option value="Entregado y Cobrado" ${ord.status === 'Entregado y Cobrado' ? 'selected' : ''}>✅ Entregado y Cobrado</option>
+              <option value="Cancelado" ${ord.status === 'Cancelado' ? 'selected' : ''}>❌ Cancelado</option>
+            </select>
+          </td>
         </tr>
       `).join("");
+
+      tbody.querySelectorAll(".order-status-select").forEach(sel => {
+        sel.addEventListener("change", () => {
+          const ordId = sel.dataset.orderId;
+          const newStatus = sel.value;
+          db.updateOrderStatus(ordId, newStatus);
+          showToast(`⚡ Pedido #${ordId} actualizado a: ${newStatus}`);
+          renderSupplierAdmin();
+        });
+      });
+    }
+
+    const btnQuickExport = document.querySelector(".btn-quick-export-orders");
+    if (btnQuickExport) {
+      btnQuickExport.onclick = () => {
+        exportOrdersToCSV(db.getOrders(), "Historico_Completo");
+      };
     }
   }
 
@@ -1215,14 +1244,64 @@ document.addEventListener("DOMContentLoaded", () => {
   // =========================================================================
   // VISTA 4: DIRECTORIO DE TIENDAS Y SIMULADOR ROI
   // =========================================================================
-  function renderDirectory() {
-    const stores = db.getStores();
-    const grid = document.getElementById("directory-stores-grid");
+  let directoryRoleFilter = "all";
+  let directorySearchQuery = "";
 
-    grid.innerHTML = stores.map(s => {
+  function renderDirectory() {
+    const allStores = db.getStores();
+    const grid = document.getElementById("directory-stores-grid");
+    if (!grid) return;
+
+    // Actualizar contadores
+    const countAll = allStores.length;
+    const countSupplier = allStores.filter(s => s.isSupplierStore).length;
+    const countPartner = allStores.filter(s => !s.isSupplierStore).length;
+
+    const elCountAll = document.getElementById("count-all-stores");
+    const elCountSup = document.getElementById("count-supplier-stores");
+    const elCountPart = document.getElementById("count-partner-stores");
+    if (elCountAll) elCountAll.textContent = countAll;
+    if (elCountSup) elCountSup.textContent = countSupplier;
+    if (elCountPart) elCountPart.textContent = countPartner;
+
+    // Aplicar filtros de rol
+    let filtered = allStores;
+    if (directoryRoleFilter === "supplier") {
+      filtered = filtered.filter(s => s.isSupplierStore);
+    } else if (directoryRoleFilter === "partner") {
+      filtered = filtered.filter(s => !s.isSupplierStore);
+    }
+
+    // Aplicar búsqueda por texto
+    if (directorySearchQuery) {
+      const q = directorySearchQuery.toLowerCase();
+      filtered = filtered.filter(s => 
+        s.name.toLowerCase().includes(q) || 
+        (s.neighborhood && s.neighborhood.toLowerCase().includes(q)) ||
+        (s.tagline && s.tagline.toLowerCase().includes(q))
+      );
+    }
+
+    if (filtered.length === 0) {
+      grid.innerHTML = `
+        <div style="grid-column: 1 / -1; text-align: center; padding: 40px 20px; background: white; border: 1px solid var(--border-subtle); border-radius: var(--radius-md);">
+          <div style="font-size: 32px; margin-bottom: 8px;">🔍</div>
+          <h4 style="font-size: 15px; font-weight: 800; color: var(--text-primary);">No se encontraron vitrinas con ese filtro</h4>
+          <p style="font-size: 12px; color: var(--text-secondary);">Prueba cambiando el término de búsqueda o seleccionando "Todos".</p>
+        </div>
+      `;
+      return;
+    }
+
+    grid.innerHTML = filtered.map(s => {
       const activeCount = s.products.filter(p => p.active).length;
       return `
-        <div class="store-directory-card">
+        <div class="store-directory-card" style="position: relative; overflow: hidden;">
+          <!-- Corner Tag Solicitado -->
+          <div class="corner-tag ${s.isSupplierStore ? 'corner-tag-supplier' : 'corner-tag-partner'}">
+            ${s.isSupplierStore ? '🏢 BODEGA' : '🏪 SNEAKER PARTNER'}
+          </div>
+
           <div style="margin-bottom: 8px;">
             <span class="badge-verified" style="${s.isSupplierStore ? 'background: #fef2f2; color: #dc2626; border-color: #fca5a5;' : 'background: #eff6ff; color: #2563eb; border-color: #bfdbfe;'} font-size: 10px; font-weight: 800;">
               ${s.isSupplierStore ? '🏢 BODEGA MATRIZ (CLIENTE DIRECTO SAAS)' : '🏪 SNEAKER PARTNER (REVENDEDOR AFILIADO)'}
@@ -1253,6 +1332,26 @@ document.addEventListener("DOMContentLoaded", () => {
         switchView("storefront");
       });
     });
+  }
+
+  function setupDirectoryFilters() {
+    const filterButtons = document.querySelectorAll(".btn-filter-role");
+    filterButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        filterButtons.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        directoryRoleFilter = btn.dataset.filter;
+        renderDirectory();
+      });
+    });
+
+    const searchInput = document.getElementById("dir-search-input");
+    if (searchInput) {
+      searchInput.addEventListener("input", (e) => {
+        directorySearchQuery = e.target.value.trim();
+        renderDirectory();
+      });
+    }
   }
 
   function setupRoiCalculator() {
@@ -1827,6 +1926,319 @@ ${itemsText}
         renderStoreAdmin(db.getCurrentStore());
       };
     }
+  }
+
+  // =========================================================================
+  // CENTRO DE REPORTES CONTABLES, FACTURACIÓN & EXPORTACIÓN EXCEL / PDF
+  // =========================================================================
+  function setupAccountingReports() {
+    const modal = document.getElementById("modal-accounting-reports");
+    const btnOpenSupplier = document.getElementById("btn-open-supplier-reports");
+    const btnOpenStore = document.getElementById("btn-open-store-reports");
+    const btnClose = document.getElementById("btn-close-reports-modal");
+    const periodButtons = document.querySelectorAll(".btn-report-period");
+    const btnExportExcel = document.getElementById("btn-export-reports-excel");
+    const btnExportPdf = document.getElementById("btn-export-reports-pdf");
+
+    if (!modal) return;
+
+    let activePeriod = "month";
+    let activeStoreFilter = null; // null = consolidado bodega / red completa
+
+    function openReports(storeFilter = null) {
+      activeStoreFilter = storeFilter;
+      const headerTitle = document.getElementById("reports-modal-header-title");
+      if (headerTitle) {
+        headerTitle.textContent = storeFilter 
+          ? `Reporte Contable — ${storeFilter}` 
+          : `Centro Contable & Liquidación Financiera (Red Cali)`;
+      }
+      renderReportData();
+      modal.classList.add("open");
+    }
+
+    if (btnOpenSupplier) {
+      btnOpenSupplier.onclick = () => openReports(null);
+    }
+    if (btnOpenStore) {
+      btnOpenStore.onclick = () => {
+        const store = db.getCurrentStore();
+        openReports(store.isSupplierStore ? null : store.name);
+      };
+    }
+    if (btnClose) {
+      btnClose.onclick = () => modal.classList.remove("open");
+    }
+
+    periodButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        periodButtons.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        activePeriod = btn.dataset.period;
+        renderReportData();
+      });
+    });
+
+    function renderReportData() {
+      const summary = db.getFinancialSummary(activePeriod, activeStoreFilter);
+      
+      const periodLabels = {
+        day: "Hoy (24 Horas)",
+        week: "Últimos 7 Días",
+        month: "Mes en Curso (30 Días)",
+        year: "Acumulado Anual / Histórico"
+      };
+      const labelEl = document.getElementById("reports-date-range-label");
+      if (labelEl) {
+        labelEl.innerHTML = `Periodo Seleccionado: <strong>${periodLabels[activePeriod] || activePeriod}</strong>`;
+      }
+
+      document.getElementById("report-kpi-gross-sales").textContent = db.formatCOP(summary.totalGross);
+      document.getElementById("report-kpi-wholesale-cost").textContent = db.formatCOP(summary.totalWholesale);
+      document.getElementById("report-kpi-net-profit").textContent = db.formatCOP(summary.netProfit);
+      document.getElementById("report-kpi-pairs-count").textContent = `${summary.totalPairs} pares (${summary.totalOrders} pedidos)`;
+
+      const tbody = document.getElementById("report-orders-tbody");
+      if (tbody) {
+        if (summary.orders.length === 0) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="9" style="text-align: center; padding: 24px; color: var(--text-muted);">
+                No hay transacciones registradas en este período.
+              </td>
+            </tr>
+          `;
+          return;
+        }
+
+        tbody.innerHTML = summary.orders.map(o => {
+          const wholesale = Number(o.totalWholesale) || 0;
+          const retail = Number(o.totalRetail) || (wholesale * 1.55);
+          const margin = retail - wholesale;
+          return `
+            <tr>
+              <td style="font-family: monospace; font-weight: 700; color: var(--primary-red);">#${o.id}</td>
+              <td style="color: var(--text-muted);">${o.date}</td>
+              <td style="font-weight: 700;">${o.storeName}</td>
+              <td>${o.productName} <span style="font-size: 10px; color: var(--text-muted);">(${o.size})</span></td>
+              <td style="text-align: center; font-weight: 800;">${o.units}</td>
+              <td style="font-weight: 700;">${db.formatCOP(retail)}</td>
+              <td style="font-weight: 700; color: #b45309;">${db.formatCOP(wholesale)}</td>
+              <td style="font-weight: 800; color: #15803d;">+${db.formatCOP(margin)}</td>
+              <td>
+                <span class="badge-verified" style="${o.status === 'Entregado y Cobrado' ? 'background: #f0fdf4; color: #16a34a; border-color: #86efac;' : 'background: #f8fafc; color: #64748b;'} font-size: 10px;">
+                  ${o.status || 'En Alistamiento'}
+                </span>
+              </td>
+            </tr>
+          `;
+        }).join("");
+      }
+    }
+
+    // Exportar a Excel (CSV)
+    if (btnExportExcel) {
+      btnExportExcel.onclick = () => {
+        const summary = db.getFinancialSummary(activePeriod, activeStoreFilter);
+        exportOrdersToCSV(summary.orders, activePeriod);
+      };
+    }
+
+    // Exportar a PDF / Impresión Ejecutiva
+    if (btnExportPdf) {
+      btnExportPdf.onclick = () => {
+        const summary = db.getFinancialSummary(activePeriod, activeStoreFilter);
+        generatePDFReport(summary, activePeriod, activeStoreFilter);
+      };
+    }
+  }
+
+  function exportOrdersToCSV(orders, periodName) {
+    if (!orders || orders.length === 0) {
+      showToast("No hay órdenes registradas para exportar.");
+      return;
+    }
+
+    const bom = "\uFEFF";
+    const headers = [
+      "ID Orden",
+      "Fecha y Hora",
+      "Tienda / Sneaker Partner",
+      "Referencia / Modelo",
+      "Colorway",
+      "Talla",
+      "Pares",
+      "Precio Venta Sugerido",
+      "Costo Mayorista Bodega",
+      "Utilidad Neta Generada",
+      "Estado Despacho",
+      "Bodega Despachadora"
+    ];
+
+    const rows = orders.map(o => {
+      const wholesale = Number(o.totalWholesale) || 0;
+      const retail = Number(o.totalRetail) || (wholesale * 1.55);
+      const margin = retail - wholesale;
+
+      return [
+        `"#${o.id}"`,
+        `"${o.date}"`,
+        `"${o.storeName}"`,
+        `"${o.productName}"`,
+        `"${o.colorway || 'Estándar'}"`,
+        `"${o.size}"`,
+        o.units,
+        retail,
+        wholesale,
+        margin,
+        `"${o.status || 'En Alistamiento'}"`,
+        `"${o.supplierName || 'Vanessa Castellar Shoes'}"`
+      ].join(";");
+    });
+
+    const csvContent = bom + [headers.join(";"), ...rows].join("\r\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const dateStamp = new Date().toISOString().slice(0, 10);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Reporte_Contable_SneakerWorld_${periodName}_${dateStamp}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    showToast("📥 ¡Archivo Excel (.CSV) descargado con éxito!");
+  }
+
+  function generatePDFReport(summary, periodName, storeFilter) {
+    const periodTitles = {
+      day: "INFORME DIARIO DE VENTAS Y DESPACHOS",
+      week: "INFORME SEMANAL DE LIQUIDACIÓN COMERCIAL",
+      month: "INFORME MENSUAL DE RESULTADOS & UTILIDADES",
+      year: "INFORME CONSOLIDADO HISTÓRICO Y ANUAL"
+    };
+
+    const title = periodTitles[periodName] || "INFORME CONTABLE";
+    const now = new Date();
+    const formattedDate = now.toLocaleDateString("es-CO", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" });
+
+    const rowsHtml = summary.orders.map(o => {
+      const wholesale = Number(o.totalWholesale) || 0;
+      const retail = Number(o.totalRetail) || (wholesale * 1.55);
+      const margin = retail - wholesale;
+      return `
+        <tr style="border-bottom: 1px solid #e2e8f0; font-size: 11px;">
+          <td style="padding: 6px 8px; font-weight: bold; color: #b91c1c;">#${o.id}</td>
+          <td style="padding: 6px 8px; color: #64748b;">${o.date}</td>
+          <td style="padding: 6px 8px; font-weight: 600;">${o.storeName}</td>
+          <td style="padding: 6px 8px;">${o.productName} (Talla ${o.size})</td>
+          <td style="padding: 6px 8px; text-align: center; font-weight: bold;">${o.units}</td>
+          <td style="padding: 6px 8px; text-align: right;">${db.formatCOP(retail)}</td>
+          <td style="padding: 6px 8px; text-align: right; color: #b45309;">${db.formatCOP(wholesale)}</td>
+          <td style="padding: 6px 8px; text-align: right; font-weight: bold; color: #15803d;">+${db.formatCOP(margin)}</td>
+          <td style="padding: 6px 8px; text-align: center;">${o.status || 'En Alistamiento'}</td>
+        </tr>
+      `;
+    }).join("");
+
+    const printWindow = window.open("", "_blank", "width=900,height=800");
+    if (!printWindow) {
+      alert("Por favor permite las ventanas emergentes para generar el PDF.");
+      return;
+    }
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html lang="es">
+      <head>
+        <meta charset="UTF-8">
+        <title>Reporte Contable - SNEAKER WORLD MLS</title>
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #0f172a; margin: 30px; }
+          .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 16px; margin-bottom: 20px; }
+          .title { font-size: 20px; font-weight: 900; color: #0f172a; margin: 0; }
+          .subtitle { font-size: 12px; color: #64748b; margin-top: 4px; }
+          .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+          .kpi-card { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; }
+          .kpi-label { font-size: 10px; color: #64748b; font-weight: bold; text-transform: uppercase; }
+          .kpi-val { font-size: 16px; font-weight: 900; margin-top: 4px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+          th { background: #0f172a; color: #ffffff; font-size: 10px; text-align: left; padding: 8px; text-transform: uppercase; }
+          .footer { margin-top: 30px; border-top: 1px solid #cbd5e1; padding-top: 12px; display: flex; justify-content: space-between; font-size: 10px; color: #64748b; }
+          @media print {
+            .no-print { display: none !important; }
+            body { margin: 10mm; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="no-print" style="margin-bottom: 16px; display: flex; justify-content: flex-end; gap: 10px;">
+          <button onclick="window.print()" style="padding: 8px 16px; background: #0f172a; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">
+            🖨️ Imprimir / Guardar como PDF
+          </button>
+          <button onclick="window.close()" style="padding: 8px 16px; background: #e2e8f0; border: none; border-radius: 6px; cursor: pointer;">
+            Cerrar
+          </button>
+        </div>
+
+        <div class="header">
+          <div>
+            <div style="font-size: 11px; font-weight: 900; color: #e6192e; letter-spacing: 1px;">SNEAKER WORLD MLS • BASTION AI</div>
+            <h1 class="title">${title}</h1>
+            <div class="subtitle">${storeFilter ? 'Entidad: <strong>' + storeFilter + '</strong>' : 'Consolidado Red Cali (Bodega Vanessa Castellar & Partners)'}</div>
+          </div>
+          <div style="text-align: right; font-size: 11px;">
+            <div>Fecha de Emisión: <strong>${formattedDate}</strong></div>
+            <div style="color: #16a34a; font-weight: bold; margin-top: 2px;">🟢 Estado: Contabilidad Validada</div>
+          </div>
+        </div>
+
+        <div class="kpi-grid">
+          <div class="kpi-card" style="border-left: 4px solid #2563eb;">
+            <div class="kpi-label">Facturación Bruta</div>
+            <div class="kpi-val" style="color: #1e3a8a;">${db.formatCOP(summary.totalGross)}</div>
+          </div>
+          <div class="kpi-card" style="border-left: 4px solid #f59e0b;">
+            <div class="kpi-label">Costo Bodega Mayorista</div>
+            <div class="kpi-val" style="color: #b45309;">${db.formatCOP(summary.totalWholesale)}</div>
+          </div>
+          <div class="kpi-card" style="border-left: 4px solid #16a34a;">
+            <div class="kpi-label">Utilidad Neta Red</div>
+            <div class="kpi-val" style="color: #15803d;">${db.formatCOP(summary.netProfit)}</div>
+          </div>
+          <div class="kpi-card" style="border-left: 4px solid #e6192e;">
+            <div class="kpi-label">Pares Despachados</div>
+            <div class="kpi-val" style="color: #e6192e;">${summary.totalPairs} pares</div>
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Fecha</th>
+              <th>Tienda / Partner</th>
+              <th>Referencia</th>
+              <th style="text-align: center;">Pares</th>
+              <th style="text-align: right;">Venta</th>
+              <th style="text-align: right;">Costo Bodega</th>
+              <th style="text-align: right;">Utilidad</th>
+              <th style="text-align: center;">Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rowsHtml}
+          </tbody>
+        </table>
+
+        <div class="footer">
+          <div>Documento auditado por el motor contable de <strong>BASTION AI</strong> — San Andresito de la 38, Cali, Colombia.</div>
+          <div>Página 1 de 1</div>
+        </div>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
   }
 
   // =========================================================================
