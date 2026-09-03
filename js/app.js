@@ -317,7 +317,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Enlace directo WhatsApp Header (Usa balanceador inteligente)
     const directPhone = db.getNextWhatsAppLine(store);
-    document.getElementById("storefront-wa-direct").href = `https://wa.me/${directPhone}?text=${encodeURIComponent('👋 ¡Hola! Estoy viendo la vitrina digital de ' + store.name + ' y quiero consultar disponibilidad de calzado.')}`;
+    const waDirectBtn = document.getElementById("storefront-wa-direct");
+    if (waDirectBtn) {
+      waDirectBtn.href = `https://wa.me/${directPhone}?text=${encodeURIComponent('👋 ¡Hola! Estoy viendo la vitrina digital de ' + store.name + ' y quiero consultar disponibilidad de calzado.')}`;
+      const span = waDirectBtn.querySelector("span");
+      if (span) {
+        span.textContent = store.isSupplierStore ? "💬 WhatsApp Dueño Bodega" : "💬 WhatsApp Directo";
+      }
+    }
 
     // Obtener productos visibles
     const products = db.getStorefrontProducts(store);
@@ -707,7 +714,7 @@ document.addEventListener("DOMContentLoaded", () => {
       drawer.classList.remove("open");
       cart = [];
       updateFloatingCartUI();
-      showToast("¡Comanda generada! Abriendo WhatsApp de la asesora...");
+      showToast("¡Comanda generada! Abriendo WhatsApp directo...");
     });
   }
 
