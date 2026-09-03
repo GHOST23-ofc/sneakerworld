@@ -55,6 +55,7 @@ document.addEventListener("DOMContentLoaded", () => {
     setupAddProductModal();
     setupRoiCalculator();
     setupAccountSettingsModal();
+    setupQuoteGenerator();
     switchView(currentView);
   }
 
@@ -1246,6 +1247,332 @@ document.addEventListener("DOMContentLoaded", () => {
         downloadAnchor.click();
         downloadAnchor.remove();
         showToast("📥 Copia de seguridad JSON descargada.");
+      };
+    }
+  }
+
+  // =========================================================================
+  // COTIZADOR PERSONALIZADO VIP (DESCUENTOS EXCLUSIVOS & CLIENTES ANTIGUOS)
+  // =========================================================================
+  function setupQuoteGenerator() {
+    const modal = document.getElementById("modal-quote-generator");
+    const previewModal = document.getElementById("modal-quote-preview");
+    const btnOpenSupplier = document.getElementById("btn-open-quote-modal");
+    const btnOpenPartner = document.getElementById("btn-open-quote-modal-partner");
+    const btnClose = document.getElementById("btn-close-quote-modal");
+    const btnClosePreview = document.getElementById("btn-close-preview-modal");
+    const btnClosePreviewBtn = document.getElementById("btn-close-preview-btn");
+
+    if (!modal) return;
+
+    let quoteItems = [];
+
+    // Apertura y Cierre
+    const openModal = () => {
+      populateProductSelect();
+      if (quoteItems.length === 0) {
+        const prods = db.getMasterProducts(false);
+        if (prods.length >= 2) {
+          quoteItems = [
+            { id: prods[0].id, name: prods[0].name, sku: prods[0].sku, size: 37, price: prods[0].suggestedRetailPrice, qty: 1, image: prods[0].image },
+            { id: prods[1].id, name: prods[1].name, sku: prods[1].sku, size: 41, price: prods[1].suggestedRetailPrice, qty: 1, image: prods[1].image }
+          ];
+        }
+      }
+      renderQuoteItems();
+      modal.classList.add("open");
+    };
+
+    if (btnOpenSupplier) btnOpenSupplier.onclick = openModal;
+    if (btnOpenPartner) btnOpenPartner.onclick = openModal;
+    if (btnClose) btnClose.onclick = () => modal.classList.remove("open");
+    if (btnClosePreview) btnClosePreview.onclick = () => previewModal.classList.remove("open");
+    if (btnClosePreviewBtn) btnClosePreviewBtn.onclick = () => previewModal.classList.remove("open");
+
+    // Llenar selector de productos
+    function populateProductSelect() {
+      const select = document.getElementById("quote-prod-select");
+      if (!select) return;
+      const prods = db.getMasterProducts(false);
+      select.innerHTML = prods.map(p => `
+        <option value="${p.id}" data-price="${p.suggestedRetailPrice}">
+          ${p.name} — ${db.formatCOP(p.suggestedRetailPrice)}
+        </option>
+      `).join("");
+    }
+
+    // Renderizar items y recalcular
+    function renderQuoteItems() {
+      const container = document.getElementById("quote-items-list");
+      if (!container) return;
+
+      if (quoteItems.length === 0) {
+        container.innerHTML = `<div style="text-align: center; color: var(--text-muted); font-size: 11px; padding: 14px;">No hay pares agregados aún. Selecciona arriba y pulsa "Agregar".</div>`;
+      } else {
+        container.innerHTML = quoteItems.map((item, idx) => `
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px dashed var(--border-subtle); font-size: 12px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-weight: 800; color: var(--primary-red);">${item.qty}x</span>
+              <div>
+                <strong style="color: var(--text-primary); font-size: 12px;">${item.name}</strong>
+                <span style="font-size: 11px; color: var(--text-muted); margin-left: 4px;">(Talla ${item.size})</span>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-weight: 700; color: var(--text-primary);">${db.formatCOP(item.price * item.qty)}</span>
+              <button type="button" class="btn-remove-quote-item" data-idx="${idx}" style="background: none; border: none; color: #ef4444; font-size: 13px; cursor: pointer; padding: 0 4px;" title="Quitar">✕</button>
+            </div>
+          </div>
+        `).join("");
+
+        container.querySelectorAll(".btn-remove-quote-item").forEach(btn => {
+          btn.onclick = () => {
+            const idx = parseInt(btn.dataset.idx, 10);
+            quoteItems.splice(idx, 1);
+            renderQuoteItems();
+          };
+        });
+      }
+
+      recalculateTotals();
+    }
+
+    // Agregar Item
+    const btnAdd = document.getElementById("btn-add-quote-item");
+    if (btnAdd) {
+      btnAdd.onclick = () => {
+        const prodSelect = document.getElementById("quote-prod-select");
+        const sizeSelect = document.getElementById("quote-size-select");
+        const qtyInput = document.getElementById("quote-qty-input");
+
+        const prodId = prodSelect.value;
+        const prods = db.getMasterProducts(false);
+        const prod = prods.find(p => p.id === prodId);
+        if (!prod) return;
+
+        const size = parseInt(sizeSelect.value, 10);
+        const qty = parseInt(qtyInput.value, 10) || 1;
+
+        quoteItems.push({
+          id: prod.id,
+          name: prod.name,
+          sku: prod.sku,
+          size,
+          price: prod.suggestedRetailPrice,
+          qty,
+          image: prod.image
+        });
+
+        renderQuoteItems();
+        showToast(`Agregado: ${qty}x ${prod.name} (Talla ${size})`);
+      };
+    }
+
+    // Recalcular Totales en Tiempo Real
+    function recalculateTotals() {
+      const subtotal = quoteItems.reduce((acc, it) => acc + (it.price * it.qty), 0);
+      const discount = Number(document.getElementById("quote-discount-amount")?.value) || 0;
+      const shipping = Number(document.getElementById("quote-shipping-select")?.value) || 0;
+      const reason = document.getElementById("quote-discount-reason")?.value.trim() || "Descuento Especial";
+
+      const total = Math.max(0, subtotal - discount + shipping);
+
+      const subtotalEl = document.getElementById("quote-subtotal-display");
+      const discountEl = document.getElementById("quote-discount-display");
+      const discountLabelEl = document.getElementById("quote-discount-label");
+      const shippingEl = document.getElementById("quote-shipping-display");
+      const totalEl = document.getElementById("quote-total-display");
+
+      if (subtotalEl) subtotalEl.textContent = db.formatCOP(subtotal) + " COP";
+      if (discountEl) discountEl.textContent = `-${db.formatCOP(discount)} COP`;
+      if (discountLabelEl) discountLabelEl.textContent = `Descuento Especial (${reason}):`;
+      if (shippingEl) shippingEl.textContent = shipping === 0 ? "¡GRATIS! (Cortesía)" : db.formatCOP(shipping) + " COP";
+      if (totalEl) totalEl.textContent = db.formatCOP(total) + " COP";
+
+      return { subtotal, discount, shipping, total, reason };
+    }
+
+    // Escuchadores de inputs de descuento y flete
+    ["quote-discount-amount", "quote-discount-reason", "quote-shipping-select"].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener("input", recalculateTotals);
+      if (el) el.addEventListener("change", recalculateTotals);
+    });
+
+    // Generar Mensaje de WhatsApp
+    function generateWhatsAppMessage() {
+      const clientName = document.getElementById("quote-client-name")?.value.trim() || "Cliente VIP";
+      const store = db.getCurrentStore();
+      const { subtotal, discount, shipping, total, reason } = recalculateTotals();
+      const validity = document.getElementById("quote-validity-select")?.value || "48 Horas";
+      const quoteNum = Math.floor(1000 + Math.random() * 9000);
+
+      const itemsText = quoteItems.map(it => 
+        `• *${it.qty}x ${it.name}*\n  - Talla: ${it.size} | Ref: ${it.sku}\n  - Precio Regular: ${db.formatCOP(it.price * it.qty)} COP`
+      ).join("\n\n");
+
+      return `📋 *COTIZACIÓN ESPECIAL PERSONALIZADA*
+🏢 *${store.name}*
+📍 *Ubicación:* ${store.neighborhood}
+📅 *Fecha:* ${new Date().toLocaleDateString('es-CO')} | *Cotización #COT-${quoteNum}*
+👤 *Cliente VIP:* ${clientName}
+
+👟 *CALZADO SELECCIONADO EN ESTA PROPUESTA:*
+${itemsText}
+
+-------------------------------------------
+💵 *Subtotal Regular:* ${db.formatCOP(subtotal)} COP
+🎁 *${reason}:* -${db.formatCOP(discount)} COP
+🛵 *Flete Domicilio Cali:* ${shipping === 0 ? 'GRATIS (Cortesía Bodega)' : db.formatCOP(shipping) + ' COP'}
+-------------------------------------------
+⭐ *TOTAL FINAL A PAGAR: ${db.formatCOP(total)} COP*
+-------------------------------------------
+⏱️ *Vigencia:* Propuesta reservada ${validity}.
+📦 *Despacho:* Entrega hoy mismo con motorizado en Cali o despacho nacional asegurado.
+
+💬 *Para confirmar tu pedido con este precio especial, por favor respóndeme con un "CONFIRMO PEDIDO" y tu dirección exacta.*`;
+    }
+
+    // Enviar WhatsApp
+    const btnSendWA = document.getElementById("btn-send-quote-wa");
+    if (btnSendWA) {
+      btnSendWA.onclick = () => {
+        if (quoteItems.length === 0) {
+          alert("Agrega al menos un par de calzado a la cotización.");
+          return;
+        }
+        const msg = generateWhatsAppMessage();
+        const clientPhone = (document.getElementById("quote-client-phone")?.value || "").replace(/\D/g, "");
+        const targetPhone = clientPhone.length >= 10 ? (clientPhone.startsWith("57") ? clientPhone : "57" + clientPhone) : db.getNextWhatsAppLine(db.getCurrentStore());
+        const url = `https://wa.me/${targetPhone}?text=${encodeURIComponent(msg)}`;
+        window.open(url, "_blank");
+        showToast("📲 Abriendo WhatsApp con la cotización formateada...");
+      };
+    }
+
+    // Copiar Texto
+    const btnCopy = document.getElementById("btn-copy-quote-text");
+    if (btnCopy) {
+      btnCopy.onclick = () => {
+        if (quoteItems.length === 0) {
+          alert("Agrega al menos un par de calzado a la cotización.");
+          return;
+        }
+        const msg = generateWhatsAppMessage();
+        navigator.clipboard?.writeText(msg).then(() => {
+          showToast("📋 ¡Cotización formal copiada al portapapeles!");
+        }).catch(() => {
+          prompt("Copia el texto de la cotización:", msg);
+        });
+      };
+    }
+
+    // Ver Ficha Formal Imprimible / Digital
+    const btnPreview = document.getElementById("btn-preview-quote-card");
+    if (btnPreview) {
+      btnPreview.onclick = () => {
+        if (quoteItems.length === 0) {
+          alert("Agrega al menos un par de calzado a la cotización.");
+          return;
+        }
+        const clientName = document.getElementById("quote-client-name")?.value.trim() || "Cliente VIP";
+        const store = db.getCurrentStore();
+        const { subtotal, discount, shipping, total, reason } = recalculateTotals();
+        const validity = document.getElementById("quote-validity-select")?.value || "48 Horas";
+        const quoteNum = Math.floor(1000 + Math.random() * 9000);
+
+        const rowsHtml = quoteItems.map(it => `
+          <tr style="border-bottom: 1px solid #f1f5f9;">
+            <td style="padding: 8px 6px;">
+              <strong style="color: #0f172a; font-size: 12px;">${it.name}</strong><br>
+              <span style="color: #64748b; font-size: 10px;">SKU: ${it.sku}</span>
+            </td>
+            <td style="padding: 8px 6px; text-align: center;"><span style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-weight: 800; font-size: 11px;">${it.size}</span></td>
+            <td style="padding: 8px 6px; text-align: center; font-weight: 700;">${it.qty}</td>
+            <td style="padding: 8px 6px; text-align: right; font-weight: 700;">${db.formatCOP(it.price)}</td>
+            <td style="padding: 8px 6px; text-align: right; font-weight: 800; color: #0f172a;">${db.formatCOP(it.price * it.qty)}</td>
+          </tr>
+        `).join("");
+
+        const previewContainer = document.getElementById("printable-quote-content");
+        if (previewContainer) {
+          previewContainer.innerHTML = `
+            <div style="border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; background: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+              <!-- Header Membretado -->
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #e6192e; padding-bottom: 14px; margin-bottom: 16px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <img src="assets/images/sneaker_world_logo_transparent.png" alt="Logo" style="width: 44px; height: 44px; border-radius: 50%; border: 2px solid #e6192e;">
+                  <div>
+                    <h2 style="margin: 0; font-size: 16px; font-weight: 900; color: #0f172a;">${store.name}</h2>
+                    <div style="font-size: 11px; color: #64748b;">${store.neighborhood}</div>
+                    <div style="font-size: 11px; color: #64748b;">WhatsApp Oficial: +${store.phone}</div>
+                  </div>
+                </div>
+                <div style="text-align: right;">
+                  <span style="font-size: 10px; font-weight: 800; background: #fff0f1; color: #e6192e; padding: 3px 8px; border-radius: 999px; border: 1px solid rgba(230,25,46,0.2);">PROPUESTA COMERCIAL VIP</span>
+                  <div style="font-size: 15px; font-weight: 900; color: #0f172a; margin-top: 4px;">#COT-${quoteNum}</div>
+                  <div style="font-size: 10px; color: #64748b;">${new Date().toLocaleDateString('es-CO', { year: 'numeric', month: 'short', day: 'numeric' })}</div>
+                </div>
+              </div>
+
+              <!-- Info Cliente VIP -->
+              <div style="background: #f8fafc; border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                <div>
+                  <span style="font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase;">Dirigido A:</span>
+                  <div style="font-size: 13px; font-weight: 800; color: #0f172a;">${clientName}</div>
+                </div>
+                <div>
+                  <span style="font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase;">Validez de la Oferta:</span>
+                  <div style="font-size: 12px; font-weight: 800; color: #e6192e;">⏱️ ${validity}</div>
+                </div>
+              </div>
+
+              <!-- Tabla de Productos -->
+              <table style="width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 16px;">
+                <thead>
+                  <tr style="background: #f1f5f9; color: #475569; text-transform: uppercase; font-size: 10px;">
+                    <th style="padding: 6px; text-align: left;">Modelo</th>
+                    <th style="padding: 6px; text-align: center;">Talla</th>
+                    <th style="padding: 6px; text-align: center;">Cant.</th>
+                    <th style="padding: 6px; text-align: right;">Unitario</th>
+                    <th style="padding: 6px; text-align: right;">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${rowsHtml}
+                </tbody>
+              </table>
+
+              <!-- Resumen Financiero -->
+              <div style="margin-left: auto; width: 260px; font-size: 12px; line-height: 1.6;">
+                <div style="display: flex; justify-content: space-between; color: #64748b;">
+                  <span>Subtotal Regular:</span>
+                  <strong style="color: #0f172a;">${db.formatCOP(subtotal)}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; color: #16a34a; font-weight: 700;">
+                  <span>${reason}:</span>
+                  <span>-${db.formatCOP(discount)}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; color: #64748b;">
+                  <span>Flete Domicilio:</span>
+                  <strong style="color: #0f172a;">${shipping === 0 ? 'GRATIS' : db.formatCOP(shipping)}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 15px; font-weight: 900; color: #e6192e; border-top: 2px solid #0f172a; padding-top: 6px; margin-top: 4px;">
+                  <span>TOTAL A PAGAR:</span>
+                  <span>${db.formatCOP(total)}</span>
+                </div>
+              </div>
+
+              <!-- Pie de Cotización y Watermark -->
+              <div style="margin-top: 20px; padding-top: 12px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; font-size: 10px; color: #64748b;">
+                <div>✨ Despachos asegurados en moto en Cali & Envíos Nacionales Interrapidísimo / Envía.</div>
+                <div style="font-weight: 800; color: #0f172a;">Engineered by <strong>BASTION AI</strong></div>
+              </div>
+            </div>
+          `;
+        }
+
+        previewModal.classList.add("open");
       };
     }
   }
