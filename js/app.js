@@ -846,9 +846,17 @@ document.addEventListener("DOMContentLoaded", () => {
               </div>
             </div>
           </td>
-          <td style="font-weight: 700; color: var(--text-primary);">${db.formatCOP(mp.wholesalePrice)}</td>
           <td>
-            <input type="number" class="table-input-price input-store-price" data-prod="${mp.id}" value="${retailPrice}" step="5000">
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <span style="font-size: 11px; color: var(--text-muted);">$</span>
+              <input type="number" class="table-input-price input-wholesale-price" data-prod="${mp.id}" value="${mp.wholesalePrice}" step="5000" style="width: 105px; font-weight: 700; color: var(--text-primary); font-size: 13px;" title="Costo Mayorista Bodega">
+            </div>
+          </td>
+          <td>
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <span style="font-size: 11px; color: var(--text-muted);">$</span>
+              <input type="number" class="table-input-price input-store-price" data-prod="${mp.id}" value="${retailPrice}" step="5000" style="width: 105px; font-weight: 800; color: var(--primary-red); font-size: 13px;">
+            </div>
           </td>
           <td>
             <span class="margin-badge ${marginClass}">+${db.formatCOP(margin)}</span>
@@ -866,14 +874,42 @@ document.addEventListener("DOMContentLoaded", () => {
       `;
     }).join("");
 
-    // Eventos: Guardar cambios de precios
+    // Evento de cálculo en vivo de margen al escribir en costo o precio
+    const updateRowMargin = (row) => {
+      const wholesaleInput = row.querySelector(".input-wholesale-price");
+      const retailInput = row.querySelector(".input-store-price");
+      const marginBadge = row.querySelector(".margin-badge");
+
+      if (wholesaleInput && retailInput && marginBadge) {
+        const wVal = Number(wholesaleInput.value) || 0;
+        const rVal = Number(retailInput.value) || 0;
+        const newMargin = rVal - wVal;
+        marginBadge.textContent = `${newMargin >= 0 ? '+' : ''}${db.formatCOP(newMargin)}`;
+        marginBadge.className = `margin-badge ${newMargin >= 60000 ? 'margin-high' : 'margin-normal'}`;
+      }
+    };
+
+    tbody.querySelectorAll(".input-wholesale-price, .input-store-price").forEach(input => {
+      input.addEventListener("input", () => updateRowMargin(input.closest("tr")));
+    });
+
+    // Eventos: Guardar cambios de precios de venta y costos mayoristas
     document.getElementById("btn-save-store-prices").onclick = () => {
       tbody.querySelectorAll(".input-store-price").forEach(input => {
         const prodId = input.dataset.prod;
         const newPrice = Number(input.value);
         db.updateStoreProductPrice(store.id, prodId, newPrice);
       });
-      showToast("¡Precios y márgenes de ganancia guardados con éxito!");
+
+      tbody.querySelectorAll(".input-wholesale-price").forEach(wInput => {
+        const prodId = wInput.dataset.prod;
+        const newWholesale = Number(wInput.value);
+        if (!isNaN(newWholesale) && newWholesale > 0) {
+          db.updateMasterProduct(prodId, { wholesalePrice: newWholesale });
+        }
+      });
+
+      showToast("✅ ¡Costos mayoristas y precios de venta guardados con éxito!");
       renderStoreAdmin(db.getCurrentStore());
     };
 
