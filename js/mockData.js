@@ -30,7 +30,7 @@ const INITIAL_MASTER_PRODUCTS = [
       { name: "Bone Mocha Beige", image: "assets/images/nike_initiator_bone_mocha.jpg", sku: "NK-INIT-MOC" },
       { name: "White Blue Metallic", image: "assets/images/nike_initiator_white_blue.jpg", sku: "NK-INIT-WHTBLU" }
     ],
-    wholesalePrice: 115000,
+    wholesalePrice: 85000,
     suggestedRetailPrice: 185000,
     sizes: [35, 36, 37, 38, 39, 40],
     supplierId: "sup-001",
@@ -51,7 +51,7 @@ const INITIAL_MASTER_PRODUCTS = [
       { name: "White / Red Rush", image: "assets/images/nike_airzoom_white_red.jpg", sku: "NK-ZOOM-RED" },
       { name: "Black / White Classic", image: "assets/images/nike_airzoom_black_white.jpg", sku: "NK-ZOOM-BLK" }
     ],
-    wholesalePrice: 120000,
+    wholesalePrice: 88000,
     suggestedRetailPrice: 200000,
     sizes: [38, 39, 40, 41, 42, 43],
     supplierId: "sup-001",
@@ -72,7 +72,7 @@ const INITIAL_MASTER_PRODUCTS = [
       { name: "Grey / Cream Neutral", image: "assets/images/on_cloud5_grey_cream.jpg", sku: "ON-C5-GRY" },
       { name: "All White Pure", image: "assets/images/on_cloud5_all_white.jpg", sku: "ON-C5-WHT" }
     ],
-    wholesalePrice: 140000,
+    wholesalePrice: 90000,
     suggestedRetailPrice: 220000,
     sizes: [36, 37, 38, 39, 40, 41, 42, 43],
     supplierId: "sup-001",
@@ -93,7 +93,7 @@ const INITIAL_MASTER_PRODUCTS = [
       { name: "Olive Aloe Green", image: "assets/images/on_cloudmonster_olive.jpg", sku: "ON-MONSTER-OLV" },
       { name: "Mint Lime Accent", image: "assets/images/on_cloudmonster_mint.jpg", sku: "ON-MONSTER-MNT" }
     ],
-    wholesalePrice: 145000,
+    wholesalePrice: 95000,
     suggestedRetailPrice: 235000,
     sizes: [38, 39, 40, 41, 42, 43, 44],
     supplierId: "sup-001",
@@ -113,7 +113,7 @@ const INITIAL_MASTER_PRODUCTS = [
     colorways: [
       { name: "Military Black Clásico", image: "assets/images/jordan_4_military_black.jpg", sku: "AJ4-MIL-BLK" }
     ],
-    wholesalePrice: 155000,
+    wholesalePrice: 95000,
     suggestedRetailPrice: 250000,
     sizes: [38, 39, 40, 41, 42, 43],
     supplierId: "sup-001",
@@ -133,7 +133,7 @@ const INITIAL_MASTER_PRODUCTS = [
     colorways: [
       { name: "Canyon Rust / Terracota", image: "assets/images/jordan_1_canyon_rust.jpg", sku: "AJ1-CYN-RST" }
     ],
-    wholesalePrice: 140000,
+    wholesalePrice: 92000,
     suggestedRetailPrice: 230000,
     sizes: [36, 37, 38, 39, 40, 41],
     supplierId: "sup-001",
@@ -153,7 +153,7 @@ const INITIAL_MASTER_PRODUCTS = [
     colorways: [
       { name: "Panda AE86 Edition", image: "assets/images/nike_dunk_initial_d.jpg", sku: "NK-DUNK-INITD" }
     ],
-    wholesalePrice: 135000,
+    wholesalePrice: 92000,
     suggestedRetailPrice: 215000,
     sizes: [37, 38, 39, 40, 41, 42, 43],
     supplierId: "sup-001",
@@ -173,7 +173,7 @@ const INITIAL_MASTER_PRODUCTS = [
     colorways: [
       { name: "Pink Valentine Love", image: "assets/images/af1_valentine_pink.jpg", sku: "AF1-VAL-PNK" }
     ],
-    wholesalePrice: 120000,
+    wholesalePrice: 85000,
     suggestedRetailPrice: 195000,
     sizes: [35, 36, 37, 38, 39],
     supplierId: "sup-001",
@@ -193,7 +193,7 @@ const INITIAL_MASTER_PRODUCTS = [
     colorways: [
       { name: "Corduroy Cream / Brown", image: "assets/images/adidas_samba_corduroy.jpg", sku: "ADI-SAMBA-CRD" }
     ],
-    wholesalePrice: 130000,
+    wholesalePrice: 89000,
     suggestedRetailPrice: 210000,
     sizes: [36, 37, 38, 39, 40, 41, 42, 43],
     supplierId: "sup-001",
@@ -213,7 +213,7 @@ const INITIAL_MASTER_PRODUCTS = [
     colorways: [
       { name: "Navy Blue / White", image: "assets/images/adidas_adizero_pro_navy.jpg", sku: "ADI-ADIZ-NVY" }
     ],
-    wholesalePrice: 125000,
+    wholesalePrice: 88000,
     suggestedRetailPrice: 195000,
     sizes: [38, 39, 40, 41, 42, 43],
     supplierId: "sup-001",
@@ -233,7 +233,7 @@ const INITIAL_MASTER_PRODUCTS = [
     colorways: [
       { name: "Grey / Neon Green Spark", image: "assets/images/adidas_response2_neon.jpg", sku: "ADI-RESP-NEON" }
     ],
-    wholesalePrice: 125000,
+    wholesalePrice: 87000,
     suggestedRetailPrice: 200000,
     sizes: [38, 39, 40, 41, 42, 43],
     supplierId: "sup-001",
@@ -253,7 +253,7 @@ const INITIAL_MASTER_PRODUCTS = [
     colorways: [
       { name: "Charcoal Trail Rugged", image: "assets/images/skechers_trail_8088.jpg", sku: "SKC-TRL-8088" }
     ],
-    wholesalePrice: 125000,
+    wholesalePrice: 89000,
     suggestedRetailPrice: 200000,
     sizes: [38, 39, 40, 41, 42, 43, 44],
     supplierId: "sup-001",
@@ -273,7 +273,7 @@ const INITIAL_MASTER_PRODUCTS = [
     colorways: [
       { name: "Rose Pastel Vintage", image: "assets/images/lecoq_runner_pink.jpg", sku: "LCS-URB-PNK" }
     ],
-    wholesalePrice: 110000,
+    wholesalePrice: 85000,
     suggestedRetailPrice: 180000,
     sizes: [35, 36, 37, 38, 39],
     supplierId: "sup-001",
@@ -293,7 +293,7 @@ const INITIAL_MASTER_PRODUCTS = [
     colorways: [
       { name: "Black Monogram Luxury", image: "assets/images/lv_trainer_maxi_black.jpg", sku: "LV-TRN-MAXIBLK" }
     ],
-    wholesalePrice: 185000,
+    wholesalePrice: 95000,
     suggestedRetailPrice: 320000,
     sizes: [39, 40, 41, 42, 43],
     supplierId: "sup-001",
@@ -313,7 +313,7 @@ const INITIAL_MASTER_PRODUCTS = [
     colorways: [
       { name: "Phantom Black", image: "assets/images/nb_9060_triple_black.jpg", sku: "NB-9060-7128A" }
     ],
-    wholesalePrice: 155000,
+    wholesalePrice: 92000,
     suggestedRetailPrice: 250000,
     sizes: [38, 39, 40, 41, 42, 43],
     supplierId: "sup-001",
@@ -333,7 +333,7 @@ const INITIAL_MASTER_PRODUCTS = [
     colorways: [
       { name: "Black Gold Edition", image: "assets/images/boss_titanium_runner.jpg", sku: "BOSS-TITAN-D5" }
     ],
-    wholesalePrice: 160000,
+    wholesalePrice: 94000,
     suggestedRetailPrice: 260000,
     sizes: [39, 40, 41, 42, 43],
     supplierId: "sup-001",
@@ -353,7 +353,7 @@ const INITIAL_MASTER_PRODUCTS = [
     colorways: [
       { name: "Mint Lime Accent", image: "assets/images/on_cloudmonster_mint.jpg", sku: "ON-MONSTER-MNT" }
     ],
-    wholesalePrice: 145000,
+    wholesalePrice: 93000,
     suggestedRetailPrice: 235000,
     sizes: [38, 39, 40, 41, 42, 43],
     supplierId: "sup-001",
@@ -373,7 +373,7 @@ const INITIAL_MASTER_PRODUCTS = [
     colorways: [
       { name: "White Black XLG", image: "assets/images/adidas_superstar_xlg.jpg", sku: "ADI-SST-XLG" }
     ],
-    wholesalePrice: 135000,
+    wholesalePrice: 88000,
     suggestedRetailPrice: 220000,
     sizes: [36, 37, 38, 39, 40, 41, 42],
     supplierId: "sup-001",

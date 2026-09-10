@@ -23,6 +23,22 @@ class ShoesStoreManager {
   init() {
     if (!localStorage.getItem(DB_KEYS.MASTER_PRODUCTS)) {
       localStorage.setItem(DB_KEYS.MASTER_PRODUCTS, JSON.stringify(INITIAL_MASTER_PRODUCTS));
+    } else if (!localStorage.getItem("sneakerworld_pricing_calibrated_85k_95k")) {
+      // Migración automática para asegurar rango 85.000 - 95.000 COP en bodegas existentes
+      try {
+        const products = JSON.parse(localStorage.getItem(DB_KEYS.MASTER_PRODUCTS));
+        const calibrated = products.map(p => {
+          const initial = INITIAL_MASTER_PRODUCTS.find(ip => ip.id === p.id);
+          return {
+            ...p,
+            wholesalePrice: initial ? initial.wholesalePrice : 88000
+          };
+        });
+        localStorage.setItem(DB_KEYS.MASTER_PRODUCTS, JSON.stringify(calibrated));
+      } catch (e) {
+        localStorage.setItem(DB_KEYS.MASTER_PRODUCTS, JSON.stringify(INITIAL_MASTER_PRODUCTS));
+      }
+      localStorage.setItem("sneakerworld_pricing_calibrated_85k_95k", "true");
     }
     if (!localStorage.getItem(DB_KEYS.STORES)) {
       localStorage.setItem(DB_KEYS.STORES, JSON.stringify(INITIAL_STORES));

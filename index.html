@@ -98,13 +98,13 @@
             📦 Panel Bodega Matriz
           </button>
           <button class="role-tab-btn" data-view="directory" id="tab-directory" style="color: #fff;">
-            📍 Directorio & ROI
+            📋 Directorio de Red
           </button>
         </nav>
 
         <div class="hud-actions">
           <div class="store-selector-wrapper" id="store-selector-box" style="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2);">
-            <span style="font-size: 11px; color: #cbd5e1;">Comercio:</span>
+            <span id="hud-store-label" style="font-size: 11px; color: #cbd5e1;">Comercio:</span>
             <select id="hud-store-select" class="hud-select" aria-label="Seleccionar Tienda Activa" style="background: transparent; color: #fff; border: none;">
               <!-- Renderizado dinámico de tiendas -->
             </select>
@@ -490,54 +490,10 @@
     </main>
 
     <!-- =========================================================================
-         VISTA 4: DIRECTORIO DE TIENDAS Y SIMULADOR ROI
+         VISTA 4: DIRECTORIO DE RED (BODEGAS & SNEAKER PARTNERS)
          ========================================================================= -->
     <main id="view-directory" class="view-panel" style="display: none;">
       <div class="main-wrapper">
-        <!-- Calculadora de Retorno ROI -->
-        <section class="roi-calc-box">
-          <div class="roi-calc-header">
-            <div>
-              <span class="badge-verified">Modelo Done-For-You + RMM</span>
-              <h2 style="font-size: 20px; font-weight: 900; color: var(--text-primary); margin-top: 4px;">Calculadora de Retorno para Proveedores de Calzado</h2>
-              <p style="color: var(--text-secondary); font-size: 13px;">Simula cuánto ganas implementando la red SNEAKER WORLD MLS para tu bodega:</p>
-            </div>
-            <div style="text-align: right;">
-              <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Ganancia Mensual Proyectada</div>
-              <div style="font-size: 24px; font-weight: 900; color: var(--primary-red);" id="roi-profit-display">$18.200.000 COP</div>
-            </div>
-          </div>
-
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 16px;">
-            <div>
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                <label class="form-label" style="margin: 0;">Número de Sneaker Partners Conectados:</label>
-                <span style="font-weight: 800; color: var(--primary-red); font-size: 16px;" id="roi-resellers-val">25</span>
-              </div>
-              <input type="range" id="roi-resellers-slider" class="roi-range-slider" min="1" max="250" value="25" style="width: 100%;">
-              <div style="display: flex; justify-content: space-between; font-size: 10px; color: var(--text-muted); margin-top: 2px;">
-                <span>1 partner</span>
-                <span>50</span>
-                <span>100</span>
-                <span>250 partners</span>
-              </div>
-            </div>
-            <div>
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                <label class="form-label" style="margin: 0;">Pares Promedio Vendidos por Tienda / Mes:</label>
-                <span style="font-weight: 800; color: var(--primary-red); font-size: 16px;" id="roi-pairs-val">150</span>
-              </div>
-              <input type="range" id="roi-pairs-slider" class="roi-range-slider" min="10" max="1000" step="10" value="150" style="width: 100%;">
-              <div style="display: flex; justify-content: space-between; font-size: 10px; color: var(--text-muted); margin-top: 2px;">
-                <span>10 pares</span>
-                <span>250</span>
-                <span>500</span>
-                <span>1.000 pares/mes</span>
-              </div>
-            </div>
-          </div>
-        </section>
-
         <!-- Directorio de Tiendas Activas con Filtros y Buscador -->
         <div>
           <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; flex-wrap: wrap; gap: 12px;">

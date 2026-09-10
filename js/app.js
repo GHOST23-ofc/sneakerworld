@@ -94,7 +94,6 @@ document.addEventListener("DOMContentLoaded", () => {
     setupAuthModal();
     setupCartDrawer();
     setupAddProductModal();
-    setupRoiCalculator();
     setupAccountSettingsModal();
     setupQuoteGenerator();
     setupInventoryStockMatrix();
@@ -244,6 +243,30 @@ document.addEventListener("DOMContentLoaded", () => {
       panel.style.display = panel.id === `view-${viewName}` ? "block" : "none";
     });
 
+    // Auto-ajuste estricto de tienda según el panel (Aislamiento de Rol):
+    const allStores = db.getStores();
+    let currentStore = db.getCurrentStore();
+
+    if (viewName === "store-admin") {
+      // Panel Sneaker Partner: SOLO TIENDAS PARTNERS (ej. Cali Shoes)
+      if (!currentStore || currentStore.isSupplierStore) {
+        const partner = allStores.find(s => !s.isSupplierStore) || allStores[0];
+        if (partner) {
+          db.setCurrentStoreId(partner.id);
+        }
+      }
+    } else if (viewName === "supplier") {
+      // Panel Bodega Matriz: SOLO BODEGAS MATRICES (ej. Vanessa Castellar)
+      if (!currentStore || !currentStore.isSupplierStore) {
+        const supplier = allStores.find(s => s.isSupplierStore) || allStores[0];
+        if (supplier) {
+          db.setCurrentStoreId(supplier.id);
+        }
+      }
+    }
+
+    renderHudStores();
+
     // Actualizar texto del botón de vitrina en la barra del cliente
     const toggleBtn = document.getElementById("btn-client-toggle-view");
     const session = db.getAuthSession();
@@ -335,12 +358,43 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function renderHudStores() {
     const select = document.getElementById("hud-store-select");
-    const stores = db.getStores();
-    const currentId = db.getCurrentStoreId();
+    const label = document.getElementById("hud-store-label");
+    if (!select) return;
 
-    select.innerHTML = stores.map(s => `
-      <option value="${s.id}" ${s.id === currentId ? 'selected' : ''}>
-        ${s.name} ${s.isSupplierStore ? '(Matriz)' : '(Satélite)'}
+    const allStores = db.getStores();
+    const currentId = db.getCurrentStoreId();
+    let visibleStores = allStores;
+
+    if (currentView === "store-admin") {
+      // Panel Sneaker Partner: SOLO Revendedores/Partners (Cali Shoes, Valle Kicks...)
+      visibleStores = allStores.filter(s => !s.isSupplierStore);
+      if (label) label.textContent = "Partner:";
+    } else if (currentView === "supplier") {
+      // Panel Bodega Matriz: SOLO Bodegas Matrices (Vanessa Castellar, Calzado Imperial...)
+      visibleStores = allStores.filter(s => s.isSupplierStore);
+      if (label) label.textContent = "Bodega:";
+    } else if (currentView === "storefront") {
+      if (label) label.textContent = "Vitrina:";
+      const session = db.getAuthSession();
+      if (session.authenticated && session.role === "supplier") {
+        visibleStores = allStores.filter(s => s.isSupplierStore);
+      } else if (session.authenticated && session.role === "store-admin") {
+        visibleStores = allStores.filter(s => !s.isSupplierStore);
+      }
+    } else {
+      if (label) label.textContent = "Comercio:";
+    }
+
+    // Asegurar que el select coincida con una tienda visible válida
+    const isCurrentVisible = visibleStores.some(s => s.id === currentId);
+    const selectedId = isCurrentVisible ? currentId : (visibleStores[0]?.id || currentId);
+    if (!isCurrentVisible && visibleStores[0]) {
+      db.setCurrentStoreId(visibleStores[0].id);
+    }
+
+    select.innerHTML = visibleStores.map(s => `
+      <option value="${s.id}" ${s.id === selectedId ? 'selected' : ''}>
+        ${s.name} ${s.isSupplierStore ? '(Bodega Matriz)' : '(Sneaker Partner)'}
       </option>
     `).join("");
   }
@@ -868,6 +922,15 @@ document.addEventListener("DOMContentLoaded", () => {
   // VISTA 2: PANEL DE LA TIENDA SATÉLITE (ADMINISTRACIÓN MARCA BLANCA)
   // =========================================================================
   function renderStoreAdmin(store) {
+    // Garantizar que solo opere sobre una tienda Sneaker Partner
+    if (store && store.isSupplierStore) {
+      const partner = db.getStores().find(s => !s.isSupplierStore);
+      if (partner) {
+        db.setCurrentStoreId(partner.id);
+        store = partner;
+      }
+    }
+
     document.getElementById("admin-store-title").textContent = `Gestión de Precios — ${store.name}`;
     document.getElementById("stat-phone-preview").textContent = `+${store.phone}`;
 
@@ -919,15 +982,17 @@ document.addEventListener("DOMContentLoaded", () => {
             </div>
           </td>
           <td>
-            <div style="display: flex; align-items: center; gap: 4px;">
-              <span style="font-size: 11px; color: var(--text-muted);">$</span>
-              <input type="number" class="table-input-price input-wholesale-price" data-prod="${mp.id}" value="${mp.wholesalePrice}" step="5000" style="width: 105px; font-weight: 700; color: var(--text-primary); font-size: 13px;" title="Costo Mayorista Bodega">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span class="cost-badge" style="font-weight: 800; color: var(--text-secondary); font-size: 13px; font-family: monospace; background: var(--bg-surface-elevated); padding: 5px 10px; border-radius: 6px; border: 1px solid var(--border-subtle); letter-spacing: 0.3px;" title="Costo Mayorista fijado por la Bodega Matriz (Automatizado y sincronizado)">
+                $ ${db.formatCOP(mp.wholesalePrice)}
+              </span>
+              <span style="font-size: 10px; color: #16a34a; font-weight: 800;" title="Sincronizado en tiempo real con Bodega Central">🔒 Fijo</span>
             </div>
           </td>
           <td>
             <div style="display: flex; align-items: center; gap: 4px;">
               <span style="font-size: 11px; color: var(--text-muted);">$</span>
-              <input type="number" class="table-input-price input-store-price" data-prod="${mp.id}" value="${retailPrice}" step="5000" style="width: 105px; font-weight: 800; color: var(--primary-red); font-size: 13px;">
+              <input type="number" class="table-input-price input-store-price" data-prod="${mp.id}" data-wholesale="${mp.wholesalePrice}" value="${retailPrice}" step="5000" style="width: 105px; font-weight: 800; color: var(--primary-red); font-size: 13px;" title="Fija tu precio de venta al público">
             </div>
           </td>
           <td>
@@ -951,26 +1016,31 @@ document.addEventListener("DOMContentLoaded", () => {
       `;
     }).join("");
 
-    // Evento de cálculo en vivo de margen al escribir en costo o precio
+    // Evento de cálculo en vivo de margen al escribir en precio de venta
     const updateRowMargin = (row) => {
-      const wholesaleInput = row.querySelector(".input-wholesale-price");
       const retailInput = row.querySelector(".input-store-price");
       const marginBadge = row.querySelector(".margin-badge");
 
-      if (wholesaleInput && retailInput && marginBadge) {
-        const wVal = Number(wholesaleInput.value) || 0;
+      if (retailInput && marginBadge) {
+        const wholesaleVal = Number(retailInput.dataset.wholesale) || 0;
         const rVal = Number(retailInput.value) || 0;
-        const newMargin = rVal - wVal;
+        const newMargin = rVal - wholesaleVal;
         marginBadge.textContent = `${newMargin >= 0 ? '+' : ''}${db.formatCOP(newMargin)}`;
         marginBadge.className = `margin-badge ${newMargin >= 60000 ? 'margin-high' : 'margin-normal'}`;
       }
     };
 
-    tbody.querySelectorAll(".input-wholesale-price, .input-store-price").forEach(input => {
+    tbody.querySelectorAll(".input-store-price").forEach(input => {
       input.addEventListener("input", () => updateRowMargin(input.closest("tr")));
+      input.addEventListener("change", () => {
+        const prodId = input.dataset.prod;
+        const newPrice = Number(input.value);
+        db.updateStoreProductPrice(store.id, prodId, newPrice);
+        showToast("✅ Precio de venta actualizado en tu vitrina.");
+      });
     });
 
-    // Eventos: Guardar cambios de precios de venta y costos mayoristas
+    // Eventos: Guardar cambios de precios de venta de la tienda
     document.getElementById("btn-save-store-prices").onclick = () => {
       tbody.querySelectorAll(".input-store-price").forEach(input => {
         const prodId = input.dataset.prod;
@@ -978,15 +1048,7 @@ document.addEventListener("DOMContentLoaded", () => {
         db.updateStoreProductPrice(store.id, prodId, newPrice);
       });
 
-      tbody.querySelectorAll(".input-wholesale-price").forEach(wInput => {
-        const prodId = wInput.dataset.prod;
-        const newWholesale = Number(wInput.value);
-        if (!isNaN(newWholesale) && newWholesale > 0) {
-          db.updateMasterProduct(prodId, { wholesalePrice: newWholesale });
-        }
-      });
-
-      showToast("✅ ¡Costos mayoristas y precios de venta guardados con éxito!");
+      showToast("✅ ¡Precios de venta de tu vitrina guardados con éxito!");
       renderStoreAdmin(db.getCurrentStore());
     };
 
@@ -1026,6 +1088,15 @@ document.addEventListener("DOMContentLoaded", () => {
   // VISTA 3: PANEL BODEGA CENTRAL (VANESSA CASTELLAR SHOES)
   // =========================================================================
   function renderSupplierAdmin() {
+    // Garantizar que solo opere sobre una Bodega Matriz
+    const currentStore = db.getCurrentStore();
+    if (currentStore && !currentStore.isSupplierStore) {
+      const supplier = db.getStores().find(s => s.isSupplierStore);
+      if (supplier) {
+        db.setCurrentStoreId(supplier.id);
+      }
+    }
+
     const products = db.getMasterProducts(false);
     const orders = db.getOrders();
 
@@ -1091,13 +1162,15 @@ document.addEventListener("DOMContentLoaded", () => {
         `;
       }).join("");
 
-      // Handlers de Guardar Individual
-      masterTbody.querySelectorAll(".btn-save-single-master").forEach(btn => {
-        btn.onclick = () => {
-          const prodId = btn.dataset.prodId;
-          const wholesale = Number(masterTbody.querySelector(`.supplier-wholesale-input[data-prod-id="${prodId}"]`)?.value) || 120000;
-          const retail = Number(masterTbody.querySelector(`.supplier-retail-input[data-prod-id="${prodId}"]`)?.value) || 190000;
-          const campaign = masterTbody.querySelector(`.supplier-campaign-select[data-prod-id="${prodId}"]`)?.value || "";
+      const saveMasterRow = (prodId, showNotification = false) => {
+        const wholesaleInput = masterTbody.querySelector(`.supplier-wholesale-input[data-prod-id="${prodId}"]`);
+        const retailInput = masterTbody.querySelector(`.supplier-retail-input[data-prod-id="${prodId}"]`);
+        const campaignSelect = masterTbody.querySelector(`.supplier-campaign-select[data-prod-id="${prodId}"]`);
+
+        if (wholesaleInput && retailInput) {
+          const wholesale = Number(wholesaleInput.value) || 0;
+          const retail = Number(retailInput.value) || 0;
+          const campaign = campaignSelect?.value || "";
 
           db.updateMasterProduct(prodId, {
             wholesalePrice: wholesale,
@@ -1105,7 +1178,34 @@ document.addEventListener("DOMContentLoaded", () => {
             campaignBadge: campaign
           });
 
-          showToast("✅ Referencia actualizada en tiempo real.");
+          if (showNotification) {
+            showToast("✅ Precio de bodega guardado y sincronizado con toda la red.");
+          }
+        }
+      };
+
+      // Auto-guardado en tiempo real al modificar o cambiar de celda
+      masterTbody.querySelectorAll(".supplier-wholesale-input, .supplier-retail-input").forEach(input => {
+        const prodId = input.dataset.prodId;
+        input.addEventListener("change", () => saveMasterRow(prodId, true));
+        input.addEventListener("blur", () => saveMasterRow(prodId, false));
+        input.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            saveMasterRow(prodId, true);
+            input.blur();
+          }
+        });
+      });
+
+      masterTbody.querySelectorAll(".supplier-campaign-select").forEach(sel => {
+        const prodId = sel.dataset.prodId;
+        sel.addEventListener("change", () => saveMasterRow(prodId, true));
+      });
+
+      // Handlers de Guardar Individual (botón diskette)
+      masterTbody.querySelectorAll(".btn-save-single-master").forEach(btn => {
+        btn.onclick = () => {
+          saveMasterRow(btn.dataset.prodId, true);
         };
       });
 
@@ -1379,32 +1479,6 @@ document.addEventListener("DOMContentLoaded", () => {
         renderDirectory();
       });
     }
-  }
-
-  function setupRoiCalculator() {
-    const resellersSlider = document.getElementById("roi-resellers-slider");
-    const pairsSlider = document.getElementById("roi-pairs-slider");
-    const resellersVal = document.getElementById("roi-resellers-val");
-    const pairsVal = document.getElementById("roi-pairs-val");
-    const profitDisplay = document.getElementById("roi-profit-display");
-
-    function calculateRoi() {
-      const resellers = parseInt(resellersSlider.value, 10);
-      const pairs = parseInt(pairsSlider.value, 10);
-      resellersVal.textContent = resellers;
-      pairsVal.textContent = pairs;
-
-      // Ganancia Bodega: $25.000 COP por par vendido + $150.000 COP mensualidad SaaS por Sneaker Partner
-      const pairProfits = resellers * pairs * 25000;
-      const saasProfits = resellers * 150000;
-      const totalMonthly = pairProfits + saasProfits;
-
-      profitDisplay.textContent = db.formatCOP(totalMonthly) + " COP";
-    }
-
-    resellersSlider.addEventListener("input", calculateRoi);
-    pairsSlider.addEventListener("input", calculateRoi);
-    calculateRoi();
   }
 
   // =========================================================================
