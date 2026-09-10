@@ -20,8 +20,21 @@ document.addEventListener("DOMContentLoaded", () => {
   // Inicializar UI
   initApp();
 
+  // Helper universal para copiar al portapapeles sin errores
+  function copyToClipboard(text, successMsg, promptMsg = "Copia este enlace:") {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => {
+        showToast(successMsg);
+      }).catch(() => {
+        prompt(promptMsg, text);
+      });
+    } else {
+      prompt(promptMsg, text);
+    }
+  }
+
   function initApp() {
-    // Manejo de parámetros de URL Multi-Tenant (?store=... &view=... &supplier=...)
+    // Manejo de parámetros de URL Multi-Tenant (?store=... &view=... &supplier=... &demo=...)
     const urlParams = new URLSearchParams(window.location.search);
     const paramStore = urlParams.get("store");
     const paramView = urlParams.get("view");
@@ -29,22 +42,50 @@ document.addEventListener("DOMContentLoaded", () => {
     const paramRole = urlParams.get("role");
     const paramDemo = urlParams.get("demo");
 
-    if (paramStore) {
-      db.setCurrentStoreId(paramStore);
-    }
-    if (paramSupplier) {
-      localStorage.setItem("sneakerworld_active_supplier_id", paramSupplier);
-    }
-    if (paramRole === "super-admin") {
-      const current = db.getAuthSession();
-      if (!current.authenticated || current.role !== "super-admin") {
-        db.loginWithCredentials(SUPER_ADMIN_CONFIG.masterUsername, SUPER_ADMIN_CONFIG.masterKey);
+    // Auto-login con links directos de demostración
+    if (paramDemo === "vanessa") {
+      db.loginWithCredentials("vanessa@castellarshoes.com", "Calishoes2026");
+      db.setCurrentStoreId("store-001");
+      currentView = "supplier";
+    } else if (paramDemo === "calishoes") {
+      db.loginWithCredentials("contacto@calishoes.com", "Calishoes2026");
+      db.setCurrentStoreId("store-002");
+      currentView = "store-admin";
+    } else if (paramDemo === "vallekicks") {
+      db.loginWithCredentials("vallekicks@gmail.com", "Calishoes2026");
+      db.setCurrentStoreId("store-003");
+      currentView = "store-admin";
+    } else if (paramDemo === "imperial") {
+      db.loginWithCredentials("imperial@calzadoimperial.com", "Calishoes2026");
+      db.setCurrentStoreId("store-004");
+      currentView = "supplier";
+    } else if (paramDemo === "admin" || paramDemo === "superadmin" || paramDemo === "true" || paramRole === "super-admin") {
+      db.loginWithCredentials(SUPER_ADMIN_CONFIG.masterUsername, SUPER_ADMIN_CONFIG.masterKey);
+      db.setCurrentStoreId("store-001");
+      currentView = paramView || "supplier";
+    } else {
+      if (paramStore) {
+        db.setCurrentStoreId(paramStore);
+      }
+      if (paramSupplier) {
+        localStorage.setItem("sneakerworld_active_supplier_id", paramSupplier);
+      }
+      if (paramView && ["storefront", "store-admin", "supplier", "directory"].includes(paramView)) {
+        currentView = paramView;
       }
     }
 
-    if (paramView && ["storefront", "store-admin", "supplier", "directory"].includes(paramView)) {
-      currentView = paramView;
-    }
+    // Cierre intuitivo de modales con clic en el fondo o tecla Escape
+    document.addEventListener("click", (e) => {
+      if (e.target.classList && e.target.classList.contains("modal-backdrop")) {
+        e.target.classList.remove("open");
+      }
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        document.querySelectorAll(".modal-backdrop.open").forEach(m => m.classList.remove("open"));
+      }
+    });
 
     renderHudStores();
     setupHeadersAndRoleIsolation(paramDemo);
@@ -70,7 +111,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const session = db.getAuthSession();
     const masterHud = document.getElementById("master-admin-hud");
     const clientHud = document.getElementById("client-auth-hud");
-    const isSuperAdmin = session.role === "super-admin" || paramDemo === "true";
+    const isSuperAdmin = session.role === "super-admin" || paramDemo === "admin" || paramDemo === "superadmin" || paramDemo === "true";
 
     if (masterHud) masterHud.style.display = "none";
     if (clientHud) clientHud.style.display = "none";
@@ -113,8 +154,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const clientAccountBtn = document.getElementById("btn-client-open-account");
         if (clientAccountBtn) {
           clientAccountBtn.onclick = () => {
-            const accModal = document.getElementById("modal-account-settings");
-            if (accModal) accModal.classList.add("open");
+            openAccountSettingsModal();
           };
         }
 
@@ -136,11 +176,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (btnCopyPartner) {
       btnCopyPartner.onclick = () => {
         const link = window.location.origin + "/admin.html?partner=vanessa";
-        navigator.clipboard?.writeText(link).then(() => {
-          showToast("🔗 Enlace copiado: " + link);
-        }).catch(() => {
-          prompt("Copia este enlace de invitación para tu nuevo Sneaker Partner:", link);
-        });
+        copyToClipboard(link, "🔗 Enlace copiado: " + link, "Copia este enlace de invitación para tu nuevo Sneaker Partner:");
       };
     }
 
@@ -168,7 +204,7 @@ document.addEventListener("DOMContentLoaded", () => {
         // Proteger vistas administrativas si no se está autenticado
         if (targetView === "supplier" || targetView === "store-admin") {
           const session = db.getAuthSession();
-          if (!session.authenticated || session.role !== targetView) {
+          if (!session.authenticated || (session.role !== targetView && session.role !== "super-admin")) {
             openAuthModal(targetView);
             return;
           }
@@ -983,22 +1019,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     });
 
-    // Eventos: Recalcular margen en tiempo real al tipear precio
-    tbody.querySelectorAll(".input-store-price").forEach(input => {
-      input.addEventListener("input", () => {
-        const row = input.closest("tr");
-        const wholesaleText = row.querySelector("td:nth-child(2)").textContent;
-        const wholesaleNum = parseInt(wholesaleText.replace(/[^0-9]/g, ""), 10) || 0;
-        const retailNum = Number(input.value) || 0;
-        const margin = retailNum - wholesaleNum;
-        
-        const badge = row.querySelector(".margin-badge");
-        if (badge) {
-          badge.textContent = `+${db.formatCOP(margin)}`;
-          badge.className = `margin-badge ${margin >= 60000 ? 'margin-high' : 'margin-normal'}`;
-        }
-      });
-    });
+
   }
 
   // =========================================================================
@@ -1095,7 +1116,7 @@ document.addEventListener("DOMContentLoaded", () => {
           const prod = products.find(p => p.id === prodId);
           if (!prod) return;
 
-          document.getElementById("modal-product-title").textContent = "Editar Referencia de Catálogo";
+          document.getElementById("modal-add-product-title").textContent = "Editar Referencia de Catálogo";
           document.getElementById("btn-submit-product-form").textContent = "Guardar Modificaciones";
           document.getElementById("add-prod-id").value = prod.id;
           document.getElementById("add-prod-name").value = prod.name;
@@ -1192,7 +1213,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const form = document.getElementById("form-add-product");
 
     btnOpen.onclick = () => {
-      document.getElementById("modal-product-title").textContent = "Publicar Nueva Referencia en Bodega";
+      document.getElementById("modal-add-product-title").textContent = "Publicar Nueva Referencia en Bodega";
       document.getElementById("btn-submit-product-form").textContent = "Publicar a Todas las Tiendas";
       form.reset();
       document.getElementById("add-prod-id").value = "";
@@ -1389,6 +1410,44 @@ document.addEventListener("DOMContentLoaded", () => {
   // =========================================================================
   // GESTIÓN DE CUENTA, SEGURIDAD & PREVENCIÓN DE PÉRDIDA DE DATOS
   // =========================================================================
+  function openAccountSettingsModal() {
+    const modal = document.getElementById("modal-account-settings");
+    if (!modal) return;
+
+    const accounts = db.getAccounts();
+    const session = db.getAuthSession();
+    const currentStore = db.getCurrentStore();
+
+    let accountKey = "vanessa";
+    if (session.authenticated && session.user && session.user.username) {
+      accountKey = session.user.username;
+    } else if (currentStore && !currentStore.isSupplierStore) {
+      accountKey = "calishoes";
+    }
+
+    const acc = accounts[accountKey] || accounts.vanessa || {};
+
+    const keyEl = document.getElementById("account-key");
+    const nameEl = document.getElementById("account-name");
+    const emailEl = document.getElementById("account-email");
+    const passEl = document.getElementById("account-password");
+    const pinEl = document.getElementById("account-pin");
+    const phoneEl = document.getElementById("account-phone");
+    const badgeEl = document.getElementById("modal-account-tenant-badge");
+
+    if (keyEl) keyEl.value = accountKey;
+    if (nameEl) nameEl.value = acc.name || currentStore.name || "";
+    if (emailEl) emailEl.value = acc.email || "";
+    if (passEl) passEl.value = acc.password || "Calishoes2026";
+    if (pinEl) pinEl.value = acc.pin || (accountKey === "vanessa" ? "8820" : "1234");
+    if (phoneEl) phoneEl.value = acc.phone || currentStore.phone || "573505337256";
+    if (badgeEl) {
+      badgeEl.textContent = `Inquilino: ${acc.tenantId || currentStore.id} • ${acc.isMasterSupplier || currentStore.isSupplierStore ? 'Bodega Matriz' : 'Sneaker Partner'}`;
+    }
+
+    modal.classList.add("open");
+  }
+
   function setupAccountSettingsModal() {
     const btnOpen = document.getElementById("btn-open-account-settings");
     const modal = document.getElementById("modal-account-settings");
@@ -1396,24 +1455,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const form = document.getElementById("form-account-settings");
     const btnExport = document.getElementById("btn-export-backup-json");
 
-    if (!modal || !btnOpen) return;
+    if (!modal) return;
 
-    btnOpen.onclick = () => {
-      const accounts = db.getAccounts();
-      const currentStore = db.getCurrentStore();
-      const accountKey = (currentStore && currentStore.isSupplierStore) ? "vanessa" : "calishoes";
-      const acc = accounts[accountKey] || accounts.vanessa;
-
-      document.getElementById("account-key").value = accountKey;
-      document.getElementById("account-name").value = acc.name || "";
-      document.getElementById("account-email").value = acc.email || "";
-      document.getElementById("account-password").value = acc.password || "Calishoes2026";
-      document.getElementById("account-pin").value = acc.pin || (accountKey === "vanessa" ? "8820" : "1234");
-      document.getElementById("account-phone").value = acc.phone || "573505337256";
-      document.getElementById("modal-account-tenant-badge").textContent = `Inquilino: ${acc.tenantId} • ${acc.isMasterSupplier ? 'Bodega Matriz' : 'Tienda Satélite'}`;
-
-      modal.classList.add("open");
-    };
+    if (btnOpen) {
+      btnOpen.onclick = openAccountSettingsModal;
+    }
 
     if (btnClose) btnClose.onclick = () => modal.classList.remove("open");
 
@@ -1430,6 +1476,8 @@ document.addEventListener("DOMContentLoaded", () => {
         db.updateAccountSecurity(key, { name, email, password, pin, phone });
         modal.classList.remove("open");
         showToast("🔒 Configuración de cuenta y seguridad guardada con éxito.");
+        setupHeadersAndRoleIsolation();
+        renderCurrentView();
       };
     }
 
@@ -1655,11 +1703,7 @@ ${itemsText}
           return;
         }
         const msg = generateWhatsAppMessage();
-        navigator.clipboard?.writeText(msg).then(() => {
-          showToast("📋 ¡Cotización formal copiada al portapapeles!");
-        }).catch(() => {
-          prompt("Copia el texto de la cotización:", msg);
-        });
+        copyToClipboard(msg, "📋 ¡Cotización formal copiada al portapapeles!", "Copia el texto de la cotización:");
       };
     }
 
