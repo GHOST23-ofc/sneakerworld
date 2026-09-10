@@ -62,7 +62,7 @@ document.addEventListener("DOMContentLoaded", () => {
     } else if (paramDemo === "admin" || paramDemo === "superadmin" || paramDemo === "true" || paramRole === "super-admin") {
       db.loginWithCredentials(SUPER_ADMIN_CONFIG.masterUsername, SUPER_ADMIN_CONFIG.masterKey);
       db.setCurrentStoreId("store-001");
-      currentView = paramView || "supplier";
+      currentView = paramView || "directory";
     } else {
       if (paramStore) {
         db.setCurrentStoreId(paramStore);
