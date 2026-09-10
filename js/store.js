@@ -445,7 +445,11 @@ class ShoesStoreManager {
         const { wholesalePrice, ...safeMp } = mp;
         return {
           ...safeMp,
-          storeRetailPrice: (sp && sp.customPrice) ? sp.customPrice : mp.suggestedRetailPrice,
+          wholesalePrice: mp.wholesalePrice,
+          suggestedRetailPrice: mp.suggestedRetailPrice,
+          storeRetailPrice: store.isSupplierStore 
+            ? mp.wholesalePrice 
+            : ((sp && sp.customPrice) ? sp.customPrice : mp.suggestedRetailPrice),
           storeAvailableSizes: (sp && sp.availableSizes) ? sp.availableSizes : mp.sizes
         };
       });
@@ -610,22 +614,40 @@ class ShoesStoreManager {
   buildSingleProductWhatsAppUrl(store, product, colorway, size) {
     const assignedLine = this.getNextWhatsAppLine(store);
     const phone = assignedLine.phone || assignedLine || "573505337256";
-    const formattedPrice = this.formatCOP(product.storeRetailPrice || product.suggestedRetailPrice);
+    const formattedPrice = this.formatCOP(store.isSupplierStore ? (product.wholesalePrice || product.storeRetailPrice || 85000) : (product.storeRetailPrice || product.suggestedRetailPrice));
     const colorName = colorway ? colorway.name : "Color Principal";
     const cm = this.getSizeCm(size);
 
-    const text = `👋 *¡Hola ${store.name}!* Vi este modelo en su vitrina digital y quiero apartarlo:
+    let text = "";
+    if (store.isSupplierStore) {
+      // Pedido B2B de un Sneaker Partner o comprador mayorista hacia la Bodega Central
+      text = `📦 *PEDIDO AL POR MAYOR B2B — BODEGA ${store.name.toUpperCase()}*
+
+👋 ¡Hola Vanessa! Soy Sneaker Partner de la red y requiero despacho mayorista de este modelo:
 
 👟 *MODELO:* ${product.name}
 🔖 *SKU:* ${product.sku}
 🎨 *COLOR:* ${colorName}
 📏 *TALLA:* ${size} (Plantilla: ${cm})
-💰 *PRECIO:* ${formattedPrice}
+💰 *COSTO MAYORISTA BODEGA:* ${formattedPrice} COP / par
 
-📍 *Destino en Cali:* (Indicar Barrio / Comuna)
-🛵 *Modalidad:* Despacho Hoy Contraentrega / Asegurado
+🏢 *Solicitante:* Tienda Sneaker Partner
+📦 *Tipo de Pedido:* Reposición B2B para cliente
+¿Me confirman disponibilidad en bodega para despacho hoy? ¡Gracias! ✨`;
+    } else {
+      // Pedido B2C del cliente final hacia la tienda Sneaker Partner
+      text = `👋 *¡Hola ${store.name}!* Vi este modelo en su tienda online y quiero comprarlo:
 
-¿Me confirman disponibilidad inmediata para despacho hoy? ¡Muchas gracias! ✨`;
+👟 *MODELO:* ${product.name}
+🔖 *SKU:* ${product.sku}
+🎨 *COLOR:* ${colorName}
+📏 *TALLA:* ${size} (Plantilla: ${cm})
+💰 *PRECIO:* ${formattedPrice} COP
+
+📍 *Destino en Cali:* (Indicar Barrio / Dirección)
+🛵 *Modalidad:* Domicilio Contraentrega Hoy
+¿Me confirman disponibilidad para envío? ¡Muchas gracias! ✨`;
+    }
 
     return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
   }

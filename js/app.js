@@ -130,13 +130,17 @@ document.addEventListener("DOMContentLoaded", () => {
         if (session.role === "supplier") {
           if (iconEl) iconEl.textContent = "📦";
           if (titleEl) titleEl.textContent = (session.user?.businessName || "Vanessa Castellar Shoes") + " (Bodega Matriz)";
-          if (subtitleEl) subtitleEl.textContent = "🟢 Panel Privado B2B • Inventario & Sneaker Partners";
-          if (toggleBtn) toggleBtn.textContent = currentView === "storefront" ? "📦 Volver al Panel Bodega" : "🛒 Ver Mi Vitrina Pública";
+          if (subtitleEl) subtitleEl.textContent = currentView === "storefront"
+            ? "👁️ CATÁLOGO MAYORISTA B2B: Precios de Proveedor ($85K - $95K) para Revendedores"
+            : "🟢 Panel Privado B2B • Inventario & Sneaker Partners";
+          if (toggleBtn) toggleBtn.textContent = currentView === "storefront" ? "📦 Volver al Panel Bodega" : "🛒 Ver Catálogo Mayorista";
         } else {
           if (iconEl) iconEl.textContent = "🏪";
           if (titleEl) titleEl.textContent = (session.user?.name || "Cali Shoes") + " (Sneaker Partner)";
-          if (subtitleEl) subtitleEl.textContent = "🟢 Margen Propio & Catálogo Sincronizado";
-          if (toggleBtn) toggleBtn.textContent = currentView === "storefront" ? "🏪 Volver a Mi Panel Tienda" : "🛒 Ver Mi Vitrina con Margen";
+          if (subtitleEl) subtitleEl.textContent = currentView === "storefront"
+            ? "👁️ VISTA PREVIA: Así ve tu cliente final tu Tienda Online (Tus precios al detal con margen)"
+            : "🟢 Margen Propio & Catálogo Sincronizado";
+          if (toggleBtn) toggleBtn.textContent = currentView === "storefront" ? "🏪 Volver a Mi Panel Tienda" : "🛒 Ver Mi Tienda Online";
         }
 
         // Toggle entre panel privado y vitrina
@@ -267,14 +271,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
     renderHudStores();
 
-    // Actualizar texto del botón de vitrina en la barra del cliente
+    // Actualizar texto del botón de vitrina y subtítulo en la barra del cliente
     const toggleBtn = document.getElementById("btn-client-toggle-view");
+    const subtitleEl = document.getElementById("client-hud-subtitle");
     const session = db.getAuthSession();
-    if (toggleBtn && session.authenticated) {
+    if (session.authenticated) {
       if (session.role === "supplier") {
-        toggleBtn.textContent = currentView === "storefront" ? "📦 Volver al Panel Bodega" : "🛒 Ver Mi Vitrina Pública";
+        if (toggleBtn) toggleBtn.textContent = currentView === "storefront" ? "📦 Volver al Panel Bodega" : "🛒 Ver Catálogo Mayorista";
+        if (subtitleEl) subtitleEl.textContent = currentView === "storefront"
+          ? "👁️ CATÁLOGO MAYORISTA B2B: Precios de Proveedor ($85K - $95K) para Revendedores"
+          : "🟢 Panel Privado B2B • Inventario & Sneaker Partners";
       } else {
-        toggleBtn.textContent = currentView === "storefront" ? "🏪 Volver a Mi Panel Tienda" : "🛒 Ver Mi Vitrina con Margen";
+        if (toggleBtn) toggleBtn.textContent = currentView === "storefront" ? "🏪 Volver a Mi Panel Tienda" : "🛒 Ver Mi Tienda Online";
+        if (subtitleEl) subtitleEl.textContent = currentView === "storefront"
+          ? "👁️ VISTA PREVIA: Así ve tu cliente final tu Tienda Online (Tus precios al detal con margen)"
+          : "🟢 Margen Propio & Catálogo Sincronizado";
       }
     }
 
@@ -405,8 +416,8 @@ document.addEventListener("DOMContentLoaded", () => {
   function renderStorefront(store) {
     // Render Header Info
     document.getElementById("storefront-avatar").textContent = store.name.split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase();
-    document.getElementById("storefront-name").innerHTML = `${store.name} <span class="badge-verified" id="storefront-badge">${store.isSupplierStore ? 'BODEGA MATRIZ VERIFICADA' : 'TIENDA AUTORIZADA'}</span>`;
-    document.getElementById("storefront-tagline").textContent = store.tagline;
+    document.getElementById("storefront-name").innerHTML = `${store.name} <span class="badge-verified" id="storefront-badge" style="${store.isSupplierStore ? 'background: #f0fdf4; color: #15803d; border-color: #86efac;' : 'background: #eff6ff; color: #2563eb; border-color: #bfdbfe;'} font-weight: 800; font-size: 11px;">${store.isSupplierStore ? '🏢 BODEGA CENTRAL (VENTA AL POR MAYOR B2B)' : '🏪 TIENDA ONLINE (VENTA AL DETAL)'}</span>`;
+    document.getElementById("storefront-tagline").textContent = store.isSupplierStore ? "Catálogo de despacho mayorista directo desde bodega para revendedores y tiendas aliadas. Precios al por mayor." : store.tagline;
     document.getElementById("storefront-location").textContent = store.neighborhood + " | ⚡ Domicilios Hoy";
 
     // Enlace directo WhatsApp Header (Usa balanceador inteligente)
@@ -510,11 +521,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
             <div class="product-footer">
               <div class="price-box">
-                <span class="price-label">Precio Tienda</span>
-                <span class="price-val">${formattedPrice}</span>
+                <span class="price-label" style="${store.isSupplierStore ? 'color: #15803d; font-weight: 800;' : ''}">
+                  ${store.isSupplierStore ? '🏢 PRECIO MAYORISTA BODEGA' : 'PRECIO VENTA AL PÚBLICO'}
+                </span>
+                <span class="price-val" style="${store.isSupplierStore ? 'color: #15803d;' : ''}">$ ${formattedPrice}</span>
+                ${store.isSupplierStore ? `
+                  <div style="font-size: 10px; color: var(--text-muted); font-weight: 600; margin-top: 1px;">
+                    Sugerido Detal: $ ${db.formatCOP(p.suggestedRetailPrice)}
+                  </div>
+                ` : `
+                  <div style="font-size: 10px; color: var(--text-muted); font-weight: 600; margin-top: 1px;">
+                    ⚡ Entrega Inmediata en Cali
+                  </div>
+                `}
               </div>
-              <button type="button" class="btn-card-wa btn-open-product-modal" data-product-id="${p.id}">
-                <span>💬 Pedir</span>
+              <button type="button" class="btn-card-wa btn-open-product-modal" data-product-id="${p.id}" style="${store.isSupplierStore ? 'background: #16a34a; border-color: #15803d;' : ''}">
+                <span>${store.isSupplierStore ? '📦 Pedir Mayorista' : '💬 Comprar'}</span>
               </button>
             </div>
           </div>
@@ -622,7 +644,17 @@ document.addEventListener("DOMContentLoaded", () => {
           <div style="flex: 1.2; min-width: 240px; display: flex; flex-direction: column; justify-content: center;">
             <div style="font-size: 11px; font-weight: 800; color: var(--primary-red); text-transform: uppercase;">${product.category} • SKU: ${product.sku}</div>
             <h4 style="font-size: 18px; font-weight: 900; color: var(--text-primary); margin: 4px 0 6px;">${product.name}</h4>
-            <div style="font-size: 22px; font-weight: 900; color: var(--primary-red); margin-bottom: 6px;">${formattedPrice}</div>
+            <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px;">
+              <div style="font-size: 22px; font-weight: 900; color: ${store.isSupplierStore ? '#15803d' : 'var(--primary-red)'};">$ ${formattedPrice}</div>
+              <span style="font-size: 11px; font-weight: 800; color: ${store.isSupplierStore ? '#15803d' : 'var(--text-muted)'}; text-transform: uppercase;">
+                ${store.isSupplierStore ? '• Costo Mayorista Bodega' : '• Precio de Venta al Detal'}
+              </span>
+            </div>
+            ${store.isSupplierStore ? `
+              <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 8px; background: #f0fdf4; padding: 5px 10px; border-radius: 6px; border: 1px solid #bbf7d0;">
+                💡 <strong>Margen sugerido para revendedor:</strong> Si se vende al detal a <strong>$ ${db.formatCOP(product.suggestedRetailPrice)}</strong>, el Sneaker Partner gana <strong>+${db.formatCOP(product.suggestedRetailPrice - (product.wholesalePrice || 85000))} COP</strong> netos por par.
+              </div>
+            ` : ''}
             
             <div style="margin-bottom: 8px;">
               ${isAgotado 
