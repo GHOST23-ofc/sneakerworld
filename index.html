@@ -839,31 +839,28 @@
           </div>
 
           <!-- Configuración de CDN Nube para Fotos Masivas (Cloudinary) -->
-          <div style="background: #f8fafc; border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 12px; margin-bottom: 16px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 4px;">
-              <strong style="color: var(--text-primary); font-size: 12px;">☁️ Almacenamiento en la Nube (Cloudinary CDN):</strong>
-              <span id="account-cloudinary-status-badge" class="badge-verified" style="background: #f0fdf4; color: #16a34a; border-color: #86efac; font-size: 10px;">⚡ Modo Autónomo</span>
+          <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: var(--radius-md); padding: 12px; margin-bottom: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 4px;">
+              <strong style="color: #15803d; font-size: 12px;">☁️ CDN Cloudinary Activo & Conectado:</strong>
+              <span id="account-cloudinary-status-badge" class="badge-verified" style="background: #ffffff; color: #16a34a; border-color: #86efac; font-size: 10px;">🟢 Conexión Activa</span>
             </div>
-            <p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 8px; line-height: 1.35;">
-              Permite a las bodegas subir fotos masivas desde el celular sin que pesen en tu hosting ni gasten almacenamiento local.
+            <p style="font-size: 11px; color: #166534; margin-bottom: 8px; line-height: 1.35;">
+              Infraestructura conectada a tu cuenta Cloudinary (<code>m7ts03dk</code> / <code>SNEAKER WORLD</code>). Las fotos subidas desde cualquier celular se alojan y comprimen automáticamente sin consumir almacenamiento de la web.
             </p>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
               <div>
                 <label class="form-label" style="font-size: 10px;">Cloud Name:</label>
-                <input type="text" id="account-cloudinary-cloud" class="form-input" placeholder="ej. sneakerworld" style="font-size: 11px; padding: 5px 8px;">
+                <input type="text" id="account-cloudinary-cloud" class="form-input" value="m7ts03dk" style="font-size: 11px; padding: 5px 8px; font-weight: 700;">
               </div>
               <div>
                 <label class="form-label" style="font-size: 10px;">Upload Preset (Unsigned):</label>
-                <input type="text" id="account-cloudinary-preset" class="form-input" placeholder="ej. ml_default" style="font-size: 11px; padding: 5px 8px;">
+                <input type="text" id="account-cloudinary-preset" class="form-input" value="SNEAKER WORLD" style="font-size: 11px; padding: 5px 8px; font-weight: 700;">
               </div>
             </div>
             <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-              <button type="button" id="btn-test-cloudinary" class="btn-secondary" style="font-size: 11px; padding: 4px 10px; cursor: pointer;">
+              <button type="button" id="btn-test-cloudinary" class="btn-secondary" style="font-size: 11px; padding: 4px 10px; cursor: pointer; background: #ffffff;">
                 🧪 Probar Conexión Cloud
               </button>
-              <a href="https://cloudinary.com/users/register_free" target="_blank" rel="noopener" style="font-size: 11px; color: var(--accent-blue); text-decoration: underline; display: inline-flex; align-items: center;">
-                Crear cuenta Cloudinary gratis (25 GB/mes) ↗
-              </a>
             </div>
           </div>
 
