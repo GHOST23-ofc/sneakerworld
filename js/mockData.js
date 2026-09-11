@@ -403,7 +403,7 @@ const DEMO_ACCOUNTS = {
     securityNote: "Cuenta Matriz Mayorista con 10 líneas de WhatsApp y red de Sneaker Partners."
   },
 
-  // SNEAKER PARTNER 1 DE VANESSA: Cali Shoes Distribuidora (Sur / Ciudad Jardín)
+  // SNEAKER PARTNER OFICIAL DE VANESSA: Cali Shoes Distribuidora (Sur / Ciudad Jardín)
   calishoes: {
     id: "user-calishoes-02",
     tenantId: "store-002",
@@ -418,42 +418,7 @@ const DEMO_ACCOUNTS = {
     phone: "573155551234",
     role: "store-admin",
     isMasterSupplier: false,
-    securityNote: "Sneaker Partner 1 Oficial de Vanessa en el Sur de Cali."
-  },
-
-  // SNEAKER PARTNER 2 DE VANESSA: Valle Kicks Palmira (Norte & Palmira)
-  vallekicks: {
-    id: "user-vallekicks-03",
-    tenantId: "store-003",
-    storeId: "store-003",
-    parentSupplierId: "sup-001",
-    username: "vallekicks",
-    name: "Valle Kicks Palmira",
-    businessName: "Valle Kicks Store (Palmira & Norte de Cali)",
-    email: "vallekicks@gmail.com",
-    password: "Calishoes2026",
-    pin: "4321",
-    phone: "573187779900",
-    role: "store-admin",
-    isMasterSupplier: false,
-    securityNote: "Sneaker Partner 2 Oficial de Vanessa en Palmira y Norte de Cali."
-  },
-
-  // COMERCIO 2: Calzado Imperial Cali (Segunda Bodega Independiente y Aislada)
-  imperial: {
-    id: "user-imperial-04",
-    tenantId: "sup-002",
-    storeId: "store-004",
-    role: "supplier",
-    name: "Calzado Imperial Cali",
-    businessName: "Calzado Imperial Mayorista (Centro, Cali)",
-    email: "imperial@calzadoimperial.com",
-    username: "imperial",
-    password: "Calishoes2026",
-    pin: "5500",
-    phone: "573112223344",
-    isMasterSupplier: true,
-    securityNote: "Bodega Matriz 2 independiente con su propio catálogo y sus propios partners aislados."
+    securityNote: "Sneaker Partner Oficial de Vanessa en Cali."
   }
 };
 
@@ -515,37 +480,6 @@ const INITIAL_STORES = [
       { productId: "prod-snk-014", customPrice: 340000, active: true, availableSizes: [40, 41, 42, 43] },
       { productId: "prod-snk-015", customPrice: 260000, active: true, availableSizes: [39, 40, 41, 42] },
       { productId: "prod-snk-016", customPrice: 275000, active: true, availableSizes: [39, 40, 41, 42] }
-    ]
-  },
-  {
-    id: "store-003",
-    name: "Valle Kicks Palmira",
-    tagline: "Boutique streetwear y dropshipping calzado en Palmira y Norte de Cali (Sneaker Partner de Vanessa).",
-    phone: "573187779900",
-    neighborhood: "Palmira Urbano & Comuna 2 (Versalles, Cali)",
-    isSupplierStore: false,
-    themeColor: "#e6192e",
-    products: [
-      { productId: "prod-snk-001", customPrice: 190000, active: true, availableSizes: [36, 37, 38, 39, 40] },
-      { productId: "prod-snk-003", customPrice: 230000, active: true, availableSizes: [37, 38, 39, 40, 41] },
-      { productId: "prod-snk-004", customPrice: 240000, active: true, availableSizes: [38, 39, 40, 41, 42] },
-      { productId: "prod-snk-005", customPrice: 260000, active: true, availableSizes: [39, 40, 41, 42, 43] },
-      { productId: "prod-snk-006", customPrice: 240000, active: true, availableSizes: [37, 38, 39, 40] },
-      { productId: "prod-snk-011", customPrice: 210000, active: true, availableSizes: [38, 39, 40, 41, 42] }
-    ]
-  },
-  {
-    id: "store-004",
-    name: "Calzado Imperial Cali",
-    tagline: "Segunda Bodega Mayorista Independiente — Centro de Cali (Aislada de Vanessa).",
-    phone: "573112223344",
-    neighborhood: "Centro Comercial El Diamante / Centro, Cali",
-    isSupplierStore: true,
-    themeColor: "#2563eb",
-    products: [
-      { productId: "prod-snk-002", customPrice: 205000, active: true, availableSizes: [38, 39, 40, 41, 42] },
-      { productId: "prod-snk-004", customPrice: 230000, active: true, availableSizes: [39, 40, 41, 42, 43] },
-      { productId: "prod-snk-014", customPrice: 330000, active: true, availableSizes: [40, 41, 42, 43] }
     ]
   }
 ];

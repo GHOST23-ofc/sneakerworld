@@ -24,14 +24,14 @@ class ShoesStoreManager {
     if (!localStorage.getItem(DB_KEYS.MASTER_PRODUCTS)) {
       localStorage.setItem(DB_KEYS.MASTER_PRODUCTS, JSON.stringify(INITIAL_MASTER_PRODUCTS));
     } else if (!localStorage.getItem("sneakerworld_pricing_calibrated_85k_95k")) {
-      // Migración automática para asegurar rango 85.000 - 95.000 COP en bodegas existentes
       try {
-        const products = JSON.parse(localStorage.getItem(DB_KEYS.MASTER_PRODUCTS));
-        const calibrated = products.map(p => {
-          const initial = INITIAL_MASTER_PRODUCTS.find(ip => ip.id === p.id);
+        const calibrated = INITIAL_MASTER_PRODUCTS.map(p => {
+          const rawPrice = p.wholesalePrice || 85000;
+          const wholesalePrice = Math.min(Math.max(rawPrice, 85000), 95000);
           return {
             ...p,
-            wholesalePrice: initial ? initial.wholesalePrice : 88000
+            wholesalePrice,
+            suggestedRetailPrice: p.suggestedRetailPrice || (wholesalePrice + 100000)
           };
         });
         localStorage.setItem(DB_KEYS.MASTER_PRODUCTS, JSON.stringify(calibrated));
@@ -39,6 +39,12 @@ class ShoesStoreManager {
         localStorage.setItem(DB_KEYS.MASTER_PRODUCTS, JSON.stringify(INITIAL_MASTER_PRODUCTS));
       }
       localStorage.setItem("sneakerworld_pricing_calibrated_85k_95k", "true");
+    }
+    // Migración para forzar únicamente a Vanessa Castellar y Cali Shoes Distribuidora
+    if (!localStorage.getItem("sneakerworld_stores_vanessa_cali_only")) {
+      localStorage.setItem(DB_KEYS.STORES, JSON.stringify(INITIAL_STORES));
+      localStorage.setItem(DB_KEYS.ACCOUNTS, JSON.stringify(DEMO_ACCOUNTS));
+      localStorage.setItem("sneakerworld_stores_vanessa_cali_only", "true");
     }
     if (!localStorage.getItem(DB_KEYS.STORES)) {
       localStorage.setItem(DB_KEYS.STORES, JSON.stringify(INITIAL_STORES));

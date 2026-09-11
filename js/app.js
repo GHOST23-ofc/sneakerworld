@@ -51,14 +51,6 @@ document.addEventListener("DOMContentLoaded", () => {
       db.loginWithCredentials("contacto@calishoes.com", "Calishoes2026");
       db.setCurrentStoreId("store-002");
       currentView = "store-admin";
-    } else if (paramDemo === "vallekicks") {
-      db.loginWithCredentials("vallekicks@gmail.com", "Calishoes2026");
-      db.setCurrentStoreId("store-003");
-      currentView = "store-admin";
-    } else if (paramDemo === "imperial") {
-      db.loginWithCredentials("imperial@calzadoimperial.com", "Calishoes2026");
-      db.setCurrentStoreId("store-004");
-      currentView = "supplier";
     } else if (paramDemo === "admin" || paramDemo === "superadmin" || paramDemo === "true" || paramRole === "super-admin") {
       db.loginWithCredentials(SUPER_ADMIN_CONFIG.masterUsername, SUPER_ADMIN_CONFIG.masterKey);
       db.setCurrentStoreId("store-001");
