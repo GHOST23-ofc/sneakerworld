@@ -245,20 +245,33 @@
       }
     };
 
+    // Cargar nombres actualizados desde la base de datos local
+    const liveAccounts = db.getAccounts();
+    if (liveAccounts.vanessa) {
+      const vTitle = document.querySelector("#btn-quick-vanessa .scenario-title");
+      if (vTitle && liveAccounts.vanessa.name) vTitle.textContent = liveAccounts.vanessa.name;
+    }
+    if (liveAccounts.calishoes) {
+      const cTitle = document.querySelector("#btn-quick-calishoes .scenario-title");
+      if (cTitle && liveAccounts.calishoes.name) cTitle.textContent = liveAccounts.calishoes.name;
+    }
+
     // 1-Click: Escenario 1 Vanessa
     document.getElementById("btn-quick-vanessa").onclick = () => {
-      emailInput.value = "vanessa@castellarshoes.com";
-      passInput.value = "Calishoes2026";
+      const acc = db.getAccounts().vanessa || {};
+      emailInput.value = acc.email || "vanessa@castellarshoes.com";
+      passInput.value = acc.password || "Calishoes2026";
       errorMsg.style.display = "none";
-      showToast("Credenciales de Vanessa Castellar cargadas.");
+      showToast(`Credenciales de ${acc.name || 'Vanessa Castellar'} cargadas.`);
     };
 
     // 1-Click: Sneaker Partner Oficial: Cali Shoes
     document.getElementById("btn-quick-calishoes").onclick = () => {
-      emailInput.value = "contacto@calishoes.com";
-      passInput.value = "Calishoes2026";
+      const acc = db.getAccounts().calishoes || {};
+      emailInput.value = acc.email || "contacto@calishoes.com";
+      passInput.value = acc.password || "Calishoes2026";
       errorMsg.style.display = "none";
-      showToast("Credenciales de Cali Shoes Distribuidora cargadas.");
+      showToast(`Credenciales de ${acc.name || 'Cali Shoes Distribuidora'} cargadas.`);
     };
 
     // Botón de Rescate Super-Admin para Vanessa

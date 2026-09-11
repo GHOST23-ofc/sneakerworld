@@ -11,6 +11,8 @@ document.addEventListener("DOMContentLoaded", () => {
   let searchQuery = "";
   let categoryFilter = "all";
   let sortOrder = "default";
+  let directoryRoleFilter = "all";
+  let directorySearchQuery = "";
   
   // Carrito de compras Multi-Par
   let cart = [];
@@ -1126,6 +1128,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.getElementById("stat-supplier-total-prods").textContent = products.length;
 
+    // Actualizar título dinámico de la Bodega Central si cambia de nombre
+    const headingTitle = document.querySelector("#view-supplier .admin-heading-title");
+    if (headingTitle && currentStore) {
+      headingTitle.textContent = `Bodega Central — ${currentStore.name}`;
+    }
+
     // 1. Tabla de Catálogo Maestro & Precios en Caliente
     const masterTbody = document.getElementById("supplier-master-products-table");
     if (masterTbody) {
@@ -1393,20 +1401,17 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // =========================================================================
-  // VISTA 4: DIRECTORIO DE TIENDAS Y SIMULADOR ROI
+  // VISTA 4: DIRECTORIO DE TIENDAS Y ECOSISTEMA MLS
   // =========================================================================
-  let directoryRoleFilter = "all";
-  let directorySearchQuery = "";
-
   function renderDirectory() {
-    const allStores = db.getStores();
+    const allStores = db.getStores() || [];
     const grid = document.getElementById("directory-stores-grid");
     if (!grid) return;
 
     // Actualizar contadores
     const countAll = allStores.length;
-    const countSupplier = allStores.filter(s => s.isSupplierStore).length;
-    const countPartner = allStores.filter(s => !s.isSupplierStore).length;
+    const countSupplier = allStores.filter(s => s && s.isSupplierStore).length;
+    const countPartner = allStores.filter(s => s && !s.isSupplierStore).length;
 
     const elCountAll = document.getElementById("count-all-stores");
     const elCountSup = document.getElementById("count-supplier-stores");
@@ -1418,16 +1423,16 @@ document.addEventListener("DOMContentLoaded", () => {
     // Aplicar filtros de rol
     let filtered = allStores;
     if (directoryRoleFilter === "supplier") {
-      filtered = filtered.filter(s => s.isSupplierStore);
+      filtered = filtered.filter(s => s && s.isSupplierStore);
     } else if (directoryRoleFilter === "partner") {
-      filtered = filtered.filter(s => !s.isSupplierStore);
+      filtered = filtered.filter(s => s && !s.isSupplierStore);
     }
 
     // Aplicar búsqueda por texto
     if (directorySearchQuery) {
       const q = directorySearchQuery.toLowerCase();
       filtered = filtered.filter(s => 
-        s.name.toLowerCase().includes(q) || 
+        (s.name && s.name.toLowerCase().includes(q)) || 
         (s.neighborhood && s.neighborhood.toLowerCase().includes(q)) ||
         (s.tagline && s.tagline.toLowerCase().includes(q))
       );
@@ -1445,7 +1450,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     grid.innerHTML = filtered.map(s => {
-      const activeCount = s.products.filter(p => p.active).length;
+      const activeCount = (s.products && Array.isArray(s.products)) ? s.products.filter(p => p && p.active).length : 0;
+      const initials = (s.name || "SW").split(" ").filter(Boolean).map(w => w[0]).slice(0, 2).join("").toUpperCase() || "SW";
       return `
         <div class="store-directory-card" style="position: relative; overflow: hidden;">
           <!-- Corner Tag Solicitado -->
@@ -1459,13 +1465,13 @@ document.addEventListener("DOMContentLoaded", () => {
             </span>
           </div>
           <div class="store-card-header">
-            <div class="store-card-avatar">${s.name.split(" ").map(w => w[0]).slice(0, 2).join("")}</div>
+            <div class="store-card-avatar">${initials}</div>
             <div>
               <div class="store-card-title">${s.name}</div>
-              <div class="store-card-location">${s.neighborhood}</div>
+              <div class="store-card-location">${s.neighborhood || 'Cali, Colombia'}</div>
             </div>
           </div>
-          <div class="store-card-body">${s.tagline}</div>
+          <div class="store-card-body">${s.tagline || ''}</div>
           <div style="display: flex; justify-content: space-between; align-items: center; margin-top: auto; padding-top: 12px; border-top: 1px solid var(--border-subtle);">
             <span style="font-size: 11px; font-weight: 700; color: var(--primary-red);">${activeCount} Modelos Sincronizados</span>
             <button class="btn-primary btn-switch-store-dir" data-id="${s.id}" style="font-size: 11px; padding: 6px 14px;">
@@ -1517,13 +1523,18 @@ document.addEventListener("DOMContentLoaded", () => {
     const currentStore = db.getCurrentStore();
 
     let accountKey = "vanessa";
-    if (session.authenticated && session.user && session.user.username) {
+    if (session.authenticated && session.accountKey) {
+      accountKey = session.accountKey;
+    } else if (session.authenticated && session.user && session.user.username) {
       accountKey = session.user.username;
-    } else if (currentStore && !currentStore.isSupplierStore) {
+    } else if (currentView === "supplier" || session.role === "supplier") {
+      accountKey = "vanessa";
+    } else if (currentView === "store-admin" || session.role === "store-admin" || (currentStore && !currentStore.isSupplierStore)) {
       accountKey = "calishoes";
     }
 
     const acc = accounts[accountKey] || accounts.vanessa || {};
+    const targetStore = (currentStore && currentStore.id === acc.storeId) ? currentStore : (db.getStores().find(s => s.id === acc.storeId) || currentStore);
 
     const keyEl = document.getElementById("account-key");
     const nameEl = document.getElementById("account-name");
@@ -1534,13 +1545,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const badgeEl = document.getElementById("modal-account-tenant-badge");
 
     if (keyEl) keyEl.value = accountKey;
-    if (nameEl) nameEl.value = acc.name || currentStore.name || "";
+    if (nameEl) nameEl.value = targetStore?.name || acc.name || "";
     if (emailEl) emailEl.value = acc.email || "";
     if (passEl) passEl.value = acc.password || "Calishoes2026";
     if (pinEl) pinEl.value = acc.pin || (accountKey === "vanessa" ? "8820" : "1234");
-    if (phoneEl) phoneEl.value = acc.phone || currentStore.phone || "573505337256";
+    if (phoneEl) phoneEl.value = targetStore?.phone || acc.phone || "573505337256";
     if (badgeEl) {
-      badgeEl.textContent = `Inquilino: ${acc.tenantId || currentStore.id} • ${acc.isMasterSupplier || currentStore.isSupplierStore ? 'Bodega Matriz' : 'Sneaker Partner'}`;
+      const isBodega = acc.isMasterSupplier || (targetStore && targetStore.isSupplierStore);
+      badgeEl.textContent = `Inquilino: ${acc.tenantId || targetStore?.id} • ${isBodega ? '👑 Bodega Matriz' : '👟 Sneaker Partner'}`;
     }
 
     modal.classList.add("open");
@@ -1573,8 +1585,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
         db.updateAccountSecurity(key, { name, email, password, pin, phone });
         modal.classList.remove("open");
-        showToast("🔒 Configuración de cuenta y seguridad guardada con éxito.");
+        showToast("🔒 Configuración de cuenta y nombre de negocio actualizados con éxito.");
         setupHeadersAndRoleIsolation();
+        renderHudStores();
         renderCurrentView();
       };
     }

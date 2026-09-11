@@ -176,26 +176,54 @@ class ShoesStoreManager {
 
   // Compatibilidad con modal rápido de PIN
   authenticate(role, pin) {
+    const accounts = this.getAccounts();
+    const accountKey = role === "supplier" ? "vanessa" : "calishoes";
+    const targetAcc = accounts[accountKey] || (role === "supplier" ? accounts.vanessa : accounts.calishoes);
     if (pin === "Calishoes2026" || pin === "8820" || pin === "1234" || pin === SUPER_ADMIN_CONFIG.masterKey || pin === "9999") {
-      const session = { role, authenticated: true, timestamp: Date.now() };
+      const session = {
+        role,
+        authenticated: true,
+        accountKey,
+        user: targetAcc,
+        storeId: targetAcc?.storeId,
+        timestamp: Date.now()
+      };
       localStorage.setItem(DB_KEYS.AUTH_SESSION, JSON.stringify(session));
       return { success: true };
     }
     return { success: false, message: "PIN de seguridad o contraseña incorrecta." };
   }
 
-  // Cambio de Credenciales y Seguridad de Cuenta en Privado
+  // Cambio de Credenciales y Seguridad de Cuenta en Privado (Bodega Matriz & Sneaker Partner)
   updateAccountSecurity(accountKey, { name, email, password, pin, phone }) {
     const accounts = this.getAccounts();
     if (!accounts[accountKey]) return { success: false, message: "Cuenta no encontrada." };
 
-    if (name) accounts[accountKey].name = name;
+    if (name) {
+      accounts[accountKey].name = name;
+      accounts[accountKey].businessName = name;
+    }
     if (email) accounts[accountKey].email = email;
     if (password) accounts[accountKey].password = password;
     if (pin) accounts[accountKey].pin = pin;
     if (phone) accounts[accountKey].phone = phone;
 
     this.saveAccounts(accounts);
+
+    // Sincronizar de inmediato con la tienda correspondiente en el ecosistema (Bodega o Sneaker Partner)
+    const targetStoreId = accounts[accountKey].storeId || (accountKey === "vanessa" ? "store-001" : "store-002");
+    const stores = this.getStores();
+    const store = stores.find(s => s.id === targetStoreId);
+    if (store) {
+      if (name) store.name = name;
+      if (phone) {
+        store.phone = phone;
+        if (store.whatsappLines && store.whatsappLines.length > 0) {
+          store.whatsappLines[0].phone = phone;
+        }
+      }
+      this.saveStores(stores);
+    }
 
     // Actualizar sesión activa
     const session = this.getAuthSession();
@@ -204,7 +232,11 @@ class ShoesStoreManager {
       localStorage.setItem(DB_KEYS.AUTH_SESSION, JSON.stringify(session));
     }
 
-    return { success: true, account: accounts[accountKey] };
+    return { success: true, account: accounts[accountKey], store };
+  }
+
+  saveStores(stores) {
+    localStorage.setItem(DB_KEYS.STORES, JSON.stringify(stores));
   }
 
   // Reseteo de Emergencia por el Dueño del SaaS (GHOST / Bastion AI)
