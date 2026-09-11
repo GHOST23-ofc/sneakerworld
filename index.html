@@ -838,28 +838,20 @@
             Tu data e inventario están protegidos. Si modificas tu contraseña y la olvidas, el soporte del SaaS puede ayudarte a recuperar tu cuenta sin perder ningún producto ni historial.
           </div>
 
-          <!-- Configuración de CDN Nube para Fotos Masivas (Cloudinary) -->
+          <!-- Infraestructura CDN Nube para Fotos Masivas (Cloudinary) -->
           <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: var(--radius-md); padding: 12px; margin-bottom: 16px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 4px;">
-              <strong style="color: #15803d; font-size: 12px;">☁️ CDN Cloudinary Activo & Conectado:</strong>
-              <span id="account-cloudinary-status-badge" class="badge-verified" style="background: #ffffff; color: #16a34a; border-color: #86efac; font-size: 10px;">🟢 Conexión Activa</span>
+              <strong style="color: #15803d; font-size: 12px;">☁️ CDN Cloudinary Conectado Internamente:</strong>
+              <span id="account-cloudinary-status-badge" class="badge-verified" style="background: #ffffff; color: #16a34a; border-color: #86efac; font-size: 10px;">🟢 Conectado de Fábrica</span>
             </div>
             <p style="font-size: 11px; color: #166534; margin-bottom: 8px; line-height: 1.35;">
-              Infraestructura conectada a tu cuenta Cloudinary (<code>m7ts03dk</code> / <code>SNEAKER WORLD</code>). Las fotos subidas desde cualquier celular se alojan y comprimen automáticamente sin consumir almacenamiento de la web.
+              Infraestructura activa pre-conectada a nivel de código (Cloud: <code>m7ts03dk</code> / Preset: <code>SNEAKER WORLD</code>). Todo el calzado y fotos que subas desde cualquier celular o bodega se alojan automáticamente en la red CDN global sin que tengas que configurar nada.
             </p>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
-              <div>
-                <label class="form-label" style="font-size: 10px;">Cloud Name:</label>
-                <input type="text" id="account-cloudinary-cloud" class="form-input" value="m7ts03dk" style="font-size: 11px; padding: 5px 8px; font-weight: 700;">
-              </div>
-              <div>
-                <label class="form-label" style="font-size: 10px;">Upload Preset (Unsigned):</label>
-                <input type="text" id="account-cloudinary-preset" class="form-input" value="SNEAKER WORLD" style="font-size: 11px; padding: 5px 8px; font-weight: 700;">
-              </div>
-            </div>
+            <input type="hidden" id="account-cloudinary-cloud" value="m7ts03dk">
+            <input type="hidden" id="account-cloudinary-preset" value="SNEAKER WORLD">
             <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
               <button type="button" id="btn-test-cloudinary" class="btn-secondary" style="font-size: 11px; padding: 4px 10px; cursor: pointer; background: #ffffff;">
-                🧪 Probar Conexión Cloud
+                🧪 Probar Conexión CDN
               </button>
             </div>
           </div>

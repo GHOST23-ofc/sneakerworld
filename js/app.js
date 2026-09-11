@@ -1817,26 +1817,19 @@ document.addEventListener("DOMContentLoaded", () => {
       badgeEl.textContent = `Inquilino: ${acc.tenantId || targetStore?.id} • ${isBodega ? '👑 Bodega Matriz' : '👟 Sneaker Partner'}`;
     }
 
-    // Cargar configuración de Cloudinary
+    // Configuración interna de Cloudinary CDN
     const cloudCfg = db.getCloudinaryConfig();
     const cloudInput = document.getElementById("account-cloudinary-cloud");
     const presetInput = document.getElementById("account-cloudinary-preset");
     const cloudStatusBadge = document.getElementById("account-cloudinary-status-badge");
 
-    if (cloudInput) cloudInput.value = cloudCfg.cloudName || "";
-    if (presetInput) presetInput.value = cloudCfg.uploadPreset || "";
+    if (cloudInput) cloudInput.value = cloudCfg.cloudName || "m7ts03dk";
+    if (presetInput) presetInput.value = cloudCfg.uploadPreset || "SNEAKER WORLD";
     if (cloudStatusBadge) {
-      if (cloudCfg.cloudName && cloudCfg.uploadPreset) {
-        cloudStatusBadge.textContent = "☁️ Cloudinary CDN Activo";
-        cloudStatusBadge.style.background = "#eff6ff";
-        cloudStatusBadge.style.color = "#1d4ed8";
-        cloudStatusBadge.style.borderColor = "#bfdbfe";
-      } else {
-        cloudStatusBadge.textContent = "⚡ Modo Autónomo (WebP Celular)";
-        cloudStatusBadge.style.background = "#f0fdf4";
-        cloudStatusBadge.style.color = "#16a34a";
-        cloudStatusBadge.style.borderColor = "#86efac";
-      }
+      cloudStatusBadge.textContent = "🟢 Conectado de Fábrica";
+      cloudStatusBadge.style.background = "#ffffff";
+      cloudStatusBadge.style.color = "#16a34a";
+      cloudStatusBadge.style.borderColor = "#86efac";
     }
 
     modal.classList.add("open");
@@ -1898,37 +1891,38 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (btnTestCloud) {
       btnTestCloud.onclick = async () => {
-        const cloudName = document.getElementById("account-cloudinary-cloud")?.value.trim();
-        const uploadPreset = document.getElementById("account-cloudinary-preset")?.value.trim();
-        if (!cloudName || !uploadPreset) {
-          showToast("⚠️ Ingresa Cloud Name y Upload Preset para probar.");
-          return;
-        }
-        btnTestCloud.textContent = "⏳ Probando...";
+        const cloudCfg = db.getCloudinaryConfig();
+        const cloudName = document.getElementById("account-cloudinary-cloud")?.value.trim() || cloudCfg.cloudName || "m7ts03dk";
+        const uploadPreset = document.getElementById("account-cloudinary-preset")?.value.trim() || cloudCfg.uploadPreset || "SNEAKER WORLD";
+        btnTestCloud.textContent = "⏳ Probando CDN...";
+        btnTestCloud.disabled = true;
         try {
           const testCanvas = document.createElement("canvas");
-          testCanvas.width = 1;
-          testCanvas.height = 1;
+          testCanvas.width = 10;
+          testCanvas.height = 10;
           testCanvas.toBlob(async (blob) => {
             try {
               await uploadToCloudinary(blob, cloudName, uploadPreset);
-              showToast("✅ ¡Conexión con Cloudinary CDN 100% exitosa!");
+              showToast("✅ ¡Conexión con Cloudinary CDN activa y funcionando!");
               db.setCloudinaryConfig({ cloudName, uploadPreset });
               const cloudStatusBadge = document.getElementById("account-cloudinary-status-badge");
               if (cloudStatusBadge) {
-                cloudStatusBadge.textContent = "☁️ Cloudinary CDN Activo";
-                cloudStatusBadge.style.background = "#eff6ff";
-                cloudStatusBadge.style.color = "#1d4ed8";
+                cloudStatusBadge.textContent = "🟢 Conectado de Fábrica";
+                cloudStatusBadge.style.background = "#ffffff";
+                cloudStatusBadge.style.color = "#16a34a";
+                cloudStatusBadge.style.borderColor = "#86efac";
               }
             } catch (err) {
               showToast(`❌ Error Cloudinary: ${err.message}`);
             } finally {
-              btnTestCloud.textContent = "🧪 Probar Conexión Cloud";
+              btnTestCloud.textContent = "🧪 Probar Conexión CDN";
+              btnTestCloud.disabled = false;
             }
-          }, "image/png");
+          }, "image/webp");
         } catch (e) {
           showToast(`❌ Error: ${e.message}`);
-          btnTestCloud.textContent = "🧪 Probar Conexión Cloud";
+          btnTestCloud.textContent = "🧪 Probar Conexión CDN";
+          btnTestCloud.disabled = false;
         }
       };
     }
@@ -1944,9 +1938,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const phone = document.getElementById("account-phone").value.trim();
         const logo = document.getElementById("account-logo-data")?.value || "";
 
-        // Guardar configuración Cloudinary
-        const cloudName = document.getElementById("account-cloudinary-cloud")?.value.trim() || "";
-        const uploadPreset = document.getElementById("account-cloudinary-preset")?.value.trim() || "";
+        // Guardar configuración Cloudinary (con respaldo interno fijo)
+        const cloudName = document.getElementById("account-cloudinary-cloud")?.value.trim() || "m7ts03dk";
+        const uploadPreset = document.getElementById("account-cloudinary-preset")?.value.trim() || "SNEAKER WORLD";
         db.setCloudinaryConfig({ cloudName, uploadPreset });
 
         db.updateAccountSecurity(key, { name, email, password, pin, phone, logo });
