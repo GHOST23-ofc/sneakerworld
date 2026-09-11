@@ -1771,6 +1771,9 @@ input:checked + .slider-round:before {
     gap: 10px;
     margin-bottom: 16px;
   }
+  .stats-cards-grid .stat-card:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
   .stat-card {
     padding: 12px 10px;
     gap: 10px;
