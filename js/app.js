@@ -1377,22 +1377,68 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function setupAddProductModal() {
-    const btnOpen = document.getElementById("btn-open-add-product");
+    const btnOpen = document.getElementById("btn-open-add-product-modal") || document.getElementById("btn-open-add-product");
     const modal = document.getElementById("modal-add-product");
-    const btnClose = document.getElementById("btn-close-add-modal");
+    const btnClose = document.getElementById("btn-close-add-modal") || document.getElementById("btn-close-add-product-modal");
     const btnCancel = document.getElementById("btn-cancel-add-product");
     const form = document.getElementById("form-add-product");
 
-    btnOpen.onclick = () => {
-      document.getElementById("modal-add-product-title").textContent = "Publicar Nueva Referencia en Bodega";
-      document.getElementById("btn-submit-product-form").textContent = "Publicar a Todas las Tiendas";
-      form.reset();
-      document.getElementById("add-prod-id").value = "";
-      modal.classList.add("open");
-    };
+    // Inputs de imagen automatizada
+    const prodImgFile = document.getElementById("add-prod-img-file");
+    const prodImgUrl = document.getElementById("add-prod-img-url");
+    const prodImgData = document.getElementById("add-prod-img-data");
+    const prodImgPreview = document.getElementById("add-prod-img-preview");
+    const prodImgStatus = document.getElementById("add-prod-img-status");
 
-    btnClose.onclick = () => modal.classList.remove("open");
-    btnCancel.onclick = () => modal.classList.remove("open");
+    if (btnOpen) {
+      btnOpen.onclick = () => {
+        document.getElementById("modal-add-product-title").textContent = "Publicar Nueva Referencia en Bodega";
+        document.getElementById("btn-submit-product-form").textContent = "Publicar a Todas las Tiendas";
+        form.reset();
+        document.getElementById("add-prod-id").value = "";
+        if (prodImgData) prodImgData.value = "";
+        if (prodImgPreview) prodImgPreview.innerHTML = "👟";
+        if (prodImgStatus) prodImgStatus.style.display = "none";
+        modal.classList.add("open");
+      };
+    }
+
+    if (btnClose) btnClose.onclick = () => modal.classList.remove("open");
+    if (btnCancel) btnCancel.onclick = () => modal.classList.remove("open");
+
+    // Auto-compresión nativa de fotos de calzado en cliente (WebP 800px / ~40KB / Cero lag)
+    if (prodImgFile) {
+      prodImgFile.addEventListener("change", async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        try {
+          if (prodImgStatus) {
+            prodImgStatus.style.display = "block";
+            prodImgStatus.textContent = "⚡ Comprimiendo foto en el dispositivo...";
+          }
+          const res = await ImageOptimizer.compressFile(file, 800, 0.82);
+          if (prodImgData) prodImgData.value = res.dataUrl;
+          if (prodImgPreview) prodImgPreview.innerHTML = `<img src="${res.dataUrl}" style="width: 100%; height: 100%; object-fit: cover; border-radius: inherit;">`;
+          if (prodImgStatus) {
+            prodImgStatus.textContent = `✅ Foto optimizada: ${res.originalKb} KB ➔ ${res.compressedKb} KB (WebP - ${res.reductionPercent}% más ligera)`;
+          }
+        } catch (err) {
+          if (prodImgStatus) prodImgStatus.style.display = "none";
+          showToast("Error procesando imagen: " + err.message);
+        }
+      });
+    }
+
+    if (prodImgUrl) {
+      prodImgUrl.addEventListener("input", (e) => {
+        const url = e.target.value.trim();
+        if (url) {
+          if (prodImgData) prodImgData.value = url;
+          if (prodImgPreview) prodImgPreview.innerHTML = `<img src="${url}" style="width: 100%; height: 100%; object-fit: cover; border-radius: inherit;">`;
+          if (prodImgStatus) prodImgStatus.style.display = "none";
+        }
+      });
+    }
 
     form.onsubmit = (e) => {
       e.preventDefault();
@@ -1404,6 +1450,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const sizesStr = document.getElementById("add-prod-sizes").value;
       const desc = document.getElementById("add-prod-desc").value.trim();
       const campaign = document.getElementById("add-prod-campaign").value;
+      const image = (prodImgData && prodImgData.value) ? prodImgData.value : "assets/images/nike_initiator_babyblue.jpg";
 
       const sizes = sizesStr.split(",").map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n));
 
@@ -1416,9 +1463,10 @@ document.addEventListener("DOMContentLoaded", () => {
           suggestedRetailPrice: retail,
           sizes,
           description: desc,
-          campaignBadge: campaign
+          campaignBadge: campaign,
+          ...(prodImgData && prodImgData.value ? { image: prodImgData.value } : {})
         });
-        showToast(`✅ Referencia ${name} modificada con éxito.`);
+        showToast(`✅ Referencia '${name}' modificada con éxito.`);
       } else {
         // Modo Creación
         db.addMasterProduct({
@@ -1428,9 +1476,10 @@ document.addEventListener("DOMContentLoaded", () => {
           suggestedRetailPrice: retail,
           sizes,
           description: desc,
-          campaignBadge: campaign
+          campaignBadge: campaign,
+          image
         });
-        showToast(`✅ ¡Nueva referencia ${name} publicada a toda la red!`);
+        showToast(`✅ ¡Nueva zapatilla '${name}' publicada a toda la red con foto optimizada!`);
       }
 
       modal.classList.remove("open");
@@ -1554,6 +1603,110 @@ document.addEventListener("DOMContentLoaded", () => {
         handleDirSearch(e.target.value.trim());
       });
     }
+
+    // Botones de carga rápida de red multi-bodega (5 a 8 bodegas de Cali)
+    const btnLoadMulti = document.getElementById("btn-load-multi-bodegas");
+    if (btnLoadMulti) {
+      btnLoadMulti.onclick = () => {
+        db.loadPresetBodegasNetwork();
+        showToast("⚡ Red completa activada: 8 Bodegas y Sneaker Partners de Cali.");
+        renderDirectory();
+        renderHudStores();
+      };
+    }
+
+    const btnResetTwo = document.getElementById("btn-reset-two-bodegas");
+    if (btnResetTwo) {
+      btnResetTwo.onclick = () => {
+        db.resetToVanessaAndCaliOnly();
+        showToast("🔄 Red restablecida a Vanessa Castellar Shoes & Cali Shoes Distribuidora.");
+        renderDirectory();
+        renderHudStores();
+      };
+    }
+
+    // Modal de Afiliación / Registro de Nueva Bodega
+    const modalReg = document.getElementById("modal-register-bodega");
+    const btnOpenReg = document.getElementById("btn-open-register-bodega-modal");
+    const btnCloseReg = document.getElementById("btn-close-register-bodega-modal");
+    const btnCancelReg = document.getElementById("btn-cancel-register-bodega");
+    const formReg = document.getElementById("form-register-bodega");
+
+    if (btnOpenReg) {
+      btnOpenReg.onclick = () => {
+        if (formReg) formReg.reset();
+        const prev = document.getElementById("new-store-logo-preview");
+        if (prev) prev.innerHTML = "🏬";
+        const st = document.getElementById("new-store-logo-status");
+        if (st) st.style.display = "none";
+        if (modalReg) modalReg.classList.add("open");
+      };
+    }
+
+    if (btnCloseReg) btnCloseReg.onclick = () => modalReg.classList.remove("open");
+    if (btnCancelReg) btnCancelReg.onclick = () => modalReg.classList.remove("open");
+
+    let newStoreLogoData = "";
+    const logoFileInput = document.getElementById("new-store-logo-file");
+    const logoUrlInput = document.getElementById("new-store-logo-url");
+    const logoPreview = document.getElementById("new-store-logo-preview");
+    const logoStatus = document.getElementById("new-store-logo-status");
+
+    if (logoFileInput) {
+      logoFileInput.addEventListener("change", async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        try {
+          if (logoStatus) {
+            logoStatus.style.display = "block";
+            logoStatus.textContent = "⚡ Comprimiendo logo en WebP...";
+          }
+          const res = await ImageOptimizer.compressFile(file, 400, 0.85);
+          newStoreLogoData = res.dataUrl;
+          if (logoPreview) logoPreview.innerHTML = `<img src="${res.dataUrl}" style="width: 100%; height: 100%; object-fit: cover; border-radius: inherit;">`;
+          if (logoStatus) logoStatus.textContent = `✅ Logo optimizado: ${res.compressedKb} KB (WebP 60fps)`;
+        } catch (err) {
+          if (logoStatus) logoStatus.style.display = "none";
+          showToast("Error procesando logo: " + err.message);
+        }
+      });
+    }
+
+    if (logoUrlInput) {
+      logoUrlInput.addEventListener("input", (e) => {
+        const url = e.target.value.trim();
+        if (url) {
+          newStoreLogoData = url;
+          if (logoPreview) logoPreview.innerHTML = `<img src="${url}" style="width: 100%; height: 100%; object-fit: cover; border-radius: inherit;">`;
+          if (logoStatus) logoStatus.style.display = "none";
+        }
+      });
+    }
+
+    if (formReg) {
+      formReg.onsubmit = (e) => {
+        e.preventDefault();
+        const role = document.getElementById("new-store-role").value;
+        const name = document.getElementById("new-store-name").value.trim();
+        const location = document.getElementById("new-store-location").value.trim();
+        const phone = document.getElementById("new-store-phone").value.trim();
+        const tagline = document.getElementById("new-store-tagline").value.trim();
+
+        const result = db.addStore({
+          role,
+          name,
+          neighborhood: location,
+          phone,
+          tagline,
+          logo: newStoreLogoData || ""
+        });
+
+        modalReg.classList.remove("open");
+        showToast(`🎉 ¡${result.store.name} afiliada a la red! Acceso directo creado.`);
+        renderDirectory();
+        renderHudStores();
+      };
+    }
   }
 
   // =========================================================================
@@ -1644,24 +1797,21 @@ document.addEventListener("DOMContentLoaded", () => {
     if (btnClose) btnClose.onclick = () => modal.classList.remove("open");
 
     if (logoFile) {
-      logoFile.addEventListener("change", (e) => {
+      logoFile.addEventListener("change", async (e) => {
         const file = e.target.files[0];
         if (!file) return;
-        if (file.size > 2 * 1024 * 1024) {
-          showToast("⚠️ La imagen supera 2MB. Por favor selecciona un logo más liviano.");
-          return;
-        }
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          const b64 = event.target.result;
-          if (logoData) logoData.value = b64;
+        try {
+          const res = await ImageOptimizer.compressFile(file, 400, 0.85);
+          if (logoData) logoData.value = res.dataUrl;
           if (logoImg) {
-            logoImg.src = b64;
+            logoImg.src = res.dataUrl;
             logoImg.style.display = "block";
           }
           if (logoPlaceholder) logoPlaceholder.style.display = "none";
-        };
-        reader.readAsDataURL(file);
+          showToast(`✅ Logo optimizado: ${res.compressedKb} KB (WebP 60fps)`);
+        } catch (err) {
+          showToast("Error procesando imagen: " + err.message);
+        }
       });
     }
 

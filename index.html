@@ -377,7 +377,10 @@
               <h2 style="font-size: 16px; font-weight: 800; color: var(--text-primary);">📦 Catálogo Maestro & Control de Precios en Caliente (18 Modelos)</h2>
               <p style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">Modifica costos de bodega, precios de venta al detal o lanza promociones/campañas especiales para toda la red.</p>
             </div>
-            <div style="display: flex; gap: 8px;">
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button type="button" id="btn-open-add-product-modal" class="btn-primary" style="font-size: 12px; padding: 7px 16px; background: var(--primary-red); border-color: var(--primary-red); cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                <span>➕ Subir Zapatilla a la Red</span>
+              </button>
               <button type="button" id="btn-save-all-supplier-prices" class="btn-primary" style="font-size: 12px; padding: 7px 16px; background: #16a34a; border-color: #15803d; cursor: pointer;">
                 💾 Guardar Modificaciones
               </button>
@@ -513,6 +516,17 @@
                 💡 <strong>Estructura del Negocio:</strong> Tus clientes directos que pagan suscripción mensual al SaaS son las <strong>Bodegas Matrices</strong> (como Vanessa Castellar Shoes). Cada bodega a su vez conecta y abastece a sus <strong>Sneaker Partners</strong> (revendedores locales como Cali Shoes Distribuidora).
               </p>
             </div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+              <button type="button" id="btn-load-multi-bodegas" class="btn-secondary" style="font-size: 12px; font-weight: 700; border-color: rgba(16,185,129,0.35); color: #059669; background: #ecfdf5; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                <span>⚡ Cargar Red 8 Bodegas Cali</span>
+              </button>
+              <button type="button" id="btn-reset-two-bodegas" class="btn-secondary" style="font-size: 12px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                <span>🔄 Solo Vanessa & Cali Shoes</span>
+              </button>
+              <button type="button" id="btn-open-register-bodega-modal" class="btn-primary" style="font-size: 12px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                <span>➕ Afiliar Nueva Bodega / Partner</span>
+              </button>
+            </div>
           </div>
 
           <!-- Barra de Búsqueda y Filtros de Rol -->
@@ -634,6 +648,22 @@
           <div class="form-group">
             <label class="form-label">Tallas Disponibles (separadas por coma):</label>
             <input type="text" id="add-prod-sizes" class="form-input" value="37, 38, 39, 40, 41, 42" required>
+          </div>
+          <!-- Carga Automatizada de Foto del Calzado con Compresor WebP -->
+          <div class="form-group">
+            <label class="form-label">📸 Foto del Calzado (Cámara Móvil / Auto-Compresión WebP):</label>
+            <div style="display: flex; gap: 14px; align-items: center; margin-bottom: 8px;">
+              <div id="add-prod-img-preview" style="width: 76px; height: 76px; border-radius: 12px; background: #f1f5f9; border: 1px dashed var(--border-subtle); display: flex; align-items: center; justify-content: center; font-size: 26px; overflow: hidden; flex-shrink: 0;">
+                👟
+              </div>
+              <div style="flex: 1;">
+                <input type="file" id="add-prod-img-file" accept="image/*" class="form-input" style="padding: 6px; font-size: 12px;">
+                <small style="color: var(--text-muted); font-size: 11px;">Toma la foto o sube de galería. Se comprime al 99% sin perder nitidez.</small>
+              </div>
+            </div>
+            <div id="add-prod-img-status" style="display: none; font-size: 11px; font-weight: 700; color: #16a34a; background: #f0fdf4; padding: 4px 8px; border-radius: 6px; border: 1px solid #bbf7d0; margin-bottom: 6px;"></div>
+            <input type="url" id="add-prod-img-url" class="form-input" placeholder="O pega una URL de imagen (Cloudinary / CDN / Web)...">
+            <input type="hidden" id="add-prod-img-data" value="">
           </div>
           <div class="form-group">
             <label class="form-label">Descripción / Detalles de Confección:</label>
@@ -1274,6 +1304,77 @@
       </div>
     </div>
 
+    <!-- =========================================================================
+         MODAL 11: AFILIAR / REGISTRAR NUEVA BODEGA O SNEAKER PARTNER
+         ========================================================================= -->
+    <div class="modal-backdrop" id="modal-register-bodega" role="dialog" aria-modal="true">
+      <div class="modal-dialog" style="max-width: 540px;">
+        <div class="modal-header">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="font-size: 24px;">🏢</div>
+            <div>
+              <h3 style="margin: 0; font-size: 18px; font-weight: 900;">Afiliar Nueva Bodega / Partner</h3>
+              <p style="margin: 0; font-size: 12px; color: var(--text-secondary);">Integra una nueva bodega mayorista o tienda revendedora a la red de Cali.</p>
+            </div>
+          </div>
+          <button class="btn-close-modal" id="btn-close-register-bodega-modal">&times;</button>
+        </div>
+
+        <form id="form-register-bodega">
+          <div class="form-group">
+            <label class="form-label">Tipo de Comercio en Cali *</label>
+            <select id="new-store-role" class="form-select" required>
+              <option value="supplier">🏢 Bodega Matriz Mayorista (Precios al por Mayor B2B)</option>
+              <option value="partner">🏪 Sneaker Partner (Tienda Revendedora al Detal)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Nombre del Negocio o Marca *</label>
+            <input type="text" id="new-store-name" class="form-input" placeholder="ej. Bodega Kicks San Andresito" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Ubicación / Dirección en Cali *</label>
+            <input type="text" id="new-store-location" class="form-input" placeholder="ej. San Andresito de la 38, Local 114" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Línea WhatsApp Oficial de Despachos *</label>
+            <input type="tel" id="new-store-phone" class="form-input" placeholder="573150000000" required>
+            <small style="color: var(--text-muted); font-size: 11px;">Formato 57 + número celular (ej. 573185551234).</small>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Eslogan o Descripción Corta</label>
+            <input type="text" id="new-store-tagline" class="form-input" placeholder="ej. Distribuidora mayorista directa de calzado urbano y deportivo.">
+          </div>
+
+          <!-- Carga Automatizada de Logo con Compresor WebP -->
+          <div class="form-group">
+            <label class="form-label">Logo de la Bodega (Subida Automatizada WebP)</label>
+            <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 8px;">
+              <div id="new-store-logo-preview" style="width: 52px; height: 52px; border-radius: 12px; background: #f1f5f9; border: 1px dashed var(--border-subtle); display: flex; align-items: center; justify-content: center; font-size: 20px; overflow: hidden; flex-shrink: 0;">
+                🏬
+              </div>
+              <div style="flex: 1;">
+                <input type="file" id="new-store-logo-file" accept="image/*" class="form-input" style="padding: 6px; font-size: 12px;">
+              </div>
+            </div>
+            <div id="new-store-logo-status" style="display: none; font-size: 11px; font-weight: 700; color: #16a34a; background: #f0fdf4; padding: 4px 8px; border-radius: 6px; border: 1px solid #bbf7d0; margin-bottom: 6px;"></div>
+            <input type="url" id="new-store-logo-url" class="form-input" placeholder="O pega una URL de logo externa...">
+          </div>
+
+          <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button type="button" class="btn-secondary" id="btn-cancel-register-bodega" style="flex: 1; justify-content: center;">Cancelar</button>
+            <button type="submit" class="btn-primary" style="flex: 1.5; justify-content: center; background: #16a34a; border-color: #15803d;">
+              💾 Registrar y Activar Bodega
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <!-- TOAST CONTAINER -->
     <div class="toast-container" id="toast-container"></div>
 
@@ -1301,6 +1402,7 @@
   <!-- Scripts -->
   <script src="js/mockData.js"></script>
   <script src="js/store.js"></script>
+  <script src="js/imageOptimizer.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
