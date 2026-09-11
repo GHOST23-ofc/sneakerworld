@@ -22,6 +22,15 @@ document.addEventListener("DOMContentLoaded", () => {
   // Inicializar UI
   initApp();
 
+  // Helper universal de debounce para máxima fluidez y cero lag en búsquedas
+  function debounce(fn, delay = 100) {
+    let timeoutId;
+    return function (...args) {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => fn.apply(this, args), delay);
+    };
+  }
+
   // Helper universal para copiar al portapapeles sin errores
   function copyToClipboard(text, successMsg, promptMsg = "Copia este enlace:") {
     if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -507,7 +516,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return `
         <div class="product-card" data-product-id="${p.id}">
           <div class="product-image-box">
-            <img src="${p.image}" alt="${p.name}" class="product-image" loading="lazy">
+            <img src="${p.image}" alt="${p.name}" class="product-image" loading="lazy" decoding="async">
             <div class="product-badges">
               <span class="category-tag">${p.category}</span>
               <span class="sku-tag">${colorCount > 1 ? `🎨 ${colorCount} Colores` : p.sku}</span>
@@ -580,12 +589,17 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     });
 
-    // Input de Búsqueda
+    // Input de Búsqueda con debounce para fluidez 60fps
     const searchInput = document.getElementById("storefront-search-input");
-    searchInput.addEventListener("input", (e) => {
-      searchQuery = e.target.value;
-      renderStorefront(db.getCurrentStore());
-    });
+    if (searchInput) {
+      const handleStorefrontSearch = debounce((val) => {
+        searchQuery = val;
+        renderStorefront(db.getCurrentStore());
+      }, 100);
+      searchInput.addEventListener("input", (e) => {
+        handleStorefrontSearch(e.target.value);
+      });
+    }
 
     // Selectores
     document.getElementById("storefront-cat-select").addEventListener("change", (e) => {
@@ -639,11 +653,11 @@ document.addEventListener("DOMContentLoaded", () => {
       }).join("");
 
       body.innerHTML = `
-        <div style="display: flex; gap: 20px; margin-bottom: 20px; flex-wrap: wrap;">
-          <div style="flex: 1; min-width: 220px; height: 220px; border-radius: var(--radius-md); overflow: hidden; background: #f1f5f9; border: 1px solid var(--border-subtle);">
-            <img src="${activeImg}" alt="${product.name}" style="width: 100%; height: 100%; object-fit: cover;">
+        <div class="product-modal-hero">
+          <div class="product-modal-img-box">
+            <img src="${activeImg}" alt="${product.name}" decoding="async" style="width: 100%; height: 100%; object-fit: cover;">
           </div>
-          <div style="flex: 1.2; min-width: 240px; display: flex; flex-direction: column; justify-content: center;">
+          <div class="product-modal-info">
             <div style="font-size: 11px; font-weight: 800; color: var(--primary-red); text-transform: uppercase;">${product.category} • SKU: ${product.sku}</div>
             <h4 style="font-size: 18px; font-weight: 900; color: var(--text-primary); margin: 4px 0 6px;">${product.name}</h4>
             <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px;">
@@ -684,7 +698,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <div class="size-pills-row" style="flex-wrap: wrap;">${sizePills}</div>
         </div>
 
-        <div style="display: flex; gap: 10px; margin-top: 24px;">
+        <div class="product-modal-actions-box">
           <button type="button" class="btn-secondary" id="btn-add-to-cart" style="flex: 1; justify-content: center; ${isAgotado ? 'opacity: 0.5; cursor: not-allowed;' : ''}">
             ${isAgotado ? '❌ Talla Agotada' : '🛍️ Agregar a la Bolsa'}
           </button>
@@ -1532,9 +1546,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const searchInput = document.getElementById("dir-search-input");
     if (searchInput) {
-      searchInput.addEventListener("input", (e) => {
-        directorySearchQuery = e.target.value.trim();
+      const handleDirSearch = debounce((val) => {
+        directorySearchQuery = val;
         renderDirectory();
+      }, 100);
+      searchInput.addEventListener("input", (e) => {
+        handleDirSearch(e.target.value.trim());
       });
     }
   }
