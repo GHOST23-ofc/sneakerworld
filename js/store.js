@@ -972,7 +972,10 @@ ${dispatchText}
   // CONFIGURACIÓN DE ALMACENAMIENTO EN LA NUBE (CLOUDINARY / CDN)
   // =========================================================================
   getCloudinaryConfig() {
-    const defaultCfg = { cloudName: "", uploadPreset: "" };
+    const defaultCfg = { 
+      cloudName: "m7ts03dk", 
+      uploadPreset: "SNEAKER WORLD" 
+    };
     try {
       const saved = localStorage.getItem(DB_KEYS.CLOUDINARY_CONFIG);
       return saved ? { ...defaultCfg, ...JSON.parse(saved) } : defaultCfg;
