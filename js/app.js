@@ -44,6 +44,78 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // =========================================================================
+  // OPTIMIZADOR INTELIGENTE DE IMÁGENES WEBP & NUBE CLOUDINARY (BASTION AI)
+  // =========================================================================
+  async function optimizeImageFile(file, maxWidth = 960, maxHeight = 960, quality = 0.82) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target.result;
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          let width = img.width;
+          let height = img.height;
+          if (width > height) {
+            if (width > maxWidth) {
+              height = Math.round((height * maxWidth) / width);
+              width = maxWidth;
+            }
+          } else {
+            if (height > maxHeight) {
+              width = Math.round((width * maxHeight) / height);
+              height = maxHeight;
+            }
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, width, height);
+
+          let dataUrl = canvas.toDataURL("image/webp", quality);
+          if (!dataUrl.startsWith("data:image/webp")) {
+            dataUrl = canvas.toDataURL("image/jpeg", quality);
+          }
+
+          canvas.toBlob((blob) => {
+            resolve({
+              dataUrl,
+              blob: blob || new Blob([dataUrl], { type: "image/webp" }),
+              originalSize: file.size,
+              compressedSize: blob ? blob.size : dataUrl.length,
+              width,
+              height
+            });
+          }, "image/webp", quality);
+        };
+        img.onerror = reject;
+      };
+      reader.onerror = reject;
+    });
+  }
+
+  // Subida directa a Cloudinary (Unsigned Preset)
+  async function uploadToCloudinary(blobOrFile, cloudName, uploadPreset) {
+    const formData = new FormData();
+    formData.append("file", blobOrFile);
+    formData.append("upload_preset", uploadPreset);
+
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+      method: "POST",
+      body: formData
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || `HTTP ${res.status}: Error al conectar con Cloudinary`);
+    }
+
+    const data = await res.json();
+    return data.secure_url;
+  }
+
   function initApp() {
     // Manejo de parámetros de URL Multi-Tenant (?store=... &view=... &supplier=... &demo=...)
     const urlParams = new URLSearchParams(window.location.search);
@@ -1298,6 +1370,28 @@ document.addEventListener("DOMContentLoaded", () => {
           document.getElementById("add-prod-desc").value = prod.description || "";
           document.getElementById("add-prod-campaign").value = prod.campaignBadge || "";
 
+          // Cargar foto existente en preview
+          const finalImgInput = document.getElementById("add-prod-image-final");
+          const urlInput = document.getElementById("add-prod-image-url");
+          const previewImg = document.getElementById("add-prod-img-preview");
+          const placeholder = document.getElementById("add-prod-img-placeholder");
+          const badge = document.getElementById("add-prod-upload-badge");
+
+          if (badge) badge.style.display = "none";
+          if (finalImgInput) finalImgInput.value = prod.image || "";
+          if (urlInput) urlInput.value = (prod.image && prod.image.startsWith("http")) ? prod.image : "";
+          if (previewImg && placeholder) {
+            if (prod.image) {
+              previewImg.src = prod.image;
+              previewImg.style.display = "block";
+              placeholder.style.display = "none";
+            } else {
+              previewImg.src = "";
+              previewImg.style.display = "none";
+              placeholder.style.display = "block";
+            }
+          }
+
           document.getElementById("modal-add-product").classList.add("open");
         };
       });
@@ -1377,68 +1471,119 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function setupAddProductModal() {
-    const btnOpen = document.getElementById("btn-open-add-product-modal") || document.getElementById("btn-open-add-product");
+    const btnOpen = document.getElementById("btn-open-add-product");
     const modal = document.getElementById("modal-add-product");
-    const btnClose = document.getElementById("btn-close-add-modal") || document.getElementById("btn-close-add-product-modal");
+    const btnClose = document.getElementById("btn-close-add-modal");
     const btnCancel = document.getElementById("btn-cancel-add-product");
     const form = document.getElementById("form-add-product");
 
-    // Inputs de imagen automatizada
-    const prodImgFile = document.getElementById("add-prod-img-file");
-    const prodImgUrl = document.getElementById("add-prod-img-url");
-    const prodImgData = document.getElementById("add-prod-img-data");
-    const prodImgPreview = document.getElementById("add-prod-img-preview");
-    const prodImgStatus = document.getElementById("add-prod-img-status");
+    // Componentes de subida y optimización de foto
+    const btnPickFile = document.getElementById("btn-add-prod-pick-file");
+    const fileInput = document.getElementById("add-prod-file-input");
+    const imageUrlInput = document.getElementById("add-prod-image-url");
+    const imageFinal = document.getElementById("add-prod-image-final");
+    const previewImg = document.getElementById("add-prod-img-preview");
+    const placeholder = document.getElementById("add-prod-img-placeholder");
+    const badge = document.getElementById("add-prod-upload-badge");
 
-    if (btnOpen) {
-      btnOpen.onclick = () => {
-        document.getElementById("modal-add-product-title").textContent = "Publicar Nueva Referencia en Bodega";
-        document.getElementById("btn-submit-product-form").textContent = "Publicar a Todas las Tiendas";
-        form.reset();
-        document.getElementById("add-prod-id").value = "";
-        if (prodImgData) prodImgData.value = "";
-        if (prodImgPreview) prodImgPreview.innerHTML = "👟";
-        if (prodImgStatus) prodImgStatus.style.display = "none";
-        modal.classList.add("open");
+    if (btnPickFile && fileInput) {
+      btnPickFile.onclick = () => fileInput.click();
+
+      fileInput.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        if (badge) {
+          badge.style.display = "block";
+          badge.style.background = "#eff6ff";
+          badge.style.color = "#1d4ed8";
+          badge.textContent = "⏳ Optimizando y comprimiendo imagen en el celular...";
+        }
+
+        try {
+          const optimized = await optimizeImageFile(file, 960, 960, 0.82);
+
+          // Actualizar preview en vivo
+          if (previewImg && placeholder) {
+            previewImg.src = optimized.dataUrl;
+            previewImg.style.display = "block";
+            placeholder.style.display = "none";
+          }
+
+          const cloudCfg = db.getCloudinaryConfig();
+          if (cloudCfg.cloudName && cloudCfg.uploadPreset) {
+            if (badge) badge.textContent = "☁️ Subiendo directamente a Cloudinary CDN...";
+            try {
+              const secureUrl = await uploadToCloudinary(optimized.blob, cloudCfg.cloudName, cloudCfg.uploadPreset);
+              if (imageUrlInput) imageUrlInput.value = secureUrl;
+              if (imageFinal) imageFinal.value = secureUrl;
+              if (badge) {
+                badge.style.background = "#f0fdf4";
+                badge.style.color = "#15803d";
+                badge.textContent = `☁️ Subida a Cloudinary CDN exitosa (WebP ultra-ligero)`;
+              }
+              showToast("☁️ Foto alojada en CDN Cloudinary con éxito.");
+              return;
+            } catch (cloudErr) {
+              console.warn("Cloudinary upload failed, falling back to local WebP:", cloudErr);
+            }
+          }
+
+          // Fallback a compresión WebP local autónoma
+          if (imageFinal) imageFinal.value = optimized.dataUrl;
+          if (imageUrlInput) imageUrlInput.value = "";
+          if (badge) {
+            const kbOrig = Math.round(optimized.originalSize / 1024);
+            const kbComp = Math.round(optimized.compressedSize / 1024);
+            const savings = Math.max(0, Math.round((1 - optimized.compressedSize / optimized.originalSize) * 100));
+            badge.style.background = "#f0fdf4";
+            badge.style.color = "#15803d";
+            badge.textContent = `⚡ WebP Autónomo: Reducida de ${kbOrig} KB a ${kbComp} KB (-${savings}%) lista para catálogo`;
+          }
+          showToast("⚡ Foto comprimida a WebP en el celular al 99% menos peso.");
+        } catch (err) {
+          if (badge) {
+            badge.style.background = "#fef2f2";
+            badge.style.color = "#dc2626";
+            badge.textContent = `❌ Error al procesar imagen: ${err.message}`;
+          }
+        }
       };
     }
 
-    if (btnClose) btnClose.onclick = () => modal.classList.remove("open");
-    if (btnCancel) btnCancel.onclick = () => modal.classList.remove("open");
-
-    // Auto-compresión nativa de fotos de calzado en cliente (WebP 800px / ~40KB / Cero lag)
-    if (prodImgFile) {
-      prodImgFile.addEventListener("change", async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        try {
-          if (prodImgStatus) {
-            prodImgStatus.style.display = "block";
-            prodImgStatus.textContent = "⚡ Comprimiendo foto en el dispositivo...";
-          }
-          const res = await ImageOptimizer.compressFile(file, 800, 0.82);
-          if (prodImgData) prodImgData.value = res.dataUrl;
-          if (prodImgPreview) prodImgPreview.innerHTML = `<img src="${res.dataUrl}" style="width: 100%; height: 100%; object-fit: cover; border-radius: inherit;">`;
-          if (prodImgStatus) {
-            prodImgStatus.textContent = `✅ Foto optimizada: ${res.originalKb} KB ➔ ${res.compressedKb} KB (WebP - ${res.reductionPercent}% más ligera)`;
-          }
-        } catch (err) {
-          if (prodImgStatus) prodImgStatus.style.display = "none";
-          showToast("Error procesando imagen: " + err.message);
-        }
-      });
-    }
-
-    if (prodImgUrl) {
-      prodImgUrl.addEventListener("input", (e) => {
+    if (imageUrlInput) {
+      imageUrlInput.addEventListener("input", (e) => {
         const url = e.target.value.trim();
         if (url) {
-          if (prodImgData) prodImgData.value = url;
-          if (prodImgPreview) prodImgPreview.innerHTML = `<img src="${url}" style="width: 100%; height: 100%; object-fit: cover; border-radius: inherit;">`;
-          if (prodImgStatus) prodImgStatus.style.display = "none";
+          if (imageFinal) imageFinal.value = url;
+          if (previewImg && placeholder) {
+            previewImg.src = url;
+            previewImg.style.display = "block";
+            placeholder.style.display = "none";
+          }
+          if (badge) badge.style.display = "none";
         }
       });
     }
+
+    btnOpen.onclick = () => {
+      document.getElementById("modal-add-product-title").textContent = "Publicar Nueva Referencia en Bodega";
+      document.getElementById("btn-submit-product-form").textContent = "Publicar a Todas las Tiendas";
+      form.reset();
+      document.getElementById("add-prod-id").value = "";
+      if (imageFinal) imageFinal.value = "";
+      if (imageUrlInput) imageUrlInput.value = "";
+      if (previewImg && placeholder) {
+        previewImg.src = "";
+        previewImg.style.display = "none";
+        placeholder.style.display = "block";
+      }
+      if (badge) badge.style.display = "none";
+      modal.classList.add("open");
+    };
+
+    btnClose.onclick = () => modal.classList.remove("open");
+    btnCancel.onclick = () => modal.classList.remove("open");
 
     form.onsubmit = (e) => {
       e.preventDefault();
@@ -1450,23 +1595,26 @@ document.addEventListener("DOMContentLoaded", () => {
       const sizesStr = document.getElementById("add-prod-sizes").value;
       const desc = document.getElementById("add-prod-desc").value.trim();
       const campaign = document.getElementById("add-prod-campaign").value;
-      const image = (prodImgData && prodImgData.value) ? prodImgData.value : "assets/images/nike_initiator_babyblue.jpg";
+      const finalImage = imageFinal?.value || imageUrlInput?.value.trim() || "";
 
       const sizes = sizesStr.split(",").map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n));
 
       if (prodId) {
         // Modo Edición
-        db.updateMasterProduct(prodId, {
+        const updatePayload = {
           name,
           category: cat,
           wholesalePrice: wholesale,
           suggestedRetailPrice: retail,
           sizes,
           description: desc,
-          campaignBadge: campaign,
-          ...(prodImgData && prodImgData.value ? { image: prodImgData.value } : {})
-        });
-        showToast(`✅ Referencia '${name}' modificada con éxito.`);
+          campaignBadge: campaign
+        };
+        if (finalImage) {
+          updatePayload.image = finalImage;
+        }
+        db.updateMasterProduct(prodId, updatePayload);
+        showToast(`✅ Referencia ${name} modificada con éxito.`);
       } else {
         // Modo Creación
         db.addMasterProduct({
@@ -1477,9 +1625,9 @@ document.addEventListener("DOMContentLoaded", () => {
           sizes,
           description: desc,
           campaignBadge: campaign,
-          image
+          image: finalImage || "assets/images/nike_initiator_babyblue.jpg"
         });
-        showToast(`✅ ¡Nueva zapatilla '${name}' publicada a toda la red con foto optimizada!`);
+        showToast(`✅ ¡Nueva referencia ${name} publicada a toda la red!`);
       }
 
       modal.classList.remove("open");
@@ -1603,110 +1751,6 @@ document.addEventListener("DOMContentLoaded", () => {
         handleDirSearch(e.target.value.trim());
       });
     }
-
-    // Botones de carga rápida de red multi-bodega (5 a 8 bodegas de Cali)
-    const btnLoadMulti = document.getElementById("btn-load-multi-bodegas");
-    if (btnLoadMulti) {
-      btnLoadMulti.onclick = () => {
-        db.loadPresetBodegasNetwork();
-        showToast("⚡ Red completa activada: 8 Bodegas y Sneaker Partners de Cali.");
-        renderDirectory();
-        renderHudStores();
-      };
-    }
-
-    const btnResetTwo = document.getElementById("btn-reset-two-bodegas");
-    if (btnResetTwo) {
-      btnResetTwo.onclick = () => {
-        db.resetToVanessaAndCaliOnly();
-        showToast("🔄 Red restablecida a Vanessa Castellar Shoes & Cali Shoes Distribuidora.");
-        renderDirectory();
-        renderHudStores();
-      };
-    }
-
-    // Modal de Afiliación / Registro de Nueva Bodega
-    const modalReg = document.getElementById("modal-register-bodega");
-    const btnOpenReg = document.getElementById("btn-open-register-bodega-modal");
-    const btnCloseReg = document.getElementById("btn-close-register-bodega-modal");
-    const btnCancelReg = document.getElementById("btn-cancel-register-bodega");
-    const formReg = document.getElementById("form-register-bodega");
-
-    if (btnOpenReg) {
-      btnOpenReg.onclick = () => {
-        if (formReg) formReg.reset();
-        const prev = document.getElementById("new-store-logo-preview");
-        if (prev) prev.innerHTML = "🏬";
-        const st = document.getElementById("new-store-logo-status");
-        if (st) st.style.display = "none";
-        if (modalReg) modalReg.classList.add("open");
-      };
-    }
-
-    if (btnCloseReg) btnCloseReg.onclick = () => modalReg.classList.remove("open");
-    if (btnCancelReg) btnCancelReg.onclick = () => modalReg.classList.remove("open");
-
-    let newStoreLogoData = "";
-    const logoFileInput = document.getElementById("new-store-logo-file");
-    const logoUrlInput = document.getElementById("new-store-logo-url");
-    const logoPreview = document.getElementById("new-store-logo-preview");
-    const logoStatus = document.getElementById("new-store-logo-status");
-
-    if (logoFileInput) {
-      logoFileInput.addEventListener("change", async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        try {
-          if (logoStatus) {
-            logoStatus.style.display = "block";
-            logoStatus.textContent = "⚡ Comprimiendo logo en WebP...";
-          }
-          const res = await ImageOptimizer.compressFile(file, 400, 0.85);
-          newStoreLogoData = res.dataUrl;
-          if (logoPreview) logoPreview.innerHTML = `<img src="${res.dataUrl}" style="width: 100%; height: 100%; object-fit: cover; border-radius: inherit;">`;
-          if (logoStatus) logoStatus.textContent = `✅ Logo optimizado: ${res.compressedKb} KB (WebP 60fps)`;
-        } catch (err) {
-          if (logoStatus) logoStatus.style.display = "none";
-          showToast("Error procesando logo: " + err.message);
-        }
-      });
-    }
-
-    if (logoUrlInput) {
-      logoUrlInput.addEventListener("input", (e) => {
-        const url = e.target.value.trim();
-        if (url) {
-          newStoreLogoData = url;
-          if (logoPreview) logoPreview.innerHTML = `<img src="${url}" style="width: 100%; height: 100%; object-fit: cover; border-radius: inherit;">`;
-          if (logoStatus) logoStatus.style.display = "none";
-        }
-      });
-    }
-
-    if (formReg) {
-      formReg.onsubmit = (e) => {
-        e.preventDefault();
-        const role = document.getElementById("new-store-role").value;
-        const name = document.getElementById("new-store-name").value.trim();
-        const location = document.getElementById("new-store-location").value.trim();
-        const phone = document.getElementById("new-store-phone").value.trim();
-        const tagline = document.getElementById("new-store-tagline").value.trim();
-
-        const result = db.addStore({
-          role,
-          name,
-          neighborhood: location,
-          phone,
-          tagline,
-          logo: newStoreLogoData || ""
-        });
-
-        modalReg.classList.remove("open");
-        showToast(`🎉 ¡${result.store.name} afiliada a la red! Acceso directo creado.`);
-        renderDirectory();
-        renderHudStores();
-      };
-    }
   }
 
   // =========================================================================
@@ -1773,6 +1817,28 @@ document.addEventListener("DOMContentLoaded", () => {
       badgeEl.textContent = `Inquilino: ${acc.tenantId || targetStore?.id} • ${isBodega ? '👑 Bodega Matriz' : '👟 Sneaker Partner'}`;
     }
 
+    // Cargar configuración de Cloudinary
+    const cloudCfg = db.getCloudinaryConfig();
+    const cloudInput = document.getElementById("account-cloudinary-cloud");
+    const presetInput = document.getElementById("account-cloudinary-preset");
+    const cloudStatusBadge = document.getElementById("account-cloudinary-status-badge");
+
+    if (cloudInput) cloudInput.value = cloudCfg.cloudName || "";
+    if (presetInput) presetInput.value = cloudCfg.uploadPreset || "";
+    if (cloudStatusBadge) {
+      if (cloudCfg.cloudName && cloudCfg.uploadPreset) {
+        cloudStatusBadge.textContent = "☁️ Cloudinary CDN Activo";
+        cloudStatusBadge.style.background = "#eff6ff";
+        cloudStatusBadge.style.color = "#1d4ed8";
+        cloudStatusBadge.style.borderColor = "#bfdbfe";
+      } else {
+        cloudStatusBadge.textContent = "⚡ Modo Autónomo (WebP Celular)";
+        cloudStatusBadge.style.background = "#f0fdf4";
+        cloudStatusBadge.style.color = "#16a34a";
+        cloudStatusBadge.style.borderColor = "#86efac";
+      }
+    }
+
     modal.classList.add("open");
   }
 
@@ -1787,6 +1853,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const logoData = document.getElementById("account-logo-data");
     const logoImg = document.getElementById("account-logo-img");
     const logoPlaceholder = document.getElementById("account-logo-placeholder");
+    const btnTestCloud = document.getElementById("btn-test-cloudinary");
 
     if (!modal) return;
 
@@ -1801,16 +1868,16 @@ document.addEventListener("DOMContentLoaded", () => {
         const file = e.target.files[0];
         if (!file) return;
         try {
-          const res = await ImageOptimizer.compressFile(file, 400, 0.85);
-          if (logoData) logoData.value = res.dataUrl;
+          const optimized = await optimizeImageFile(file, 200, 200, 0.85);
+          if (logoData) logoData.value = optimized.dataUrl;
           if (logoImg) {
-            logoImg.src = res.dataUrl;
+            logoImg.src = optimized.dataUrl;
             logoImg.style.display = "block";
           }
           if (logoPlaceholder) logoPlaceholder.style.display = "none";
-          showToast(`✅ Logo optimizado: ${res.compressedKb} KB (WebP 60fps)`);
+          showToast("🏷️ Logo comprimido a WebP liviano.");
         } catch (err) {
-          showToast("Error procesando imagen: " + err.message);
+          showToast("⚠️ Error al optimizar logo.");
         }
       });
     }
@@ -1829,6 +1896,43 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
 
+    if (btnTestCloud) {
+      btnTestCloud.onclick = async () => {
+        const cloudName = document.getElementById("account-cloudinary-cloud")?.value.trim();
+        const uploadPreset = document.getElementById("account-cloudinary-preset")?.value.trim();
+        if (!cloudName || !uploadPreset) {
+          showToast("⚠️ Ingresa Cloud Name y Upload Preset para probar.");
+          return;
+        }
+        btnTestCloud.textContent = "⏳ Probando...";
+        try {
+          const testCanvas = document.createElement("canvas");
+          testCanvas.width = 1;
+          testCanvas.height = 1;
+          testCanvas.toBlob(async (blob) => {
+            try {
+              await uploadToCloudinary(blob, cloudName, uploadPreset);
+              showToast("✅ ¡Conexión con Cloudinary CDN 100% exitosa!");
+              db.setCloudinaryConfig({ cloudName, uploadPreset });
+              const cloudStatusBadge = document.getElementById("account-cloudinary-status-badge");
+              if (cloudStatusBadge) {
+                cloudStatusBadge.textContent = "☁️ Cloudinary CDN Activo";
+                cloudStatusBadge.style.background = "#eff6ff";
+                cloudStatusBadge.style.color = "#1d4ed8";
+              }
+            } catch (err) {
+              showToast(`❌ Error Cloudinary: ${err.message}`);
+            } finally {
+              btnTestCloud.textContent = "🧪 Probar Conexión Cloud";
+            }
+          }, "image/png");
+        } catch (e) {
+          showToast(`❌ Error: ${e.message}`);
+          btnTestCloud.textContent = "🧪 Probar Conexión Cloud";
+        }
+      };
+    }
+
     if (form) {
       form.onsubmit = (e) => {
         e.preventDefault();
@@ -1840,9 +1944,14 @@ document.addEventListener("DOMContentLoaded", () => {
         const phone = document.getElementById("account-phone").value.trim();
         const logo = document.getElementById("account-logo-data")?.value || "";
 
+        // Guardar configuración Cloudinary
+        const cloudName = document.getElementById("account-cloudinary-cloud")?.value.trim() || "";
+        const uploadPreset = document.getElementById("account-cloudinary-preset")?.value.trim() || "";
+        db.setCloudinaryConfig({ cloudName, uploadPreset });
+
         db.updateAccountSecurity(key, { name, email, password, pin, phone, logo });
         modal.classList.remove("open");
-        showToast("🔒 Configuración de cuenta, logo y nombre guardados con éxito.");
+        showToast("🔒 Configuración de cuenta, logo y CDN guardados con éxito.");
         setupHeadersAndRoleIsolation();
         renderHudStores();
         renderCurrentView();

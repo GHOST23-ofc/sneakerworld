@@ -11,7 +11,8 @@ const DB_KEYS = {
   AUTH_SESSION: "sneakerworld_auth_session_v8",
   LINE_ROTATION_INDEX: "sneakerworld_line_rotation_v8",
   ACCOUNTS: "sneakerworld_accounts_v8",
-  STOCK: "sneakerworld_inventory_stock_v8"
+  STOCK: "sneakerworld_inventory_stock_v8",
+  CLOUDINARY_CONFIG: "sneakerworld_cloudinary_config_v1"
 };
 
 class ShoesStoreManager {
@@ -241,81 +242,6 @@ class ShoesStoreManager {
     localStorage.setItem(DB_KEYS.STORES, JSON.stringify(stores));
   }
 
-  // Registrar y afiliar una nueva Bodega o Partner
-  addStore(storeData) {
-    const stores = this.getStores();
-    const newId = "store-" + String(stores.length + 1).padStart(3, "0");
-    const masterProds = this.getMasterProducts(false);
-    const isSupplier = storeData.role === "supplier" || !!storeData.isSupplierStore;
-
-    const newStore = {
-      id: newId,
-      name: storeData.name || ("Bodega " + (stores.length + 1)),
-      tagline: storeData.tagline || (isSupplier ? "Bodega Mayorista de Calzado en Cali." : "Vitrina Boutique de Calzado."),
-      phone: storeData.phone || "573150000000",
-      neighborhood: storeData.neighborhood || "San Andresito de la 38, Cali",
-      isSupplierStore: isSupplier,
-      themeColor: storeData.themeColor || (isSupplier ? "#e6192e" : "#0284c7"),
-      logo: storeData.logo || "",
-      whatsappLines: isSupplier 
-        ? [{ id: "line-1", phone: storeData.phone || "573150000000", name: "Línea 1 - Despacho Bodega", active: true }]
-        : [],
-      products: masterProds.map(p => ({
-        productId: p.id,
-        customPrice: isSupplier ? (p.wholesalePrice || 85000) : (p.suggestedRetailPrice || 195000),
-        active: true,
-        availableSizes: [...p.sizes]
-      }))
-    };
-
-    stores.push(newStore);
-    this.saveStores(stores);
-
-    // Crear cuenta de acceso para la bodega o partner
-    const accounts = this.getAccounts();
-    const cleanUsername = (storeData.username || storeData.name.toLowerCase().replace(/[^a-z0-9]/g, "")).slice(0, 15) || ("bodega" + stores.length);
-    const accKey = cleanUsername;
-    accounts[accKey] = {
-      id: "user-" + newId,
-      tenantId: isSupplier ? ("sup-" + newId) : newId,
-      storeId: newId,
-      role: isSupplier ? "supplier" : "store-admin",
-      name: newStore.name,
-      businessName: newStore.name + " (" + newStore.neighborhood + ")",
-      email: storeData.email || (cleanUsername + "@sneakerworld.co"),
-      username: cleanUsername,
-      password: storeData.password || "Calishoes2026",
-      pin: storeData.pin || String(1000 + Math.floor(Math.random() * 9000)),
-      phone: newStore.phone,
-      isMasterSupplier: isSupplier,
-      securityNote: isSupplier ? "Bodega Mayorista afiliada a la red." : "Sneaker Partner revendedor afiliado."
-    };
-    this.saveAccounts(accounts);
-
-    return { store: newStore, accountKey: accKey, account: accounts[accKey] };
-  }
-
-  // Cargar red ampliada de 8 bodegas de Cali
-  loadPresetBodegasNetwork() {
-    if (typeof NETWORK_BODEGAS_PRESET !== "undefined") {
-      this.saveStores(NETWORK_BODEGAS_PRESET);
-      this.saveAccounts(NETWORK_ACCOUNTS_PRESET);
-      return { success: true, count: NETWORK_BODEGAS_PRESET.length };
-    }
-    return { success: false, message: "Presets no encontrados" };
-  }
-
-  // Volver a únicamente Vanessa Castellar y Cali Shoes
-  resetToVanessaAndCaliOnly() {
-    if (typeof INITIAL_STORES !== "undefined") {
-      this.saveStores(INITIAL_STORES);
-      this.saveAccounts(DEMO_ACCOUNTS);
-      this.setCurrentStoreId("store-001");
-      return { success: true };
-    }
-    return { success: false };
-  }
-
   // Reseteo de Emergencia por el Dueño del SaaS (GHOST / Bastion AI)
   superAdminResetPassword(accountKey, newPassword = "Calishoes2026") {
     const accounts = this.getAccounts();
@@ -420,6 +346,10 @@ class ShoesStoreManager {
       suggestedRetailPrice: updatedFields.suggestedRetailPrice !== undefined ? Number(updatedFields.suggestedRetailPrice) : products[index].suggestedRetailPrice,
       updatedAt: new Date().toISOString().split("T")[0]
     };
+
+    if (updatedFields.image && products[index].colorways && products[index].colorways.length > 0) {
+      products[index].colorways[0].image = updatedFields.image;
+    }
 
     localStorage.setItem(DB_KEYS.MASTER_PRODUCTS, JSON.stringify(products));
 
@@ -1036,6 +966,26 @@ ${dispatchText}
       order,
       whatsappText: waText
     };
+  }
+
+  // =========================================================================
+  // CONFIGURACIÓN DE ALMACENAMIENTO EN LA NUBE (CLOUDINARY / CDN)
+  // =========================================================================
+  getCloudinaryConfig() {
+    const defaultCfg = { cloudName: "", uploadPreset: "" };
+    try {
+      const saved = localStorage.getItem(DB_KEYS.CLOUDINARY_CONFIG);
+      return saved ? { ...defaultCfg, ...JSON.parse(saved) } : defaultCfg;
+    } catch (e) {
+      return defaultCfg;
+    }
+  }
+
+  setCloudinaryConfig(config) {
+    const current = this.getCloudinaryConfig();
+    const updated = { ...current, ...config };
+    localStorage.setItem(DB_KEYS.CLOUDINARY_CONFIG, JSON.stringify(updated));
+    return updated;
   }
 }
 
