@@ -286,6 +286,7 @@ body {
   font-weight: 900;
   color: var(--primary-red);
   flex-shrink: 0;
+  overflow: hidden;
 }
 
 .store-meta h1 {
@@ -1029,6 +1030,8 @@ input:checked + .slider-round:before {
   align-items: center;
   justify-content: center;
   font-weight: 800;
+  overflow: hidden;
+  flex-shrink: 0;
 }
 
 .store-card-title {

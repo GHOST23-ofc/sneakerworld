@@ -235,10 +235,15 @@
     <main id="view-store-admin" class="view-panel" style="display: none;">
       <div class="main-wrapper">
         <div class="admin-top-bar">
-          <div>
-            <span class="badge-verified">Portal Sneaker Partner Sincronizado</span>
-            <h1 class="admin-heading-title" id="admin-store-title">Configuración de Mi Tienda</h1>
-            <p style="color: var(--text-secondary); font-size: 13px;">Fija tus propios precios de venta, activa/desactiva tallas y despacha desde la bodega central.</p>
+          <div style="display: flex; align-items: center; gap: 14px;">
+            <div class="admin-brand-logo" id="partner-brand-logo" style="width: 52px; height: 52px; border-radius: 12px; background: #eff6ff; color: #2563eb; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 18px; border: 1px solid rgba(37,99,235,0.2); overflow: hidden; flex-shrink: 0; box-shadow: var(--shadow-sm);">
+              CS
+            </div>
+            <div>
+              <span class="badge-verified">Portal Sneaker Partner Sincronizado</span>
+              <h1 class="admin-heading-title" id="admin-store-title">Configuración de Mi Tienda</h1>
+              <p style="color: var(--text-secondary); font-size: 13px;">Fija tus propios precios de venta, activa/desactiva tallas y despacha desde la bodega central.</p>
+            </div>
           </div>
           <div style="display: flex; gap: 10px; flex-wrap: wrap;">
             <button type="button" id="btn-open-store-reports" class="btn-secondary" style="font-weight: 700; font-size: 13px; cursor: pointer;">
@@ -311,10 +316,15 @@
     <main id="view-supplier" class="view-panel" style="display: none;">
       <div class="main-wrapper">
         <div class="admin-top-bar">
-          <div>
-            <span class="badge-verified">Centro de Distribución Mayorista</span>
-            <h1 class="admin-heading-title">Bodega Central — Vanessa Castellar</h1>
-            <p style="color: var(--text-secondary); font-size: 13px;">Control de las 10 líneas de atención, inventario maestro e historial de pedidos B2B.</p>
+          <div style="display: flex; align-items: center; gap: 14px;">
+            <div class="admin-brand-logo" id="supplier-brand-logo" style="width: 52px; height: 52px; border-radius: 12px; background: #fee2e2; color: #dc2626; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 18px; border: 1px solid rgba(220,38,38,0.2); overflow: hidden; flex-shrink: 0; box-shadow: var(--shadow-sm);">
+              VC
+            </div>
+            <div>
+              <span class="badge-verified">Centro de Distribución Mayorista</span>
+              <h1 class="admin-heading-title">Bodega Central — Vanessa Castellar</h1>
+              <p style="color: var(--text-secondary); font-size: 13px;">Control de las 10 líneas de atención, inventario maestro e historial de pedidos B2B.</p>
+            </div>
           </div>
           <div style="display: flex; gap: 10px; flex-wrap: wrap;">
             <button type="button" id="btn-open-supplier-reports" class="btn-primary" style="font-weight: 700; font-size: 13px; background: #0f172a; border-color: #0f172a; cursor: pointer;">
@@ -748,8 +758,27 @@
           <input type="hidden" id="account-key" value="vanessa">
 
           <div class="form-group">
-            <label class="form-label">Nombre del Negocio / Titular:</label>
-            <input type="text" id="account-name" class="form-input" required>
+            <label class="form-label">Nombre del Negocio / Marca:</label>
+            <input type="text" id="account-name" class="form-input" placeholder="Ej: Cali Shoes Distribuidora" required>
+          </div>
+
+          <!-- Personalización de Logo de Marca -->
+          <div class="form-group">
+            <label class="form-label">Logo de la Marca / Negocio:</label>
+            <div style="display: flex; gap: 12px; align-items: center; background: var(--bg-surface-elevated); padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+              <div id="account-logo-preview" style="width: 56px; height: 56px; border-radius: 12px; border: 2px dashed var(--border-subtle); display: flex; align-items: center; justify-content: center; overflow: hidden; background: white; flex-shrink: 0;">
+                <span style="font-size: 22px;" id="account-logo-placeholder">🏷️</span>
+                <img id="account-logo-img" src="" alt="Logo" style="display: none; width: 100%; height: 100%; object-fit: cover;">
+              </div>
+              <div style="flex: 1; min-width: 0;">
+                <label style="display: block; font-size: 11px; font-weight: 700; color: var(--text-secondary); margin-bottom: 4px; cursor: pointer;">
+                  📁 Subir imagen de logo (JPG, PNG, WebP):
+                </label>
+                <input type="file" id="account-logo-file" accept="image/*" style="font-size: 11px; margin-bottom: 6px; width: 100%;">
+                <input type="url" id="account-logo-url" class="form-input" placeholder="O pega enlace URL (https://...)" style="font-size: 11px; padding: 5px 8px;">
+              </div>
+            </div>
+            <input type="hidden" id="account-logo-data" value="">
           </div>
 
           <div class="form-group">

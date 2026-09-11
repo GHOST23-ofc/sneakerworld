@@ -195,7 +195,7 @@ class ShoesStoreManager {
   }
 
   // Cambio de Credenciales y Seguridad de Cuenta en Privado (Bodega Matriz & Sneaker Partner)
-  updateAccountSecurity(accountKey, { name, email, password, pin, phone }) {
+  updateAccountSecurity(accountKey, { name, email, password, pin, phone, logo }) {
     const accounts = this.getAccounts();
     if (!accounts[accountKey]) return { success: false, message: "Cuenta no encontrada." };
 
@@ -207,6 +207,7 @@ class ShoesStoreManager {
     if (password) accounts[accountKey].password = password;
     if (pin) accounts[accountKey].pin = pin;
     if (phone) accounts[accountKey].phone = phone;
+    if (logo !== undefined) accounts[accountKey].logo = logo;
 
     this.saveAccounts(accounts);
 
@@ -216,6 +217,7 @@ class ShoesStoreManager {
     const store = stores.find(s => s.id === targetStoreId);
     if (store) {
       if (name) store.name = name;
+      if (logo !== undefined) store.logo = logo;
       if (phone) {
         store.phone = phone;
         if (store.whatsappLines && store.whatsappLines.length > 0) {

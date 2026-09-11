@@ -121,16 +121,17 @@ document.addEventListener("DOMContentLoaded", () => {
         const iconEl = document.getElementById("client-role-icon");
         const toggleBtn = document.getElementById("btn-client-toggle-view");
 
+        const currentStore = db.getCurrentStore();
         if (session.role === "supplier") {
           if (iconEl) iconEl.textContent = "📦";
-          if (titleEl) titleEl.textContent = (session.user?.businessName || "Vanessa Castellar Shoes") + " (Bodega Matriz)";
+          if (titleEl) titleEl.textContent = (currentStore?.name || session.user?.name || "Vanessa Castellar Shoes") + " (Bodega Matriz)";
           if (subtitleEl) subtitleEl.textContent = currentView === "storefront"
             ? "👁️ CATÁLOGO MAYORISTA B2B: Precios de Proveedor ($85K - $95K) para Revendedores"
             : "🟢 Panel Privado B2B • Inventario & Sneaker Partners";
           if (toggleBtn) toggleBtn.textContent = currentView === "storefront" ? "📦 Volver al Panel Bodega" : "🛒 Ver Catálogo Mayorista";
         } else {
           if (iconEl) iconEl.textContent = "🏪";
-          if (titleEl) titleEl.textContent = (session.user?.name || "Cali Shoes") + " (Sneaker Partner)";
+          if (titleEl) titleEl.textContent = (currentStore?.name || session.user?.name || "Cali Shoes") + " (Sneaker Partner)";
           if (subtitleEl) subtitleEl.textContent = currentView === "storefront"
             ? "👁️ VISTA PREVIA: Así ve tu cliente final tu Tienda Online (Tus precios al detal con margen)"
             : "🟢 Margen Propio & Catálogo Sincronizado";
@@ -409,7 +410,14 @@ document.addEventListener("DOMContentLoaded", () => {
   // =========================================================================
   function renderStorefront(store) {
     // Render Header Info
-    document.getElementById("storefront-avatar").textContent = store.name.split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase();
+    const storefrontAvatar = document.getElementById("storefront-avatar");
+    if (storefrontAvatar) {
+      if (store.logo) {
+        storefrontAvatar.innerHTML = `<img src="${store.logo}" alt="${store.name}" style="width: 100%; height: 100%; object-fit: cover; border-radius: inherit;">`;
+      } else {
+        storefrontAvatar.textContent = (store.name || "SW").split(" ").filter(Boolean).map(w => w[0]).slice(0, 2).join("").toUpperCase();
+      }
+    }
     document.getElementById("storefront-name").innerHTML = `${store.name} <span class="badge-verified" id="storefront-badge" style="${store.isSupplierStore ? 'background: #f0fdf4; color: #15803d; border-color: #86efac;' : 'background: #eff6ff; color: #2563eb; border-color: #bfdbfe;'} font-weight: 800; font-size: 11px;">${store.isSupplierStore ? '🏢 BODEGA CENTRAL (VENTA AL POR MAYOR B2B)' : '🏪 TIENDA ONLINE (VENTA AL DETAL)'}</span>`;
     document.getElementById("storefront-tagline").textContent = store.isSupplierStore ? "Catálogo de despacho mayorista directo desde bodega para revendedores y tiendas aliadas. Precios al por mayor." : store.tagline;
     document.getElementById("storefront-location").textContent = store.neighborhood + " | ⚡ Domicilios Hoy";
@@ -960,6 +968,15 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("admin-store-title").textContent = `Gestión de Precios — ${store.name}`;
     document.getElementById("stat-phone-preview").textContent = `+${store.phone}`;
 
+    const partnerLogo = document.getElementById("partner-brand-logo");
+    if (partnerLogo) {
+      if (store.logo) {
+        partnerLogo.innerHTML = `<img src="${store.logo}" alt="${store.name}" style="width: 100%; height: 100%; object-fit: cover; border-radius: inherit;">`;
+      } else {
+        partnerLogo.textContent = (store.name || "CS").split(" ").filter(Boolean).map(w => w[0]).slice(0, 2).join("").toUpperCase();
+      }
+    }
+
     const masterProds = db.getMasterProducts(true);
     const activeCount = store.products.filter(p => p.active).length;
     document.getElementById("stat-active-prods").textContent = activeCount;
@@ -1128,10 +1145,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.getElementById("stat-supplier-total-prods").textContent = products.length;
 
-    // Actualizar título dinámico de la Bodega Central si cambia de nombre
+    // Actualizar título dinámico y logo de la Bodega Central si cambia de nombre
     const headingTitle = document.querySelector("#view-supplier .admin-heading-title");
     if (headingTitle && currentStore) {
       headingTitle.textContent = `Bodega Central — ${currentStore.name}`;
+    }
+    const supplierLogo = document.getElementById("supplier-brand-logo");
+    if (supplierLogo && currentStore) {
+      if (currentStore.logo) {
+        supplierLogo.innerHTML = `<img src="${currentStore.logo}" alt="${currentStore.name}" style="width: 100%; height: 100%; object-fit: cover; border-radius: inherit;">`;
+      } else {
+        supplierLogo.textContent = (currentStore.name || "VC").split(" ").filter(Boolean).map(w => w[0]).slice(0, 2).join("").toUpperCase();
+      }
     }
 
     // 1. Tabla de Catálogo Maestro & Precios en Caliente
@@ -1452,6 +1477,9 @@ document.addEventListener("DOMContentLoaded", () => {
     grid.innerHTML = filtered.map(s => {
       const activeCount = (s.products && Array.isArray(s.products)) ? s.products.filter(p => p && p.active).length : 0;
       const initials = (s.name || "SW").split(" ").filter(Boolean).map(w => w[0]).slice(0, 2).join("").toUpperCase() || "SW";
+      const avatarHtml = s.logo 
+        ? `<img src="${s.logo}" alt="${s.name}" style="width: 100%; height: 100%; object-fit: cover; border-radius: inherit;">` 
+        : initials;
       return `
         <div class="store-directory-card" style="position: relative; overflow: hidden;">
           <!-- Corner Tag Solicitado -->
@@ -1465,7 +1493,7 @@ document.addEventListener("DOMContentLoaded", () => {
             </span>
           </div>
           <div class="store-card-header">
-            <div class="store-card-avatar">${initials}</div>
+            <div class="store-card-avatar">${avatarHtml}</div>
             <div>
               <div class="store-card-title">${s.name}</div>
               <div class="store-card-location">${s.neighborhood || 'Cali, Colombia'}</div>
@@ -1543,6 +1571,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const pinEl = document.getElementById("account-pin");
     const phoneEl = document.getElementById("account-phone");
     const badgeEl = document.getElementById("modal-account-tenant-badge");
+    const logoDataEl = document.getElementById("account-logo-data");
+    const logoUrlEl = document.getElementById("account-logo-url");
+    const logoFileEl = document.getElementById("account-logo-file");
+    const logoImgEl = document.getElementById("account-logo-img");
+    const logoPlaceholder = document.getElementById("account-logo-placeholder");
+    const currentLogo = targetStore?.logo || acc.logo || "";
 
     if (keyEl) keyEl.value = accountKey;
     if (nameEl) nameEl.value = targetStore?.name || acc.name || "";
@@ -1550,6 +1584,20 @@ document.addEventListener("DOMContentLoaded", () => {
     if (passEl) passEl.value = acc.password || "Calishoes2026";
     if (pinEl) pinEl.value = acc.pin || (accountKey === "vanessa" ? "8820" : "1234");
     if (phoneEl) phoneEl.value = targetStore?.phone || acc.phone || "573505337256";
+    if (logoFileEl) logoFileEl.value = "";
+    if (logoDataEl) logoDataEl.value = currentLogo;
+    if (logoUrlEl) logoUrlEl.value = (currentLogo && currentLogo.startsWith("http")) ? currentLogo : "";
+
+    if (currentLogo && logoImgEl && logoPlaceholder) {
+      logoImgEl.src = currentLogo;
+      logoImgEl.style.display = "block";
+      logoPlaceholder.style.display = "none";
+    } else if (logoImgEl && logoPlaceholder) {
+      logoImgEl.src = "";
+      logoImgEl.style.display = "none";
+      logoPlaceholder.style.display = "block";
+    }
+
     if (badgeEl) {
       const isBodega = acc.isMasterSupplier || (targetStore && targetStore.isSupplierStore);
       badgeEl.textContent = `Inquilino: ${acc.tenantId || targetStore?.id} • ${isBodega ? '👑 Bodega Matriz' : '👟 Sneaker Partner'}`;
@@ -1564,6 +1612,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const btnClose = document.getElementById("btn-close-account-modal");
     const form = document.getElementById("form-account-settings");
     const btnExport = document.getElementById("btn-export-backup-json");
+    const logoFile = document.getElementById("account-logo-file");
+    const logoUrl = document.getElementById("account-logo-url");
+    const logoData = document.getElementById("account-logo-data");
+    const logoImg = document.getElementById("account-logo-img");
+    const logoPlaceholder = document.getElementById("account-logo-placeholder");
 
     if (!modal) return;
 
@@ -1572,6 +1625,42 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (btnClose) btnClose.onclick = () => modal.classList.remove("open");
+
+    if (logoFile) {
+      logoFile.addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        if (file.size > 2 * 1024 * 1024) {
+          showToast("⚠️ La imagen supera 2MB. Por favor selecciona un logo más liviano.");
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const b64 = event.target.result;
+          if (logoData) logoData.value = b64;
+          if (logoImg) {
+            logoImg.src = b64;
+            logoImg.style.display = "block";
+          }
+          if (logoPlaceholder) logoPlaceholder.style.display = "none";
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    if (logoUrl) {
+      logoUrl.addEventListener("input", (e) => {
+        const url = e.target.value.trim();
+        if (url) {
+          if (logoData) logoData.value = url;
+          if (logoImg) {
+            logoImg.src = url;
+            logoImg.style.display = "block";
+          }
+          if (logoPlaceholder) logoPlaceholder.style.display = "none";
+        }
+      });
+    }
 
     if (form) {
       form.onsubmit = (e) => {
@@ -1582,10 +1671,11 @@ document.addEventListener("DOMContentLoaded", () => {
         const password = document.getElementById("account-password").value.trim();
         const pin = document.getElementById("account-pin").value.trim();
         const phone = document.getElementById("account-phone").value.trim();
+        const logo = document.getElementById("account-logo-data")?.value || "";
 
-        db.updateAccountSecurity(key, { name, email, password, pin, phone });
+        db.updateAccountSecurity(key, { name, email, password, pin, phone, logo });
         modal.classList.remove("open");
-        showToast("🔒 Configuración de cuenta y nombre de negocio actualizados con éxito.");
+        showToast("🔒 Configuración de cuenta, logo y nombre guardados con éxito.");
         setupHeadersAndRoleIsolation();
         renderHudStores();
         renderCurrentView();
