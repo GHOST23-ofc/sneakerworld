@@ -125,16 +125,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const paramRole = urlParams.get("role");
     const paramDemo = urlParams.get("demo");
 
-    // Auto-login con links directos de demostración
-    if (paramDemo === "vanessa") {
+    // Auto-login y enrutamiento con links directos y parámetros de vista/rol
+    if (paramDemo === "vanessa" || paramView === "supplier" || paramRole === "supplier" || paramDemo === "bodega") {
       db.loginWithCredentials("vanessa@castellarshoes.com", "Calishoes2026");
       db.setCurrentStoreId("store-001");
       currentView = "supplier";
-    } else if (paramDemo === "calishoes") {
+    } else if (paramDemo === "calishoes" || paramView === "store-admin" || paramRole === "partner" || paramRole === "store-admin") {
       db.loginWithCredentials("contacto@calishoes.com", "Calishoes2026");
       db.setCurrentStoreId("store-002");
       currentView = "store-admin";
-    } else if (paramDemo === "admin" || paramDemo === "superadmin" || paramDemo === "true" || paramRole === "super-admin") {
+    } else if (paramDemo === "admin" || paramDemo === "superadmin" || paramDemo === "true" || paramRole === "super-admin" || paramView === "directory") {
       db.loginWithCredentials(SUPER_ADMIN_CONFIG.masterUsername, SUPER_ADMIN_CONFIG.masterKey);
       db.setCurrentStoreId("store-001");
       currentView = paramView || "directory";
