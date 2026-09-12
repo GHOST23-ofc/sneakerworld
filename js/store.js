@@ -546,9 +546,7 @@ class ShoesStoreManager {
           ...safeMp,
           wholesalePrice: mp.wholesalePrice,
           suggestedRetailPrice: mp.suggestedRetailPrice,
-          storeRetailPrice: store.isSupplierStore 
-            ? mp.wholesalePrice 
-            : ((sp && sp.customPrice) ? sp.customPrice : mp.suggestedRetailPrice),
+          storeRetailPrice: (sp && sp.customPrice) ? sp.customPrice : mp.suggestedRetailPrice,
           storeAvailableSizes: (sp && sp.availableSizes) ? sp.availableSizes : mp.sizes
         };
       });

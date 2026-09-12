@@ -490,8 +490,10 @@ document.addEventListener("DOMContentLoaded", () => {
         storefrontAvatar.textContent = (store.name || "SW").split(" ").filter(Boolean).map(w => w[0]).slice(0, 2).join("").toUpperCase();
       }
     }
-    document.getElementById("storefront-name").innerHTML = `${store.name} <span class="badge-verified" id="storefront-badge" style="${store.isSupplierStore ? 'background: #f0fdf4; color: #15803d; border-color: #86efac;' : 'background: #eff6ff; color: #2563eb; border-color: #bfdbfe;'} font-weight: 800; font-size: 11px;">${store.isSupplierStore ? '🏢 BODEGA CENTRAL (VENTA AL POR MAYOR B2B)' : '🏪 TIENDA ONLINE (VENTA AL DETAL)'}</span>`;
-    document.getElementById("storefront-tagline").textContent = store.isSupplierStore ? "Catálogo de despacho mayorista directo desde bodega para revendedores y tiendas aliadas. Precios al por mayor." : store.tagline;
+    const badgeText = store.isSupplierStore ? '🏢 BODEGA MATRIZ OFICIAL • ENVÍOS CONTRAENTREGA' : '🏪 TIENDA ONLINE (VENTA AL DETAL)';
+    const badgeStyle = store.isSupplierStore ? 'background: #f0fdf4; color: #15803d; border-color: #86efac;' : 'background: #eff6ff; color: #2563eb; border-color: #bfdbfe;';
+    document.getElementById("storefront-name").innerHTML = `${store.name} <span class="badge-verified" id="storefront-badge" style="${badgeStyle} font-weight: 800; font-size: 11px;">${badgeText}</span>`;
+    document.getElementById("storefront-tagline").textContent = store.isSupplierStore ? "Calzado Urbano y Deportivo en Cali — Despacho Inmediato y Pago Contraentrega a Toda Colombia." : store.tagline;
     document.getElementById("storefront-location").textContent = store.neighborhood + " | ⚡ Domicilios Hoy";
 
     // Enlace directo WhatsApp Header (Usa balanceador inteligente)
@@ -501,7 +503,7 @@ document.addEventListener("DOMContentLoaded", () => {
       waDirectBtn.href = `https://wa.me/${directPhone}?text=${encodeURIComponent('👋 ¡Hola! Estoy viendo la vitrina digital de ' + store.name + ' y quiero consultar disponibilidad de calzado.')}`;
       const span = waDirectBtn.querySelector("span");
       if (span) {
-        span.textContent = store.isSupplierStore ? "💬 WhatsApp Dueño Bodega" : "💬 WhatsApp Directo";
+        span.textContent = "💬 WhatsApp Directo";
       }
     }
 
@@ -595,22 +597,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
             <div class="product-footer">
               <div class="price-box">
-                <span class="price-label" style="${store.isSupplierStore ? 'color: #15803d; font-weight: 800;' : ''}">
-                  ${store.isSupplierStore ? '🏢 PRECIO MAYORISTA BODEGA' : 'PRECIO VENTA AL PÚBLICO'}
+                <span class="price-label">
+                  PRECIO VENTA AL PÚBLICO
                 </span>
-                <span class="price-val" style="${store.isSupplierStore ? 'color: #15803d;' : ''}">$ ${formattedPrice}</span>
-                ${store.isSupplierStore ? `
-                  <div style="font-size: 10px; color: var(--text-muted); font-weight: 600; margin-top: 1px;">
-                    Sugerido Detal: $ ${db.formatCOP(p.suggestedRetailPrice)}
-                  </div>
-                ` : `
-                  <div style="font-size: 10px; color: var(--text-muted); font-weight: 600; margin-top: 1px;">
-                    ⚡ Entrega Inmediata en Cali
-                  </div>
-                `}
+                <span class="price-val">$ ${formattedPrice}</span>
+                <div style="font-size: 10px; color: var(--text-muted); font-weight: 600; margin-top: 1px;">
+                  ⚡ Entrega Inmediata en Cali
+                </div>
               </div>
-              <button type="button" class="btn-card-wa btn-open-product-modal" data-product-id="${p.id}" style="${store.isSupplierStore ? 'background: #16a34a; border-color: #15803d;' : ''}">
-                <span>${store.isSupplierStore ? '📦 Pedir Mayorista' : '💬 Comprar'}</span>
+              <button type="button" class="btn-card-wa btn-open-product-modal" data-product-id="${p.id}">
+                <span>💬 Comprar</span>
               </button>
             </div>
           </div>
@@ -679,10 +675,30 @@ document.addEventListener("DOMContentLoaded", () => {
   // =========================================================================
   // MODAL DE DETALLE DE PRODUCTO Y AGREGAR AL CARRITO
   // =========================================================================
-  function openProductModal(store, product) {
+  function openProductModal(storeOrProdId, maybeProduct) {
     const modal = document.getElementById("modal-product-detail");
     const title = document.getElementById("modal-product-title");
     const body = document.getElementById("modal-product-body");
+
+    let store = db.getCurrentStore();
+    let product = maybeProduct;
+
+    if (typeof storeOrProdId === "string") {
+      const prodId = storeOrProdId;
+      product = db.getStorefrontProducts(store).find(p => p.id === prodId) || db.getMasterProductById(prodId);
+    } else if (storeOrProdId && !maybeProduct) {
+      if (storeOrProdId.id && storeOrProdId.sku) {
+        product = storeOrProdId;
+      } else {
+        store = storeOrProdId;
+      }
+    } else if (storeOrProdId && maybeProduct) {
+      store = storeOrProdId;
+      product = maybeProduct;
+    }
+
+    if (!product) return;
+    modal.classList.add("open");
 
     title.textContent = product.name;
 
@@ -697,6 +713,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const colorName = selectedColorway ? selectedColorway.name : "Estándar";
       const stock = db.getProductStock(product.id, colorName, selectedSize);
       const isAgotado = stock <= 0;
+      const session = db.getAuthSession();
 
       const colorChips = (product.colorways || []).map((cw, idx) => `
         <button type="button" class="colorway-badge-chip ${selectedColorway && selectedColorway.sku === cw.sku ? 'active' : ''}" data-index="${idx}">
@@ -729,7 +746,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 ${store.isSupplierStore ? '• Costo Mayorista Bodega' : '• Precio de Venta al Detal'}
               </span>
             </div>
-            ${store.isSupplierStore ? `
+            ${store.isSupplierStore && session.authenticated && session.role === "supplier" ? `
               <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 8px; background: #f0fdf4; padding: 5px 10px; border-radius: 6px; border: 1px solid #bbf7d0;">
                 💡 <strong>Margen sugerido para revendedor:</strong> Si se vende al detal a <strong>$ ${db.formatCOP(product.suggestedRetailPrice)}</strong>, el Sneaker Partner gana <strong>+${db.formatCOP(product.suggestedRetailPrice - (product.wholesalePrice || 85000))} COP</strong> netos por par.
               </div>
@@ -769,21 +786,7 @@ document.addEventListener("DOMContentLoaded", () => {
             ${isAgotado ? '❌ Agotado en Bodega' : '💬 Pedir 1 Par por WhatsApp'}
           </a>
         </div>
-        <button type="button" class="btn-secondary btn-modal-share-product" style="width: 100%; margin-top: 8px; justify-content: center; font-size: 12px; font-weight: 700; background: #f8fafc; border-color: #cbd5e1; cursor: pointer; display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 8px;">
-          <span>🔗 Crear Enlace para Historias / Clientes</span>
-        </button>
       `;
-
-      // Evento de compartir enlace de este producto
-      const shareBtn = body.querySelector(".btn-modal-share-product");
-      if (shareBtn) {
-        shareBtn.onclick = () => {
-          modal.classList.remove("open");
-          if (window.openSneakerLinkCreator) {
-            window.openSneakerLinkCreator(product.id);
-          }
-        };
-      }
 
       // Eventos de selección de color
       body.querySelectorAll(".colorway-badge-chip").forEach(btn => {
