@@ -3146,6 +3146,11 @@ ${itemsText}
     const triggerPartnerBanner = document.getElementById("btn-partner-banner-link-creator");
     const triggerSupplierBanner = document.getElementById("btn-supplier-open-link-creator");
 
+    // Selector de Vitrina de Cliente Final (Bodega vs Sneaker Partner)
+    const btnStoreBodega = document.getElementById("btn-link-store-bodega");
+    const btnStorePartner = document.getElementById("btn-link-store-partner");
+    const storeExplainer = document.getElementById("link-store-explainer");
+
     // Controles internos del modal
     const btnTypeStore = document.getElementById("btn-link-type-store");
     const btnTypeProduct = document.getElementById("btn-link-type-product");
@@ -3164,6 +3169,7 @@ ${itemsText}
     const waShareBtn = document.getElementById("link-wa-share-btn");
     const btnPreview = document.getElementById("btn-open-generated-link-preview");
 
+    let targetStoreId = "store-001"; // "store-001" (Vanessa) | "store-002" (Cali Shoes)
     let currentType = "store"; // "store" | "product"
     let currentFormat = "story"; // "story" | "chat" | "bio"
     let selectedProductId = null;
@@ -3181,6 +3187,42 @@ ${itemsText}
       }
     }
 
+    function updateStoreButtons() {
+      if (targetStoreId === "store-001") {
+        if (btnStoreBodega) {
+          btnStoreBodega.classList.add("active");
+          btnStoreBodega.style.background = "#0f172a";
+          btnStoreBodega.style.color = "#ffffff";
+          btnStoreBodega.style.borderColor = "#0f172a";
+        }
+        if (btnStorePartner) {
+          btnStorePartner.classList.remove("active");
+          btnStorePartner.style.background = "";
+          btnStorePartner.style.color = "";
+          btnStorePartner.style.borderColor = "";
+        }
+        if (storeExplainer) {
+          storeExplainer.innerHTML = "👉 <strong>De Bodega a Cliente/Revendedor:</strong> Muestra la vitrina pública de Vanessa con fotos HD y su WhatsApp directo.";
+        }
+      } else {
+        if (btnStorePartner) {
+          btnStorePartner.classList.add("active");
+          btnStorePartner.style.background = "#0f172a";
+          btnStorePartner.style.color = "#ffffff";
+          btnStorePartner.style.borderColor = "#0f172a";
+        }
+        if (btnStoreBodega) {
+          btnStoreBodega.classList.remove("active");
+          btnStoreBodega.style.background = "";
+          btnStoreBodega.style.color = "";
+          btnStoreBodega.style.borderColor = "";
+        }
+        if (storeExplainer) {
+          storeExplainer.innerHTML = "👉 <strong>De Sneaker Partner a Cliente Final:</strong> Muestra la vitrina de Cali Shoes con tus precios al detal y tu WhatsApp para cerrar la venta.";
+        }
+      }
+    }
+
     function generateLinkAndCopy() {
       if (!urlInput || !suggestedCopy) return;
 
@@ -3189,17 +3231,8 @@ ${itemsText}
       const isLocal = origin.includes("localhost") || origin.includes("127.0.0.1") || origin.startsWith("file:");
       const baseUrl = isLocal ? "https://sneakerworld-roan.vercel.app" : `${origin}${pathname}`;
 
-      // Detectar contexto de tienda o proveedor
-      const session = db.getAuthSession();
-      let queryParam = "";
-
-      if (session.role === "supplier" || currentView === "supplier") {
-        queryParam = "demo=vanessa";
-      } else {
-        queryParam = "demo=calishoes";
-      }
-
-      let finalUrl = `${baseUrl}?${queryParam}`;
+      // Enlace 100% seguro a la vitrina de cara al cliente final (sin credenciales admin)
+      let finalUrl = `${baseUrl}?store=${encodeURIComponent(targetStoreId)}&view=storefront`;
       let prodObj = null;
 
       if (currentType === "product") {
@@ -3214,23 +3247,32 @@ ${itemsText}
 
       urlInput.value = finalUrl;
 
-      // Generar copy persuasivo según formato elegido
+      // Generar copy persuasivo según vitrina y formato
       let copyText = "";
       const priceFmt = prodObj ? `$${db.formatCOP(prodObj.suggestedRetailPrice)} COP` : "";
+      const isBodega = targetStoreId === "store-001";
 
       if (currentFormat === "story") {
         if (copyLabel) copyLabel.textContent = "📸 Texto gancho sugerido para tu Historia / Sticker:";
         if (currentType === "product" && prodObj) {
-          copyText = `👟 ${prodObj.name} disponibles en bodega (${priceFmt}). Toca el sticker para ver fotos en HD, tallas en cm y pedir contraentrega 👇`;
+          copyText = isBodega
+            ? `👟 ${prodObj.name} disponibles en bodega directa. Toca el sticker para ver tallas en cm y pedir contraentrega 👇`
+            : `👟 ${prodObj.name} disponibles (${priceFmt}). Toca el sticker para ver fotos en HD, tallas en cm y pedir contraentrega 👇`;
         } else {
-          copyText = `👟 ¡Nueva colección de zapatillas disponible! Toca el sticker para ver el catálogo en vivo, tallas en cm y pedir contraentrega 👇`;
+          copyText = isBodega
+            ? `👟 Catálogo oficial de bodega abierto para revendedores y clientes. Toca el sticker para consultar stock en tiempo real y pedir contraentrega 👇`
+            : `👟 ¡Nueva colección disponible con entrega inmediata! Toca el sticker para ver tallas en cm y pedir contraentrega a tu casa 👇`;
         }
       } else if (currentFormat === "chat") {
         if (copyLabel) copyLabel.textContent = "💬 Mensaje listo para enviar por WhatsApp al cliente:";
         if (currentType === "product" && prodObj) {
-          copyText = `¡Hola! 👋 Te comparto las fotos oficiales y disponibilidad de las ${prodObj.name} (${priceFmt}). Puedes ver fotos de todos los ángulos y apartar tu par aquí: ${finalUrl}`;
+          copyText = isBodega
+            ? `¡Hola! 👋 Te comparto las fotos oficiales y disponibilidad de las ${prodObj.name} en Bodega Vanessa. Puedes pedir directamente aquí: ${finalUrl}`
+            : `¡Hola! 👋 Te comparto las fotos oficiales y detalles de las ${prodObj.name} (${priceFmt}). Puedes ver fotos de todos los ángulos y pedir aquí: ${finalUrl}`;
         } else {
-          copyText = `¡Hola! 👋 Claro que sí, aquí tienes nuestro catálogo oficial en vivo donde puedes ver todas las referencias activas con fotos reales y tallas disponibles: ${finalUrl}`;
+          copyText = isBodega
+            ? `¡Hola! 👋 Te comparto nuestra vitrina oficial en vivo de Bodega Vanessa Castellar. Puedes revisar tallas disponibles y fotos HD aquí: ${finalUrl}`
+            : `¡Hola! 👋 Mira todo nuestro catálogo de calzado disponible con fotos reales y consulta de tallas en tiempo real aquí: ${finalUrl}`;
         }
       } else if (currentFormat === "bio") {
         if (copyLabel) copyLabel.textContent = "🌐 Texto recomendado para tu Biografía de Instagram / TikTok:";
@@ -3249,15 +3291,40 @@ ${itemsText}
         waShareBtn.href = `https://wa.me/?text=${waMsg}`;
       }
 
-      // Previsualización directa
+      // Previsualización directa de la vitrina pública
       if (btnPreview) {
         btnPreview.onclick = () => window.open(finalUrl, "_blank");
       }
     }
 
+    // Handlers para selector de vitrina (Bodega vs Sneaker Partner)
+    if (btnStoreBodega) {
+      btnStoreBodega.onclick = () => {
+        targetStoreId = "store-001";
+        updateStoreButtons();
+        generateLinkAndCopy();
+      };
+    }
+
+    if (btnStorePartner) {
+      btnStorePartner.onclick = () => {
+        targetStoreId = "store-002";
+        updateStoreButtons();
+        generateLinkAndCopy();
+      };
+    }
+
     // Exponer función global para abrir desde el modal de producto
     window.openSneakerLinkCreator = (prodId) => {
       populateProductSelect();
+      const session = db.getAuthSession();
+      if (session.role === "store-admin" || currentView === "store-admin") {
+        targetStoreId = "store-002";
+      } else {
+        targetStoreId = "store-001";
+      }
+      updateStoreButtons();
+
       if (prodId) {
         currentType = "product";
         selectedProductId = prodId;
@@ -3283,6 +3350,13 @@ ${itemsText}
       if (btn) {
         btn.onclick = () => {
           populateProductSelect();
+          const session = db.getAuthSession();
+          if (session.role === "store-admin" || currentView === "store-admin") {
+            targetStoreId = "store-002";
+          } else {
+            targetStoreId = "store-001";
+          }
+          updateStoreButtons();
           generateLinkAndCopy();
           modal?.classList.add("open");
         };
