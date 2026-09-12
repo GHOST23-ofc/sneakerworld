@@ -339,6 +339,36 @@
           </div>
         </div>
 
+        <!-- BANNER OFICIAL: EMPLEADO DIGITAL 24/7 (SISTEMA IA DE ATENCIÓN & DESPACHOS) -->
+        <div class="empleado-digital-card" style="background: linear-gradient(135deg, #090d16 0%, #1e293b 100%); color: #ffffff; border-radius: var(--radius-lg); padding: 18px 22px; margin-bottom: 22px; border: 1.5px solid rgba(230,25,46,0.35); box-shadow: 0 10px 30px rgba(0,0,0,0.18); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+          <div style="display: flex; align-items: center; gap: 14px;">
+            <div style="width: 52px; height: 52px; border-radius: 14px; background: rgba(230, 25, 46, 0.15); border: 1.5px solid #e6192e; display: flex; align-items: center; justify-content: center; font-size: 26px; flex-shrink: 0; box-shadow: 0 0 16px rgba(230,25,46,0.25);">
+              🤖
+            </div>
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 3px; flex-wrap: wrap;">
+                <span style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: #4ade80; background: rgba(74, 222, 128, 0.12); padding: 2px 8px; border-radius: 999px; border: 1px solid rgba(74, 222, 128, 0.3); display: inline-flex; align-items: center; gap: 4px;">
+                  <span style="width: 6px; height: 6px; border-radius: 50%; background: #4ade80; display: inline-block; box-shadow: 0 0 6px #4ade80;"></span>
+                  Empleado Digital 24/7 Activo
+                </span>
+                <span style="font-size: 11px; color: #94a3b8;">• Guardia Nocturna & Fines de Semana</span>
+              </div>
+              <h3 style="margin: 0; font-size: 16px; font-weight: 800; color: #ffffff;">Asistente Virtual de Despachos — Vanessa Castellar Shoes</h3>
+              <p style="margin: 3px 0 0; font-size: 12px; color: #cbd5e1; max-width: 650px; line-height: 1.35;">
+                Atiende consultas de revendedores, valida stock por tallas y pre-arma pedidos a WhatsApp en piloto automático para que no tengas que trasnochar ni trabajar los domingos.
+              </p>
+            </div>
+          </div>
+          <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <button type="button" id="btn-open-empleado-copier" class="btn-primary" style="background: #e6192e; border-color: #e6192e; font-size: 12px; padding: 8px 14px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+              ⚡ Respuestas Rápidas (1 Clic)
+            </button>
+            <button type="button" id="btn-open-empleado-chat-preview" class="btn-secondary" style="background: #ffffff; color: #0f172a; border-color: #ffffff; font-size: 12px; padding: 8px 14px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+              💬 Probar Chat Asistente
+            </button>
+          </div>
+        </div>
+
         <div class="stats-cards-grid">
           <div class="stat-card">
             <div class="stat-icon-badge">📦</div>
@@ -1320,7 +1350,159 @@
           </div>
         </form>
       </div>
+    <!-- =========================================================================
+         MODAL 10: CHAT INTERACTIVO EMPLEADO DIGITAL 24/7
+         ========================================================================= -->
+    <div class="modal-backdrop" id="modal-empleado-chat" role="dialog" aria-modal="true">
+      <div class="modal-dialog" style="max-width: 500px; padding: 0; overflow: hidden; border-radius: var(--radius-lg);">
+        <div style="background: linear-gradient(135deg, #090d16 0%, #1e293b 100%); padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 42px; height: 42px; border-radius: 50%; background: rgba(230,25,46,0.2); border: 1.5px solid #e6192e; display: flex; align-items: center; justify-content: center; font-size: 20px; position: relative;">
+              🤖
+              <span style="position: absolute; bottom: 0; right: 0; width: 10px; height: 10px; border-radius: 50%; background: #22c55e; border: 2px solid #090d16;"></span>
+            </div>
+            <div>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <h3 style="margin: 0; font-size: 15px; font-weight: 800; color: #ffffff;">Empleado Digital 24/7</h3>
+                <span style="font-size: 9px; font-weight: 800; color: #4ade80; background: rgba(74,222,128,0.15); padding: 1px 6px; border-radius: 999px;">EN LÍNEA</span>
+              </div>
+              <p style="margin: 2px 0 0; font-size: 11px; color: #94a3b8;">Asistente Virtual • Vanessa Castellar Shoes</p>
+            </div>
+          </div>
+          <button type="button" class="btn-close-modal" id="btn-close-empleado-chat" style="color: #cbd5e1; font-size: 22px;">&times;</button>
+        </div>
+
+        <div class="empleado-chat-wrapper">
+          <!-- Historial de mensajes -->
+          <div class="empleado-chat-messages" id="empleado-chat-messages">
+            <div class="chat-msg bot">
+              <div class="chat-msg-avatar">🤖</div>
+              <div class="chat-msg-bubble">
+                ¡Hola! 👋 Soy tu <strong>Empleado Digital 24/7</strong> de <strong>Vanessa Castellar Shoes</strong>.
+                <br><br>
+                Estoy aquí para resolver tus dudas al instante sin que tengas que esperar: consultar tallas en cm, tiempos de envío, calcular tus ganancias de revendedor o armar tu pedido listo para bodega.
+                <br><br>
+                ¿En qué te puedo colaborar hoy? 👇
+              </div>
+            </div>
+          </div>
+
+          <!-- Chips de preguntas frecuentes rápidas -->
+          <div class="empleado-quick-actions">
+            <button type="button" class="quick-action-chip" data-ask="talla">📏 ¿Cómo sé mi talla en cm?</button>
+            <button type="button" class="quick-action-chip" data-ask="envios">🚚 ¿Tiempos de envío y fletes?</button>
+            <button type="button" class="quick-action-chip" data-ask="revendedor">💰 ¿Cómo ganar dinero revendiendo?</button>
+            <button type="button" class="quick-action-chip" data-ask="garantia">🛡️ ¿Qué garantía tienen los tenis?</button>
+            <button type="button" class="quick-action-chip" data-ask="whatsapp">📲 Hablar con Vanessa por WhatsApp</button>
+          </div>
+
+          <!-- Barra de entrada de texto -->
+          <form id="form-empleado-chat" class="empleado-chat-input-bar">
+            <input type="text" id="empleado-chat-input" class="form-input" placeholder="Pregúntame sobre tallas, envíos, modelos..." style="flex: 1; font-size: 12px; padding: 9px 12px; border-radius: 999px;">
+            <button type="submit" class="btn-primary" style="border-radius: 50%; width: 36px; height: 36px; padding: 0; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: #e6192e; border-color: #e6192e; cursor: pointer;">
+              ➤
+            </button>
+          </form>
+        </div>
+      </div>
     </div>
+
+    <!-- =========================================================================
+         MODAL 11: RESPUESTAS RÁPIDAS (EMPLEADO DIGITAL 1 CLIC)
+         ========================================================================= -->
+    <div class="modal-backdrop" id="modal-empleado-copier" role="dialog" aria-modal="true">
+      <div class="modal-dialog" style="max-width: 600px;">
+        <div class="modal-header">
+          <div>
+            <span style="font-size: 10px; font-weight: 800; color: #15803d; background: #f0fdf4; padding: 2px 8px; border-radius: 999px;">AUTOMATIZACIÓN DE CHAT WHATSAPP</span>
+            <h3 style="margin-top: 4px; font-size: 17px;">⚡ Respuestas Rápidas con 1 Clic</h3>
+            <p style="margin: 2px 0 0; font-size: 11px; color: var(--text-muted);">Copia y pega en tus chats de WhatsApp para atender a revendedores en 2 segundos sin trasnochar.</p>
+          </div>
+          <button class="btn-close-modal" id="btn-close-empleado-copier">&times;</button>
+        </div>
+
+        <div style="padding: 16px 20px; max-height: 65vh; overflow-y: auto;">
+          <div class="copier-grid">
+            <!-- Template 1: Catálogo sin saturar memoria -->
+            <div class="copier-card">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+                <strong style="font-size: 13px; color: var(--text-primary);">👟 1. Enlace Catálogo en Vivo (Cero fotos en el celular)</strong>
+                <button type="button" class="btn-secondary btn-copy-template" data-tpl="catalogo" style="font-size: 11px; padding: 4px 10px; font-weight: 700; cursor: pointer;">
+                  📋 Copiar
+                </button>
+              </div>
+              <p style="font-size: 11.5px; color: var(--text-secondary); margin: 0; background: #f8fafc; padding: 8px 10px; border-radius: 6px; border: 1px solid #e2e8f0; line-height: 1.4;">
+                ¡Hola! Claro que sí, aquí tienes nuestro catálogo oficial en vivo donde puedes ver todas las referencias activas, consultar por tu talla exacta y ver fotos en alta calidad sin que se te llene la memoria del teléfono: https://sneakerworld-roan.vercel.app/?demo=vanessa
+              </p>
+            </div>
+
+            <!-- Template 2: Cuentas de Pago Nequi/Bancolombia -->
+            <div class="copier-card">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+                <strong style="font-size: 13px; color: var(--text-primary);">💳 2. Cuentas de Pago (Nequi / Bancolombia)</strong>
+                <button type="button" class="btn-secondary btn-copy-template" data-tpl="pago" style="font-size: 11px; padding: 4px 10px; font-weight: 700; cursor: pointer;">
+                  📋 Copiar
+                </button>
+              </div>
+              <p style="font-size: 11.5px; color: var(--text-secondary); margin: 0; background: #f8fafc; padding: 8px 10px; border-radius: 6px; border: 1px solid #e2e8f0; line-height: 1.4;">
+                Para confirmar y asegurar tu par en bodega antes de que se agote la talla, puedes transferir a:&#10;• Nequi / Daviplata: 312 456 7890&#10;• Bancolombia Ahorros: 820-123456-78 a nombre de Vanessa Castellar.&#10;Nos envías el soporte por aquí para empacar de inmediato. 📦✨
+              </p>
+            </div>
+
+            <!-- Template 3: Envíos y Fletes -->
+            <div class="copier-card">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+                <strong style="font-size: 13px; color: var(--text-primary);">🚚 3. Tiempos de Entrega & Domicilios</strong>
+                <button type="button" class="btn-secondary btn-copy-template" data-tpl="envios" style="font-size: 11px; padding: 4px 10px; font-weight: 700; cursor: pointer;">
+                  📋 Copiar
+                </button>
+              </div>
+              <p style="font-size: 11.5px; color: var(--text-secondary); margin: 0; background: #f8fafc; padding: 8px 10px; border-radius: 6px; border: 1px solid #e2e8f0; line-height: 1.4;">
+                En Cali despachamos el mismo día con domiciliario motorizado. Para el resto de Colombia despachamos por Servientrega o Interrapidísimo con guía de rastreo (flete promedio $15.000 a $18.000 COP). ¿A qué ciudad y barrio te enviamos?
+              </p>
+            </div>
+
+            <!-- Template 4: Guía de Tallas -->
+            <div class="copier-card">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+                <strong style="font-size: 13px; color: var(--text-primary);">📏 4. Tabla de Tallas en Centímetros</strong>
+                <button type="button" class="btn-secondary btn-copy-template" data-tpl="tallas" style="font-size: 11px; padding: 4px 10px; font-weight: 700; cursor: pointer;">
+                  📋 Copiar
+                </button>
+              </div>
+              <p style="font-size: 11.5px; color: var(--text-secondary); margin: 0; background: #f8fafc; padding: 8px 10px; border-radius: 6px; border: 1px solid #e2e8f0; line-height: 1.4;">
+                Para que tu calzado te quede perfecto, mide tu pie sobre una hoja de papel desde el talón hasta el dedo más largo:&#10;• 35: 22.5 cm | 36: 23 cm | 37: 24 cm&#10;• 38: 24.5 cm | 39: 25 cm | 40: 25.5 cm&#10;• 41: 26.5 cm | 42: 27 cm | 43: 28 cm | 44: 28.5 cm
+              </p>
+            </div>
+
+            <!-- Template 5: Garantía -->
+            <div class="copier-card">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+                <strong style="font-size: 13px; color: var(--text-primary);">🛡️ 5. Garantía de Bodega & Cambios</strong>
+                <button type="button" class="btn-secondary btn-copy-template" data-tpl="garantia" style="font-size: 11px; padding: 4px 10px; font-weight: 700; cursor: pointer;">
+                  📋 Copiar
+                </button>
+              </div>
+              <p style="font-size: 11.5px; color: var(--text-secondary); margin: 0; background: #f8fafc; padding: 8px 10px; border-radius: 6px; border: 1px solid #e2e8f0; line-height: 1.4;">
+                Todas nuestras referencias cuentan con garantía directa de bodega por defectos de fabricación. Si necesitas cambio de talla, te lo gestionamos de inmediato siempre que el calzado esté sin uso y en su empaque original.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BOTÓN FLOTANTE: EMPLEADO DIGITAL 24/7 (STOREFRONT Y CLIENTES) -->
+    <button type="button" id="btn-floating-empleado" class="floating-empleado-btn" aria-label="Abrir Empleado Digital 24/7">
+      <div class="bot-avatar-badge">
+        <span class="bot-icon">🤖</span>
+        <span class="bot-online-dot"></span>
+      </div>
+      <div class="bot-label-pill">
+        <span class="bot-title">Empleado Digital 24/7</span>
+        <span class="bot-status">Asistente en Línea ✨</span>
+      </div>
+    </button>
 
     <!-- TOAST CONTAINER -->
     <div class="toast-container" id="toast-container"></div>

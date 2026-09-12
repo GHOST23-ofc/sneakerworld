@@ -175,6 +175,7 @@ document.addEventListener("DOMContentLoaded", () => {
     setupDirectoryFilters();
     setupAccountingReports();
     setupReturnExchangeModal();
+    setupEmpleadoDigital();
     switchView(currentView);
   }
 
@@ -2883,6 +2884,177 @@ ${itemsText}
         }, 300);
       }
     };
+  }
+
+  // =========================================================================
+  // EMPLEADO DIGITAL 24/7 (SISTEMA IA DE ATENCIÓN, VENTAS Y DESPACHOS)
+  // =========================================================================
+  function setupEmpleadoDigital() {
+    const btnFloating = document.getElementById("btn-floating-empleado");
+    const modalChat = document.getElementById("modal-empleado-chat");
+    const btnCloseChat = document.getElementById("btn-close-empleado-chat");
+    const chatForm = document.getElementById("form-empleado-chat");
+    const chatInput = document.getElementById("empleado-chat-input");
+    const chatMessages = document.getElementById("empleado-chat-messages");
+
+    const modalCopier = document.getElementById("modal-empleado-copier");
+    const btnCloseCopier = document.getElementById("btn-close-empleado-copier");
+    const btnOpenCopier = document.getElementById("btn-open-empleado-copier");
+    const btnOpenChatPreview = document.getElementById("btn-open-empleado-chat-preview");
+
+    // Abrir modal de chat desde botón flotante o botón del panel
+    if (btnFloating) {
+      btnFloating.onclick = () => modalChat?.classList.add("open");
+    }
+    if (btnOpenChatPreview) {
+      btnOpenChatPreview.onclick = () => modalChat?.classList.add("open");
+    }
+    if (btnCloseChat) {
+      btnCloseChat.onclick = () => modalChat?.classList.remove("open");
+    }
+
+    // Abrir modal de respuestas rápidas para Vanessa
+    if (btnOpenCopier) {
+      btnOpenCopier.onclick = () => modalCopier?.classList.add("open");
+    }
+    if (btnCloseCopier) {
+      btnCloseCopier.onclick = () => modalCopier?.classList.remove("open");
+    }
+
+    // Copiar plantillas rápidas al portapapeles
+    document.querySelectorAll(".btn-copy-template").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const card = btn.closest(".copier-card");
+        const textEl = card ? card.querySelector("p") : null;
+        if (textEl) {
+          const text = textEl.innerText.trim();
+          navigator.clipboard.writeText(text).then(() => {
+            const originalText = btn.textContent;
+            btn.textContent = "✅ ¡Copiado!";
+            btn.style.background = "#f0fdf4";
+            btn.style.color = "#15803d";
+            showToast("📋 Mensaje copiado al portapapeles listo para enviar en WhatsApp.");
+            setTimeout(() => {
+              btn.textContent = originalText;
+              btn.style.background = "";
+              btn.style.color = "";
+            }, 2500);
+          }).catch(() => {
+            showToast("⚠️ Selecciona el texto para copiarlo manualmente.");
+          });
+        }
+      });
+    });
+
+    // Respuestas automáticas inteligentes del Empleado Digital
+    function appendChatMessage(sender, html) {
+      if (!chatMessages) return;
+      const msg = document.createElement("div");
+      msg.className = `chat-msg ${sender}`;
+      msg.innerHTML = `
+        <div class="chat-msg-avatar">${sender === 'bot' ? '🤖' : '👤'}</div>
+        <div class="chat-msg-bubble">${html}</div>
+      `;
+      chatMessages.appendChild(msg);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function processEmpleadoQuery(query) {
+      const q = query.toLowerCase().trim();
+      if (!q) return;
+
+      const userTextEscaped = document.createElement("div");
+      userTextEscaped.textContent = query;
+      appendChatMessage("user", userTextEscaped.innerHTML);
+
+      // Respuesta instantánea en 200ms
+      setTimeout(() => {
+        if (q.includes("talla") || q.includes("medir") || q.includes("cm") || q.includes("centimetro") || q.includes("pie")) {
+          appendChatMessage("bot", `
+            📏 <strong>Tabla Oficial de Medidas en Centímetros:</strong><br><br>
+            Para asegurar tu talla exacta, pisa una hoja de papel y mide del talón a la punta:<br>
+            • <strong>35:</strong> 22.5 cm | <strong>36:</strong> 23.0 cm<br>
+            • <strong>37:</strong> 24.0 cm | <strong>38:</strong> 24.5 cm<br>
+            • <strong>39:</strong> 25.0 cm | <strong>40:</strong> 25.5 cm<br>
+            • <strong>41:</strong> 26.5 cm | <strong>42:</strong> 27.0 cm<br>
+            • <strong>43:</strong> 28.0 cm | <strong>44:</strong> 28.5 cm<br><br>
+            💡 <em>Consejo:</em> Si estás entre dos tallas o tienes pie ancho, te recomendamos pedir la talla superior.
+          `);
+        } else if (q.includes("envio") || q.includes("entrega") || q.includes("domicilio") || q.includes("bogota") || q.includes("medellin") || q.includes("cali") || q.includes("ciudad") || q.includes("flete")) {
+          appendChatMessage("bot", `
+            🚚 <strong>Cobertura & Tiempos de Entrega:</strong><br><br>
+            • <strong>En Cali:</strong> Domicilios motorizados el mismo día con liquidación de flete por barrio y opción contraentrega.<br>
+            • <strong>Resto de Colombia (Bogotá, Medellín, Barranquilla, etc.):</strong> Despachos por Servientrega o Interrapidísimo con guía de rastreo oficial (tiempo estimado 24 a 48 horas hábiles).<br><br>
+            📦 Todas las cajas van aseguradas con empaque de protección original de bodega.
+          `);
+        } else if (q.includes("revend") || q.includes("ganar") || q.includes("socio") || q.includes("partner") || q.includes("mayor") || q.includes("dropshipping") || q.includes("precio")) {
+          appendChatMessage("bot", `
+            💰 <strong>¿Cómo ganar dinero como revendedor?</strong><br><br>
+            1. No necesitas comprar inventario por adelantado.<br>
+            2. Tomas las fotos de nuestro catálogo en la nube (alta resolución sin saturar tu celular).<br>
+            3. Tú compras a costo de Bodega Vanessa ($115.000 COP aprox.) y vendes al detal ($185.000 COP).<br>
+            👉 <strong>Te ganas entre $50.000 y $80.000 COP limpios por cada par</strong>.<br><br>
+            Tú solo nos pasas los datos del cliente y nosotros despachamos por ti.
+          `);
+        } else if (q.includes("garantia") || q.includes("cambio") || q.includes("defect") || q.includes("devolucion")) {
+          appendChatMessage("bot", `
+            🛡️ <strong>Garantía de Fábrica & Cambios Ágiles:</strong><br><br>
+            • Tienes garantía directa de bodega por defectos de confección o pegue.<br>
+            • Si no le quedó la talla a tu cliente, le gestionamos cambio ágil en bodega sin trabas (el calzado debe estar limpio y en su caja original).<br>
+            ¡Tu compra y la de tus clientes está 100% protegida! ✨
+          `);
+        } else if (q.includes("whatsapp") || q.includes("contacto") || q.includes("telefono") || q.includes("celular") || q.includes("asesor") || q.includes("humano")) {
+          appendChatMessage("bot", `
+            📲 <strong>Línea Directa de Vanessa Castellar Shoes:</strong><br><br>
+            Puedes escribir directamente a nuestra línea de despachos mayoristas en WhatsApp:<br>
+            👉 <a href="https://wa.me/573505337256?text=Hola%20Vanessa,%20estoy%20viendo%20tu%20catálogo%20y%20quiero%20confirmar%20un%20pedido." target="_blank" style="color: #e6192e; font-weight: 800; text-decoration: underline;">Tocar aquí para abrir WhatsApp (+57 350 533 7256)</a>
+          `);
+        } else {
+          // Búsqueda inteligente en el catálogo si el usuario pregunta por un modelo
+          const products = db.getMasterProducts(false);
+          const found = products.filter(p => p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q));
+          if (found.length > 0) {
+            const listHtml = found.slice(0, 3).map(p => `
+              • <strong>${p.name}</strong> ($${db.formatCOP(p.suggestedRetailPrice)}) — Tallas: ${(p.storeAvailableSizes || [37,38,39,40,41,42]).join(", ")}
+            `).join("<br>");
+            appendChatMessage("bot", `
+              👟 <strong>Encontré estas referencias activas en bodega:</strong><br><br>
+              ${listHtml}<br><br>
+              ¿Te gustaría apartar alguna en tu talla antes de que se agote?
+            `);
+          } else {
+            appendChatMessage("bot", `
+              🤖 Entendido. Para esa consulta puntual o apartar un modelo exclusivo, te conecto de inmediato con la línea de WhatsApp de Vanessa Castellar Shoes para que te atiendan personalmente:<br><br>
+              👉 <a href="https://wa.me/573505337256?text=Hola%20Vanessa,%20tengo%20una%20consulta%20sobre:%20${encodeURIComponent(query)}" target="_blank" style="color: #e6192e; font-weight: 800; text-decoration: underline;">Abrir WhatsApp de Despachos (+57 350 533 7256)</a>
+            `);
+          }
+        }
+      }, 200);
+    }
+
+    // Manejar envío de formulario de chat
+    if (chatForm && chatInput) {
+      chatForm.onsubmit = (e) => {
+        e.preventDefault();
+        const text = chatInput.value.trim();
+        if (text) {
+          processEmpleadoQuery(text);
+          chatInput.value = "";
+        }
+      };
+    }
+
+    // Manejar clics en las píldoras de preguntas rápidas
+    document.querySelectorAll(".quick-action-chip").forEach(chip => {
+      chip.addEventListener("click", () => {
+        const ask = chip.getAttribute("data-ask");
+        if (ask === "talla") processEmpleadoQuery("¿Cómo sé mi talla en cm?");
+        else if (ask === "envios") processEmpleadoQuery("¿Cuáles son los tiempos de envío y costos de fletes?");
+        else if (ask === "revendedor") processEmpleadoQuery("¿Cómo ganar dinero revendiendo este calzado?");
+        else if (ask === "garantia") processEmpleadoQuery("¿Qué garantía tienen los tenis y cómo son los cambios?");
+        else if (ask === "whatsapp") processEmpleadoQuery("Hablar con Vanessa por WhatsApp");
+      });
+    });
   }
 
   // =========================================================================
