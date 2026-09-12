@@ -296,6 +296,11 @@ class ShoesStoreManager {
     return products;
   }
 
+  getMasterProductById(productId) {
+    const products = this.getMasterProducts(false);
+    return products.find(p => p.id === productId) || null;
+  }
+
   addMasterProduct(productData) {
     const products = this.getMasterProducts(false);
     const newProduct = {
