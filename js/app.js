@@ -741,12 +741,12 @@ document.addEventListener("DOMContentLoaded", () => {
             <div style="font-size: 11px; font-weight: 800; color: var(--primary-red); text-transform: uppercase;">${product.category} • SKU: ${product.sku}</div>
             <h4 style="font-size: 18px; font-weight: 900; color: var(--text-primary); margin: 4px 0 6px;">${product.name}</h4>
             <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px;">
-              <div style="font-size: 22px; font-weight: 900; color: ${store.isSupplierStore ? '#15803d' : 'var(--primary-red)'};">$ ${formattedPrice}</div>
-              <span style="font-size: 11px; font-weight: 800; color: ${store.isSupplierStore ? '#15803d' : 'var(--text-muted)'}; text-transform: uppercase;">
-                ${store.isSupplierStore ? '• Costo Mayorista Bodega' : '• Precio de Venta al Detal'}
+              <div style="font-size: 22px; font-weight: 900; color: var(--primary-red);">$ ${formattedPrice}</div>
+              <span style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">
+                • Precio de Venta al Detal
               </span>
             </div>
-            ${store.isSupplierStore && session.authenticated && session.role === "supplier" ? `
+            ${currentView !== "storefront" && session.authenticated && session.role === "supplier" ? `
               <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 8px; background: #f0fdf4; padding: 5px 10px; border-radius: 6px; border: 1px solid #bbf7d0;">
                 💡 <strong>Margen sugerido para revendedor:</strong> Si se vende al detal a <strong>$ ${db.formatCOP(product.suggestedRetailPrice)}</strong>, el Sneaker Partner gana <strong>+${db.formatCOP(product.suggestedRetailPrice - (product.wholesalePrice || 85000))} COP</strong> netos por par.
               </div>
