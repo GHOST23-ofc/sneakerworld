@@ -3221,16 +3221,17 @@ ${itemsText}
     const modal = document.getElementById("modal-link-creator");
     const btnClose = document.getElementById("btn-close-link-creator");
 
-    // Botones disparadores en distintas vistas
-    const triggerStorefront = document.getElementById("btn-storefront-open-link-creator");
+    // Botones disparadores en los paneles de administración
     const triggerPartnerHeader = document.getElementById("btn-partner-open-link-creator");
     const triggerPartnerBanner = document.getElementById("btn-partner-banner-link-creator");
     const triggerSupplierBanner = document.getElementById("btn-supplier-open-link-creator");
 
-    // Selector de Vitrina de Cliente Final (Bodega vs Sneaker Partner)
-    const btnStoreBodega = document.getElementById("btn-link-store-bodega");
-    const btnStorePartner = document.getElementById("btn-link-store-partner");
-    const storeExplainer = document.getElementById("link-store-explainer");
+    // Ficha informativa de la tienda activa (Aislamiento por Rol)
+    const storeAvatar = document.getElementById("link-active-store-avatar");
+    const storeName = document.getElementById("link-active-store-name");
+    const storeTypeBadge = document.getElementById("link-active-store-type-badge");
+    const storeTag = document.getElementById("link-active-store-tag");
+    const storeExplainer = document.getElementById("link-active-store-explainer");
 
     // Controles internos del modal
     const btnTypeStore = document.getElementById("btn-link-type-store");
@@ -3250,57 +3251,71 @@ ${itemsText}
     const waShareBtn = document.getElementById("link-wa-share-btn");
     const btnPreview = document.getElementById("btn-open-generated-link-preview");
 
-    let targetStoreId = "store-001"; // "store-001" (Vanessa) | "store-002" (Cali Shoes)
+    let targetStoreId = "store-002"; // Por defecto Cali Shoes o según el panel activo
     let currentType = "store"; // "store" | "product"
     let currentFormat = "story"; // "story" | "chat" | "bio"
     let selectedProductId = null;
 
+    function updateActiveStoreInfo() {
+      const session = db.getAuthSession();
+      const allStores = db.getStores();
+      let activeStore = null;
+
+      // Determinación estricta según el panel donde esté el usuario:
+      if (session.role === "store-admin" || currentView === "store-admin") {
+        activeStore = allStores.find(s => !s.isSupplierStore) || allStores[1] || allStores[0];
+        targetStoreId = activeStore ? activeStore.id : "store-002";
+      } else {
+        activeStore = allStores.find(s => s.isSupplierStore) || allStores[0];
+        targetStoreId = activeStore ? activeStore.id : "store-001";
+      }
+
+      if (storeAvatar && activeStore) {
+        if (activeStore.logo) {
+          storeAvatar.innerHTML = `<img src="${activeStore.logo}" alt="${activeStore.name}" style="width: 100%; height: 100%; object-fit: cover; border-radius: inherit;">`;
+        } else {
+          storeAvatar.textContent = (activeStore.name || "SW").split(" ").filter(Boolean).map(w => w[0]).slice(0, 2).join("").toUpperCase();
+        }
+        storeAvatar.style.background = activeStore.isSupplierStore ? "#f0fdf4" : "#eff6ff";
+        storeAvatar.style.color = activeStore.isSupplierStore ? "#15803d" : "#2563eb";
+        storeAvatar.style.borderColor = activeStore.isSupplierStore ? "#bbf7d0" : "#bfdbfe";
+      }
+
+      if (storeName && activeStore) {
+        storeName.textContent = activeStore.name;
+      }
+
+      if (storeTypeBadge && activeStore) {
+        storeTypeBadge.textContent = activeStore.isSupplierStore ? "🏢 Catálogo Oficial de Bodega" : "🟢 Vitrina Activa para tus Clientes";
+        storeTypeBadge.style.color = activeStore.isSupplierStore ? "#15803d" : "#2563eb";
+      }
+
+      if (storeTag && activeStore) {
+        storeTag.textContent = activeStore.isSupplierStore ? "Bodega Central" : "Tu Tienda Online";
+        storeTag.style.color = activeStore.isSupplierStore ? "#15803d" : "#2563eb";
+        storeTag.style.background = activeStore.isSupplierStore ? "#f0fdf4" : "#eff6ff";
+        storeTag.style.borderColor = activeStore.isSupplierStore ? "#bbf7d0" : "#bfdbfe";
+      }
+
+      if (storeExplainer && activeStore) {
+        storeExplainer.innerHTML = activeStore.isSupplierStore
+          ? `👉 Enlace directo a la vitrina oficial de <strong>${activeStore.name}</strong> para que tus clientes y revendedores consulten stock y pidan a tu WhatsApp.`
+          : `👉 Enlace directo a tu vitrina oficial de <strong>${activeStore.name}</strong> con tus precios al detal y tu WhatsApp para cerrar ventas directas.`;
+      }
+    }
+
     function populateProductSelect() {
       if (!productSelect) return;
-      const prods = db.getMasterProducts(false);
+      const allStores = db.getStores();
+      const currentStore = allStores.find(s => s.id === targetStoreId) || db.getCurrentStore();
+      const prods = db.getStorefrontProducts(currentStore);
       productSelect.innerHTML = prods.map(p => `
         <option value="${p.id}" ${p.id === selectedProductId ? 'selected' : ''}>
-          ${p.name} — $${db.formatCOP(p.suggestedRetailPrice)}
+          ${p.name} — $${db.formatCOP(p.storeRetailPrice || p.suggestedRetailPrice)}
         </option>
       `).join("");
       if (!selectedProductId && prods.length > 0) {
         selectedProductId = prods[0].id;
-      }
-    }
-
-    function updateStoreButtons() {
-      if (targetStoreId === "store-001") {
-        if (btnStoreBodega) {
-          btnStoreBodega.classList.add("active");
-          btnStoreBodega.style.background = "#0f172a";
-          btnStoreBodega.style.color = "#ffffff";
-          btnStoreBodega.style.borderColor = "#0f172a";
-        }
-        if (btnStorePartner) {
-          btnStorePartner.classList.remove("active");
-          btnStorePartner.style.background = "";
-          btnStorePartner.style.color = "";
-          btnStorePartner.style.borderColor = "";
-        }
-        if (storeExplainer) {
-          storeExplainer.innerHTML = "👉 <strong>De Bodega a Cliente/Revendedor:</strong> Muestra la vitrina pública de Vanessa con fotos HD y su WhatsApp directo.";
-        }
-      } else {
-        if (btnStorePartner) {
-          btnStorePartner.classList.add("active");
-          btnStorePartner.style.background = "#0f172a";
-          btnStorePartner.style.color = "#ffffff";
-          btnStorePartner.style.borderColor = "#0f172a";
-        }
-        if (btnStoreBodega) {
-          btnStoreBodega.classList.remove("active");
-          btnStoreBodega.style.background = "";
-          btnStoreBodega.style.color = "";
-          btnStoreBodega.style.borderColor = "";
-        }
-        if (storeExplainer) {
-          storeExplainer.innerHTML = "👉 <strong>De Sneaker Partner a Cliente Final:</strong> Muestra la vitrina de Cali Shoes con tus precios al detal y tu WhatsApp para cerrar la venta.";
-        }
       }
     }
 
@@ -3316,11 +3331,15 @@ ${itemsText}
       let finalUrl = `${baseUrl}?store=${encodeURIComponent(targetStoreId)}&view=storefront`;
       let prodObj = null;
 
+      const allStores = db.getStores();
+      const currentStore = allStores.find(s => s.id === targetStoreId) || db.getCurrentStore();
+      const storeProducts = db.getStorefrontProducts(currentStore);
+
       if (currentType === "product") {
         if (!selectedProductId && productSelect) {
           selectedProductId = productSelect.value;
         }
-        prodObj = db.getMasterProductById(selectedProductId) || db.getMasterProducts(false)[0];
+        prodObj = storeProducts.find(p => p.id === selectedProductId) || db.getMasterProductById(selectedProductId) || storeProducts[0];
         if (prodObj) {
           finalUrl += `&prod=${encodeURIComponent(prodObj.id)}`;
         }
@@ -3328,39 +3347,31 @@ ${itemsText}
 
       urlInput.value = finalUrl;
 
-      // Generar copy persuasivo según vitrina y formato
+      // Generar copy persuasivo según la tienda activa y el formato
       let copyText = "";
-      const priceFmt = prodObj ? `$${db.formatCOP(prodObj.suggestedRetailPrice)} COP` : "";
-      const isBodega = targetStoreId === "store-001";
+      const priceFmt = prodObj ? `$${db.formatCOP(prodObj.storeRetailPrice || prodObj.suggestedRetailPrice)} COP` : "";
+      const sName = currentStore ? currentStore.name : "nuestra tienda";
 
       if (currentFormat === "story") {
         if (copyLabel) copyLabel.textContent = "📸 Texto gancho sugerido para tu Historia / Sticker:";
         if (currentType === "product" && prodObj) {
-          copyText = isBodega
-            ? `👟 ${prodObj.name} disponibles en bodega directa. Toca el sticker para ver tallas en cm y pedir contraentrega 👇`
-            : `👟 ${prodObj.name} disponibles (${priceFmt}). Toca el sticker para ver fotos en HD, tallas en cm y pedir contraentrega 👇`;
+          copyText = `👟 ${prodObj.name} disponibles en ${sName} (${priceFmt}). Toca el sticker para ver fotos en HD, tallas en cm y pedir contraentrega 👇`;
         } else {
-          copyText = isBodega
-            ? `👟 Catálogo oficial de bodega abierto para revendedores y clientes. Toca el sticker para consultar stock en tiempo real y pedir contraentrega 👇`
-            : `👟 ¡Nueva colección disponible con entrega inmediata! Toca el sticker para ver tallas en cm y pedir contraentrega a tu casa 👇`;
+          copyText = `👟 ¡Nueva colección disponible en ${sName} con entrega inmediata! Toca el sticker para ver tallas en cm y pedir contraentrega a tu casa 👇`;
         }
       } else if (currentFormat === "chat") {
         if (copyLabel) copyLabel.textContent = "💬 Mensaje listo para enviar por WhatsApp al cliente:";
         if (currentType === "product" && prodObj) {
-          copyText = isBodega
-            ? `¡Hola! 👋 Te comparto las fotos oficiales y disponibilidad de las ${prodObj.name} en Bodega Vanessa. Puedes pedir directamente aquí: ${finalUrl}`
-            : `¡Hola! 👋 Te comparto las fotos oficiales y detalles de las ${prodObj.name} (${priceFmt}). Puedes ver fotos de todos los ángulos y pedir aquí: ${finalUrl}`;
+          copyText = `¡Hola! 👋 Te comparto las fotos oficiales y detalles de las ${prodObj.name} (${priceFmt}) en ${sName}. Puedes ver fotos de todos los ángulos y pedir aquí: ${finalUrl}`;
         } else {
-          copyText = isBodega
-            ? `¡Hola! 👋 Te comparto nuestra vitrina oficial en vivo de Bodega Vanessa Castellar. Puedes revisar tallas disponibles y fotos HD aquí: ${finalUrl}`
-            : `¡Hola! 👋 Mira todo nuestro catálogo de calzado disponible con fotos reales y consulta de tallas en tiempo real aquí: ${finalUrl}`;
+          copyText = `¡Hola! 👋 Mira todo nuestro catálogo de calzado disponible en ${sName} con fotos reales y consulta de tallas en tiempo real aquí: ${finalUrl}`;
         }
       } else if (currentFormat === "bio") {
         if (copyLabel) copyLabel.textContent = "🌐 Texto recomendado para tu Biografía de Instagram / TikTok:";
         if (currentType === "product" && prodObj) {
-          copyText = `👟 Compra directa ${prodObj.name} con envíos y contraentrega nacional 👇`;
+          copyText = `👟 Compra directa ${prodObj.name} en ${sName} con envíos y contraentrega nacional 👇`;
         } else {
-          copyText = `🛍️ Catálogo Oficial & Pedidos Contraentrega a toda Colombia 👇`;
+          copyText = `🛍️ Catálogo Oficial ${sName} & Pedidos Contraentrega a toda Colombia 👇`;
         }
       }
 
@@ -3378,33 +3389,10 @@ ${itemsText}
       }
     }
 
-    // Handlers para selector de vitrina (Bodega vs Sneaker Partner)
-    if (btnStoreBodega) {
-      btnStoreBodega.onclick = () => {
-        targetStoreId = "store-001";
-        updateStoreButtons();
-        generateLinkAndCopy();
-      };
-    }
-
-    if (btnStorePartner) {
-      btnStorePartner.onclick = () => {
-        targetStoreId = "store-002";
-        updateStoreButtons();
-        generateLinkAndCopy();
-      };
-    }
-
-    // Exponer función global para abrir desde el modal de producto
+    // Exponer función global para abrir desde el catálogo o tabla
     window.openSneakerLinkCreator = (prodId) => {
+      updateActiveStoreInfo();
       populateProductSelect();
-      const session = db.getAuthSession();
-      if (session.role === "store-admin" || currentView === "store-admin") {
-        targetStoreId = "store-002";
-      } else {
-        targetStoreId = "store-001";
-      }
-      updateStoreButtons();
 
       if (prodId) {
         currentType = "product";
@@ -3426,18 +3414,12 @@ ${itemsText}
       modal?.classList.add("open");
     };
 
-    // Disparadores en panel y tienda
-    [triggerStorefront, triggerPartnerHeader, triggerPartnerBanner, triggerSupplierBanner].forEach(btn => {
+    // Disparadores en panel de administración (Partner y Bodega)
+    [triggerPartnerHeader, triggerPartnerBanner, triggerSupplierBanner].forEach(btn => {
       if (btn) {
         btn.onclick = () => {
+          updateActiveStoreInfo();
           populateProductSelect();
-          const session = db.getAuthSession();
-          if (session.role === "store-admin" || currentView === "store-admin") {
-            targetStoreId = "store-002";
-          } else {
-            targetStoreId = "store-001";
-          }
-          updateStoreButtons();
           generateLinkAndCopy();
           modal?.classList.add("open");
         };
