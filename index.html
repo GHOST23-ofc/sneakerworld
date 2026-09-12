@@ -151,7 +151,10 @@
               </div>
             </div>
           </div>
-          <div class="store-header-cta">
+          <div class="store-header-cta" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+            <button type="button" id="btn-storefront-open-link-creator" class="btn-action-sm" style="background: #ffffff; color: var(--text-primary); border: 1.5px solid var(--border-subtle); font-weight: 800; font-size: 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 999px;">
+              <span>🔗 Crear Enlace (Historias & Clientes)</span>
+            </button>
             <a href="#" id="storefront-wa-direct" target="_blank" rel="noopener" class="btn-wa-header">
               <span>💬 WhatsApp Dueño Bodega</span>
             </a>
@@ -246,6 +249,9 @@
             </div>
           </div>
           <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <button type="button" id="btn-partner-open-link-creator" class="btn-primary" style="font-weight: 700; font-size: 13px; background: #0f172a; border-color: #0f172a; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+              <span>🔗 Crear Enlace (Historias & Clientes)</span>
+            </button>
             <button type="button" id="btn-open-store-reports" class="btn-secondary" style="font-weight: 700; font-size: 13px; cursor: pointer;">
               <span>📊 Mi Contabilidad & Excel</span>
             </button>
@@ -254,6 +260,41 @@
             </button>
             <button id="btn-save-store-prices" class="btn-primary">
               <span>💾 Guardar Cambios de Vitrina</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- BANNER OFICIAL: EMPLEADO DIGITAL 24/7/365 (SNEAKER PARTNER) -->
+        <div class="empleado-digital-card" style="background: linear-gradient(135deg, #090d16 0%, #1e293b 100%); color: #ffffff; border-radius: var(--radius-lg); padding: 20px 24px; margin-bottom: 24px; border: 1.5px solid rgba(230,25,46,0.35); box-shadow: 0 10px 30px rgba(0,0,0,0.22); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 18px;">
+          <div style="display: flex; align-items: center; gap: 16px;">
+            <div style="width: 56px; height: 56px; border-radius: 16px; background: rgba(230, 25, 46, 0.15); border: 1.5px solid #e6192e; display: flex; align-items: center; justify-content: center; font-size: 28px; flex-shrink: 0; box-shadow: 0 0 20px rgba(230,25,46,0.3);">
+              🤖
+            </div>
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap;">
+                <span style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: #4ade80; background: rgba(74, 222, 128, 0.12); padding: 3px 10px; border-radius: 999px; border: 1px solid rgba(74, 222, 128, 0.3); display: inline-flex; align-items: center; gap: 5px;">
+                  <span style="width: 7px; height: 7px; border-radius: 50%; background: #4ade80; display: inline-block; box-shadow: 0 0 8px #4ade80;"></span>
+                  24/7 • 365 DÍAS AL AÑO ACTIVO
+                </span>
+                <span style="font-size: 11px; font-weight: 800; color: #facc15; background: rgba(250, 204, 21, 0.12); padding: 3px 10px; border-radius: 999px; border: 1px solid rgba(250, 204, 21, 0.35); display: inline-flex; align-items: center; gap: 5px;">
+                  ⚡ RECUPERAS +21 HORAS A LA SEMANA (~84h al mes)
+                </span>
+              </div>
+              <h3 style="margin: 0; font-size: 17px; font-weight: 800; color: #ffffff;" id="empleado-partner-title">Vendedor Digital 24/7/365 — Sneaker Partner</h3>
+              <p style="margin: 4px 0 0; font-size: 12px; color: #cbd5e1; max-width: 680px; line-height: 1.4;">
+                Vende en piloto automático las 24 horas del día, los 365 días del año. Atiende compradores de redes sociales, cotiza precios con tu margen de ganancia y pasa los pedidos directamente a bodega sin que tengas que contestar chats de noche ni fines de semana. Recuperas +21 horas semanales de atención manual.
+              </p>
+            </div>
+          </div>
+          <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <button type="button" id="btn-partner-banner-link-creator" class="btn-primary" style="background: #0f172a; border-color: #0f172a; font-size: 12px; padding: 8px 14px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+              🔗 Crear Enlace Historias
+            </button>
+            <button type="button" id="btn-open-empleado-copier-partner" class="btn-primary" style="background: #e6192e; border-color: #e6192e; font-size: 12px; padding: 8px 14px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+              ⚡ Respuestas Rápidas (1 Clic)
+            </button>
+            <button type="button" id="btn-partner-chat-preview" class="btn-secondary" style="background: #ffffff; color: #0f172a; border-color: #ffffff; font-size: 12px; padding: 8px 14px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+              💬 Probar Chat Asistente
             </button>
           </div>
         </div>
@@ -339,27 +380,32 @@
           </div>
         </div>
 
-        <!-- BANNER OFICIAL: EMPLEADO DIGITAL 24/7 (SISTEMA IA DE ATENCIÓN & DESPACHOS) -->
-        <div class="empleado-digital-card" style="background: linear-gradient(135deg, #090d16 0%, #1e293b 100%); color: #ffffff; border-radius: var(--radius-lg); padding: 18px 22px; margin-bottom: 22px; border: 1.5px solid rgba(230,25,46,0.35); box-shadow: 0 10px 30px rgba(0,0,0,0.18); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
-          <div style="display: flex; align-items: center; gap: 14px;">
-            <div style="width: 52px; height: 52px; border-radius: 14px; background: rgba(230, 25, 46, 0.15); border: 1.5px solid #e6192e; display: flex; align-items: center; justify-content: center; font-size: 26px; flex-shrink: 0; box-shadow: 0 0 16px rgba(230,25,46,0.25);">
+        <!-- BANNER OFICIAL: EMPLEADO DIGITAL 24/7/365 (SISTEMA IA DE ATENCIÓN & DESPACHOS) -->
+        <div class="empleado-digital-card" style="background: linear-gradient(135deg, #090d16 0%, #1e293b 100%); color: #ffffff; border-radius: var(--radius-lg); padding: 20px 24px; margin-bottom: 24px; border: 1.5px solid rgba(230,25,46,0.35); box-shadow: 0 10px 30px rgba(0,0,0,0.22); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 18px;">
+          <div style="display: flex; align-items: center; gap: 16px;">
+            <div style="width: 56px; height: 56px; border-radius: 16px; background: rgba(230, 25, 46, 0.15); border: 1.5px solid #e6192e; display: flex; align-items: center; justify-content: center; font-size: 28px; flex-shrink: 0; box-shadow: 0 0 20px rgba(230,25,46,0.3);">
               🤖
             </div>
             <div>
-              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 3px; flex-wrap: wrap;">
-                <span style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: #4ade80; background: rgba(74, 222, 128, 0.12); padding: 2px 8px; border-radius: 999px; border: 1px solid rgba(74, 222, 128, 0.3); display: inline-flex; align-items: center; gap: 4px;">
-                  <span style="width: 6px; height: 6px; border-radius: 50%; background: #4ade80; display: inline-block; box-shadow: 0 0 6px #4ade80;"></span>
-                  Empleado Digital 24/7 Activo
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap;">
+                <span style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: #4ade80; background: rgba(74, 222, 128, 0.12); padding: 3px 10px; border-radius: 999px; border: 1px solid rgba(74, 222, 128, 0.3); display: inline-flex; align-items: center; gap: 5px;">
+                  <span style="width: 7px; height: 7px; border-radius: 50%; background: #4ade80; display: inline-block; box-shadow: 0 0 8px #4ade80;"></span>
+                  24/7 • 365 DÍAS AL AÑO ACTIVO
                 </span>
-                <span style="font-size: 11px; color: #94a3b8;">• Guardia Nocturna & Fines de Semana</span>
+                <span style="font-size: 11px; font-weight: 800; color: #facc15; background: rgba(250, 204, 21, 0.12); padding: 3px 10px; border-radius: 999px; border: 1px solid rgba(250, 204, 21, 0.35); display: inline-flex; align-items: center; gap: 5px;">
+                  ⚡ RECUPERAS +28 HORAS A LA SEMANA (~112h al mes)
+                </span>
               </div>
-              <h3 style="margin: 0; font-size: 16px; font-weight: 800; color: #ffffff;">Asistente Virtual de Despachos — Vanessa Castellar Shoes</h3>
-              <p style="margin: 3px 0 0; font-size: 12px; color: #cbd5e1; max-width: 650px; line-height: 1.35;">
-                Atiende consultas de revendedores, valida stock por tallas y pre-arma pedidos a WhatsApp en piloto automático para que no tengas que trasnochar ni trabajar los domingos.
+              <h3 style="margin: 0; font-size: 17px; font-weight: 800; color: #ffffff;">Asistente Virtual de Despachos 24/7/365 — Vanessa Castellar Shoes</h3>
+              <p style="margin: 4px 0 0; font-size: 12px; color: #cbd5e1; max-width: 680px; line-height: 1.4;">
+                Atiende consultas de revendedores las 24 horas del día, los 365 días del año. Valida stock en vivo por talla, envía fotos HD de bodega y pre-arma pedidos a WhatsApp en piloto automático. Te ahorra ~4 horas diarias de chat repetitivo (+28 horas libres semanales) para que no vuelvas a trasnochar subiendo fotos un lunes a las 11:00 PM ni contestes mensajes un domingo a las 7:00 AM.
               </p>
             </div>
           </div>
           <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <button type="button" id="btn-supplier-open-link-creator" class="btn-primary" style="background: #0f172a; border-color: #0f172a; font-size: 12px; padding: 8px 14px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+              🔗 Crear Enlace Historias
+            </button>
             <button type="button" id="btn-open-empleado-copier" class="btn-primary" style="background: #e6192e; border-color: #e6192e; font-size: 12px; padding: 8px 14px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
               ⚡ Respuestas Rápidas (1 Clic)
             </button>
@@ -1422,7 +1468,18 @@
         </div>
 
         <div style="padding: 16px 20px; max-height: 65vh; overflow-y: auto;">
-          <div class="copier-grid">
+          <!-- Pestañas Bodega vs Sneaker Partner -->
+          <div style="display: flex; gap: 8px; margin-bottom: 14px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;">
+            <button type="button" class="copier-tab-btn active" id="tab-copier-supplier" style="flex: 1; padding: 8px 12px; font-size: 12px; font-weight: 700; border-radius: 8px; border: 1.5px solid #0f172a; background: #0f172a; color: #ffffff; cursor: pointer;">
+              🏢 Bodega Vanessa (Mayorista)
+            </button>
+            <button type="button" class="copier-tab-btn" id="tab-copier-partner" style="flex: 1; padding: 8px 12px; font-size: 12px; font-weight: 700; border-radius: 8px; border: 1.5px solid #cbd5e1; background: #ffffff; color: #334155; cursor: pointer;">
+              👟 Sneaker Partner (Venta al Detal)
+            </button>
+          </div>
+
+          <!-- SECCIÓN 1: PLANTILLAS BODEGA VANESSA (MAYORISTA) -->
+          <div class="copier-grid" id="copier-content-supplier">
             <!-- Template 1: Catálogo sin saturar memoria -->
             <div class="copier-card">
               <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
@@ -1487,6 +1544,163 @@
                 Todas nuestras referencias cuentan con garantía directa de bodega por defectos de fabricación. Si necesitas cambio de talla, te lo gestionamos de inmediato siempre que el calzado esté sin uso y en su empaque original.
               </p>
             </div>
+          </div>
+
+          <!-- SECCIÓN 2: PLANTILLAS SNEAKER PARTNER (VENTA DETAL / CLIENTES REDES) -->
+          <div class="copier-grid" id="copier-content-partner" style="display: none;">
+            <!-- Partner Template 1: Catálogo de la tienda -->
+            <div class="copier-card">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+                <strong style="font-size: 13px; color: var(--text-primary);">👟 1. Mi Tienda en Vivo (Ver fotos HD sin llenar tu celular)</strong>
+                <button type="button" class="btn-secondary btn-copy-template" style="font-size: 11px; padding: 4px 10px; font-weight: 700; cursor: pointer;">
+                  📋 Copiar
+                </button>
+              </div>
+              <p style="font-size: 11.5px; color: var(--text-secondary); margin: 0; background: #f8fafc; padding: 8px 10px; border-radius: 6px; border: 1px solid #e2e8f0; line-height: 1.4;">
+                ¡Hola! Claro que sí, aquí tienes nuestra tienda oficial en línea donde puedes ver todos los modelos disponibles, consultar por tu talla exacta y ver fotos reales sin saturar la memoria de tu teléfono: https://sneakerworld-roan.vercel.app/?demo=calishoes
+              </p>
+            </div>
+
+            <!-- Partner Template 2: Contraentrega & Medios de Pago -->
+            <div class="copier-card">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+                <strong style="font-size: 13px; color: var(--text-primary);">💳 2. Pago Contraentrega o Transferencia</strong>
+                <button type="button" class="btn-secondary btn-copy-template" style="font-size: 11px; padding: 4px 10px; font-weight: 700; cursor: pointer;">
+                  📋 Copiar
+                </button>
+              </div>
+              <p style="font-size: 11.5px; color: var(--text-secondary); margin: 0; background: #f8fafc; padding: 8px 10px; border-radius: 6px; border: 1px solid #e2e8f0; line-height: 1.4;">
+                Manejamos pago contraentrega en las principales ciudades del país o transferencia por Nequi / Bancolombia / Daviplata. ¿Para qué ciudad y barrio sería tu entrega para confirmarte el flete? 📦
+              </p>
+            </div>
+
+            <!-- Partner Template 3: Talla exacta para el cliente -->
+            <div class="copier-card">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+                <strong style="font-size: 13px; color: var(--text-primary);">📏 3. Guía de Talla en Centímetros (Cero errores)</strong>
+                <button type="button" class="btn-secondary btn-copy-template" style="font-size: 11px; padding: 4px 10px; font-weight: 700; cursor: pointer;">
+                  📋 Copiar
+                </button>
+              </div>
+              <p style="font-size: 11.5px; color: var(--text-secondary); margin: 0; background: #f8fafc; padding: 8px 10px; border-radius: 6px; border: 1px solid #e2e8f0; line-height: 1.4;">
+                Para asegurarte de pedir la talla exacta, mide tu pie sobre una hoja del talón a la punta:&#10;• 37: 24 cm | 38: 24.5 cm | 39: 25 cm | 40: 25.5 cm&#10;• 41: 26.5 cm | 42: 27 cm | 43: 28 cm. ¿Qué talla calzas normalmente?
+              </p>
+            </div>
+
+            <!-- Partner Template 4: Despacho y Entrega Rápida -->
+            <div class="copier-card">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+                <strong style="font-size: 13px; color: var(--text-primary);">🚚 4. Despacho Directo & Tiempos de Entrega</strong>
+                <button type="button" class="btn-secondary btn-copy-template" style="font-size: 11px; padding: 4px 10px; font-weight: 700; cursor: pointer;">
+                  📋 Copiar
+                </button>
+              </div>
+              <p style="font-size: 11.5px; color: var(--text-secondary); margin: 0; background: #f8fafc; padding: 8px 10px; border-radius: 6px; border: 1px solid #e2e8f0; line-height: 1.4;">
+                Despachamos tu par en caja de protección original. En Cali entregamos el mismo día. A nivel nacional llega en 24 a 48 horas hábiles con número de guía oficial de Servientrega o Interrapidísimo.
+              </p>
+            </div>
+
+            <!-- Partner Template 5: Garantía de Satisfacción -->
+            <div class="copier-card">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+                <strong style="font-size: 13px; color: var(--text-primary);">🛡️ 5. Garantía de Calidad & Cambio de Talla</strong>
+                <button type="button" class="btn-secondary btn-copy-template" style="font-size: 11px; padding: 4px 10px; font-weight: 700; cursor: pointer;">
+                  📋 Copiar
+                </button>
+              </div>
+              <p style="font-size: 11.5px; color: var(--text-secondary); margin: 0; background: #f8fafc; padding: 8px 10px; border-radius: 6px; border: 1px solid #e2e8f0; line-height: 1.4;">
+                Tu compra tiene garantía de fábrica y cuentas con cambio de talla si no te queda perfecto. ¡Tu satisfacción está 100% garantizada con nosotros! ✨
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =========================================================================
+         MODAL 12: CREADOR DE ENLACES PARA HISTORIAS & CLIENTES (SNEAKERS & BODEGA)
+         ========================================================================= -->
+    <div class="modal-backdrop" id="modal-link-creator" role="dialog" aria-modal="true">
+      <div class="modal-dialog" style="max-width: 580px;">
+        <div class="modal-header">
+          <div>
+            <span style="font-size: 10px; font-weight: 800; color: #e6192e; background: #fff0f1; padding: 2px 8px; border-radius: 999px;">GENERADOR DE ENLACES VIRALES</span>
+            <h3 style="margin-top: 4px; font-size: 17px;">🔗 Creador de Enlaces para Historias & Clientes</h3>
+            <p style="margin: 2px 0 0; font-size: 11.5px; color: var(--text-muted);">Genera enlaces listos para pegar en tus Stickers de Instagram, enviar por WhatsApp o poner en tu Bio.</p>
+          </div>
+          <button class="btn-close-modal" id="btn-close-link-creator">&times;</button>
+        </div>
+
+        <div style="padding: 18px 20px; max-height: 75vh; overflow-y: auto;">
+          <!-- Paso 1: ¿Qué vas a compartir? -->
+          <div class="form-group" style="margin-bottom: 14px;">
+            <label class="form-label" style="font-size: 11.5px; font-weight: 800;">1. ¿Qué deseas compartir?</label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+              <button type="button" class="btn-secondary link-target-type-btn active" id="btn-link-type-store" data-type="store" style="padding: 10px; text-align: left; border-radius: 10px; font-size: 12px; font-weight: 700; cursor: pointer; border-color: #0f172a; background: #0f172a; color: #ffffff;">
+                🏪 Toda la Tienda / Catálogo
+              </button>
+              <button type="button" class="btn-secondary link-target-type-btn" id="btn-link-type-product" data-type="product" style="padding: 10px; text-align: left; border-radius: 10px; font-size: 12px; font-weight: 700; cursor: pointer;">
+                👟 Una Zapatilla Puntual
+              </button>
+            </div>
+            <!-- Selector de producto si elige zapatilla -->
+            <div id="link-product-select-container" style="display: none; margin-top: 8px;">
+              <label class="form-label" style="font-size: 11px;">Elige la zapatilla del catálogo:</label>
+              <select id="link-product-select" class="form-input" style="font-size: 12px; font-weight: 600;"></select>
+            </div>
+          </div>
+
+          <!-- Paso 2: Formato de Publicación -->
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label class="form-label" style="font-size: 11.5px; font-weight: 800;">2. ¿Dónde lo vas a publicar?</label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px;">
+              <button type="button" class="btn-secondary link-format-btn active" id="btn-link-fmt-story" data-format="story" style="font-size: 11px; padding: 8px 6px; font-weight: 700; text-align: center; cursor: pointer; border-color: #e6192e; background: #fff0f1; color: #e6192e;">
+                📸 Historia Instagram
+              </button>
+              <button type="button" class="btn-secondary link-format-btn" id="btn-link-fmt-chat" data-format="chat" style="font-size: 11px; padding: 8px 6px; font-weight: 700; text-align: center; cursor: pointer;">
+                💬 Chat WhatsApp
+              </button>
+              <button type="button" class="btn-secondary link-format-btn" id="btn-link-fmt-bio" data-format="bio" style="font-size: 11px; padding: 8px 6px; font-weight: 700; text-align: center; cursor: pointer;">
+                🌐 Bio Instagram / TikTok
+              </button>
+            </div>
+          </div>
+
+          <!-- Caja de Enlace Generado -->
+          <div style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 12px; padding: 14px; margin-bottom: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span style="font-size: 11px; font-weight: 800; color: var(--text-primary);">🔗 Tu Enlace Optimizado:</span>
+              <span id="link-generated-badge" style="font-size: 10px; font-weight: 800; color: #15803d; background: #f0fdf4; padding: 1px 7px; border-radius: 999px; border: 1px solid #bbf7d0;">Listo para compartir</span>
+            </div>
+            <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+              <input type="text" id="link-generated-url" class="form-input" readonly style="font-size: 11px; font-weight: 700; background: #ffffff; color: #0f172a; padding: 8px 10px; cursor: text;">
+              <button type="button" id="btn-copy-generated-link" class="btn-primary" style="font-size: 12px; padding: 8px 14px; font-weight: 700; flex-shrink: 0; background: #0f172a; border-color: #0f172a; cursor: pointer;">
+                📋 Copiar Enlace
+              </button>
+            </div>
+
+            <!-- Sugerencia de Copy / Texto para Historias o WhatsApp -->
+            <div id="link-copy-text-box" style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #e2e8f0;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <span style="font-size: 11px; font-weight: 800; color: var(--text-secondary);" id="link-copy-label">📸 Texto gancho sugerido para tu Historia:</span>
+                <button type="button" id="btn-copy-story-text" class="btn-secondary" style="font-size: 10px; padding: 3px 8px; font-weight: 700; cursor: pointer;">
+                  📋 Copiar Texto
+                </button>
+              </div>
+              <p id="link-suggested-copy" style="font-size: 11.5px; color: #334155; margin: 0; background: #ffffff; padding: 8px 10px; border-radius: 6px; border: 1px solid #e2e8f0; line-height: 1.4;">
+                👟 Nueva colección disponible en bodega. Toca el sticker para ver tallas en cm y pedir contraentrega sin descargar fotos a tu celular 👇
+              </p>
+            </div>
+          </div>
+
+          <!-- Botones de Acción Inmediata -->
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <a href="#" id="link-wa-share-btn" target="_blank" rel="noopener" class="btn-primary" style="flex: 1; justify-content: center; font-size: 12px; background: #25d366; border-color: #25d366; font-weight: 800; padding: 10px 14px; text-decoration: none;">
+              📲 Compartir Directo en WhatsApp
+            </a>
+            <button type="button" id="btn-open-generated-link-preview" class="btn-secondary" style="font-size: 12px; padding: 10px 14px; font-weight: 700; cursor: pointer;">
+              👁️ Probar Enlace
+            </button>
           </div>
         </div>
       </div>

@@ -176,7 +176,16 @@ document.addEventListener("DOMContentLoaded", () => {
     setupAccountingReports();
     setupReturnExchangeModal();
     setupEmpleadoDigital();
+    setupLinkCreatorModal();
     switchView(currentView);
+
+    // Auto-abrir zapatilla si viene en el enlace por sticker de Instagram o chat
+    const paramProd = urlParams.get("prod");
+    if (paramProd) {
+      setTimeout(() => {
+        openProductModal(paramProd);
+      }, 450);
+    }
   }
 
   // =========================================================================
@@ -779,7 +788,21 @@ document.addEventListener("DOMContentLoaded", () => {
             ${isAgotado ? '❌ Agotado en Bodega' : '💬 Pedir 1 Par por WhatsApp'}
           </a>
         </div>
+        <button type="button" class="btn-secondary btn-modal-share-product" style="width: 100%; margin-top: 8px; justify-content: center; font-size: 12px; font-weight: 700; background: #f8fafc; border-color: #cbd5e1; cursor: pointer; display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 8px;">
+          <span>🔗 Crear Enlace para Historias / Clientes</span>
+        </button>
       `;
+
+      // Evento de compartir enlace de este producto
+      const shareBtn = body.querySelector(".btn-modal-share-product");
+      if (shareBtn) {
+        shareBtn.onclick = () => {
+          modal.classList.remove("open");
+          if (window.openSneakerLinkCreator) {
+            window.openSneakerLinkCreator(product.id);
+          }
+        };
+      }
 
       // Eventos de selección de color
       body.querySelectorAll(".colorway-badge-chip").forEach(btn => {
@@ -2900,22 +2923,75 @@ ${itemsText}
     const modalCopier = document.getElementById("modal-empleado-copier");
     const btnCloseCopier = document.getElementById("btn-close-empleado-copier");
     const btnOpenCopier = document.getElementById("btn-open-empleado-copier");
+    const btnOpenCopierPartner = document.getElementById("btn-open-empleado-copier-partner");
     const btnOpenChatPreview = document.getElementById("btn-open-empleado-chat-preview");
+    const btnPartnerChatPreview = document.getElementById("btn-partner-chat-preview");
 
-    // Abrir modal de chat desde botón flotante o botón del panel
+    const tabSupplier = document.getElementById("tab-copier-supplier");
+    const tabPartner = document.getElementById("tab-copier-partner");
+    const contentSupplier = document.getElementById("copier-content-supplier");
+    const contentPartner = document.getElementById("copier-content-partner");
+
+    function selectCopierTab(tab) {
+      if (tab === "supplier") {
+        if (contentSupplier) contentSupplier.style.display = "grid";
+        if (contentPartner) contentPartner.style.display = "none";
+        if (tabSupplier) {
+          tabSupplier.style.background = "#0f172a";
+          tabSupplier.style.color = "#ffffff";
+          tabSupplier.style.borderColor = "#0f172a";
+        }
+        if (tabPartner) {
+          tabPartner.style.background = "#ffffff";
+          tabPartner.style.color = "#334155";
+          tabPartner.style.borderColor = "#cbd5e1";
+        }
+      } else {
+        if (contentSupplier) contentSupplier.style.display = "none";
+        if (contentPartner) contentPartner.style.display = "grid";
+        if (tabPartner) {
+          tabPartner.style.background = "#0f172a";
+          tabPartner.style.color = "#ffffff";
+          tabPartner.style.borderColor = "#0f172a";
+        }
+        if (tabSupplier) {
+          tabSupplier.style.background = "#ffffff";
+          tabSupplier.style.color = "#334155";
+          tabSupplier.style.borderColor = "#cbd5e1";
+        }
+      }
+    }
+
+    if (tabSupplier) tabSupplier.onclick = () => selectCopierTab("supplier");
+    if (tabPartner) tabPartner.onclick = () => selectCopierTab("partner");
+
+    // Abrir modal de chat desde botón flotante o botones de paneles
     if (btnFloating) {
       btnFloating.onclick = () => modalChat?.classList.add("open");
     }
     if (btnOpenChatPreview) {
       btnOpenChatPreview.onclick = () => modalChat?.classList.add("open");
     }
+    if (btnPartnerChatPreview) {
+      btnPartnerChatPreview.onclick = () => modalChat?.classList.add("open");
+    }
     if (btnCloseChat) {
       btnCloseChat.onclick = () => modalChat?.classList.remove("open");
     }
 
-    // Abrir modal de respuestas rápidas para Vanessa
+    // Abrir modal de respuestas rápidas (Vanessa)
     if (btnOpenCopier) {
-      btnOpenCopier.onclick = () => modalCopier?.classList.add("open");
+      btnOpenCopier.onclick = () => {
+        selectCopierTab("supplier");
+        modalCopier?.classList.add("open");
+      };
+    }
+    // Abrir modal de respuestas rápidas (Sneaker Partner)
+    if (btnOpenCopierPartner) {
+      btnOpenCopierPartner.onclick = () => {
+        selectCopierTab("partner");
+        modalCopier?.classList.add("open");
+      };
     }
     if (btnCloseCopier) {
       btnCloseCopier.onclick = () => modalCopier?.classList.remove("open");
@@ -3055,6 +3131,261 @@ ${itemsText}
         else if (ask === "whatsapp") processEmpleadoQuery("Hablar con Vanessa por WhatsApp");
       });
     });
+  }
+
+  // =========================================================================
+  // CREADOR DE ENLACES VIRALES PARA HISTORIAS, WHATSAPP & BIO (SNEAKERS & BODEGA)
+  // =========================================================================
+  function setupLinkCreatorModal() {
+    const modal = document.getElementById("modal-link-creator");
+    const btnClose = document.getElementById("btn-close-link-creator");
+
+    // Botones disparadores en distintas vistas
+    const triggerStorefront = document.getElementById("btn-storefront-open-link-creator");
+    const triggerPartnerHeader = document.getElementById("btn-partner-open-link-creator");
+    const triggerPartnerBanner = document.getElementById("btn-partner-banner-link-creator");
+    const triggerSupplierBanner = document.getElementById("btn-supplier-open-link-creator");
+
+    // Controles internos del modal
+    const btnTypeStore = document.getElementById("btn-link-type-store");
+    const btnTypeProduct = document.getElementById("btn-link-type-product");
+    const productSelectContainer = document.getElementById("link-product-select-container");
+    const productSelect = document.getElementById("link-product-select");
+
+    const btnFmtStory = document.getElementById("btn-link-fmt-story");
+    const btnFmtChat = document.getElementById("btn-link-fmt-chat");
+    const btnFmtBio = document.getElementById("btn-link-fmt-bio");
+
+    const urlInput = document.getElementById("link-generated-url");
+    const btnCopyLink = document.getElementById("btn-copy-generated-link");
+    const btnCopyText = document.getElementById("btn-copy-story-text");
+    const copyLabel = document.getElementById("link-copy-label");
+    const suggestedCopy = document.getElementById("link-suggested-copy");
+    const waShareBtn = document.getElementById("link-wa-share-btn");
+    const btnPreview = document.getElementById("btn-open-generated-link-preview");
+
+    let currentType = "store"; // "store" | "product"
+    let currentFormat = "story"; // "story" | "chat" | "bio"
+    let selectedProductId = null;
+
+    function populateProductSelect() {
+      if (!productSelect) return;
+      const prods = db.getMasterProducts(false);
+      productSelect.innerHTML = prods.map(p => `
+        <option value="${p.id}" ${p.id === selectedProductId ? 'selected' : ''}>
+          ${p.name} — $${db.formatCOP(p.suggestedRetailPrice)}
+        </option>
+      `).join("");
+      if (!selectedProductId && prods.length > 0) {
+        selectedProductId = prods[0].id;
+      }
+    }
+
+    function generateLinkAndCopy() {
+      if (!urlInput || !suggestedCopy) return;
+
+      const origin = window.location.origin;
+      const pathname = window.location.pathname;
+      const isLocal = origin.includes("localhost") || origin.includes("127.0.0.1") || origin.startsWith("file:");
+      const baseUrl = isLocal ? "https://sneakerworld-roan.vercel.app" : `${origin}${pathname}`;
+
+      // Detectar contexto de tienda o proveedor
+      const session = db.getAuthSession();
+      let queryParam = "";
+
+      if (session.role === "supplier" || currentView === "supplier") {
+        queryParam = "demo=vanessa";
+      } else {
+        queryParam = "demo=calishoes";
+      }
+
+      let finalUrl = `${baseUrl}?${queryParam}`;
+      let prodObj = null;
+
+      if (currentType === "product") {
+        if (!selectedProductId && productSelect) {
+          selectedProductId = productSelect.value;
+        }
+        prodObj = db.getMasterProductById(selectedProductId) || db.getMasterProducts(false)[0];
+        if (prodObj) {
+          finalUrl += `&prod=${encodeURIComponent(prodObj.id)}`;
+        }
+      }
+
+      urlInput.value = finalUrl;
+
+      // Generar copy persuasivo según formato elegido
+      let copyText = "";
+      const priceFmt = prodObj ? `$${db.formatCOP(prodObj.suggestedRetailPrice)} COP` : "";
+
+      if (currentFormat === "story") {
+        if (copyLabel) copyLabel.textContent = "📸 Texto gancho sugerido para tu Historia / Sticker:";
+        if (currentType === "product" && prodObj) {
+          copyText = `👟 ${prodObj.name} disponibles en bodega (${priceFmt}). Toca el sticker para ver fotos en HD, tallas en cm y pedir contraentrega 👇`;
+        } else {
+          copyText = `👟 ¡Nueva colección de zapatillas disponible! Toca el sticker para ver el catálogo en vivo, tallas en cm y pedir contraentrega 👇`;
+        }
+      } else if (currentFormat === "chat") {
+        if (copyLabel) copyLabel.textContent = "💬 Mensaje listo para enviar por WhatsApp al cliente:";
+        if (currentType === "product" && prodObj) {
+          copyText = `¡Hola! 👋 Te comparto las fotos oficiales y disponibilidad de las ${prodObj.name} (${priceFmt}). Puedes ver fotos de todos los ángulos y apartar tu par aquí: ${finalUrl}`;
+        } else {
+          copyText = `¡Hola! 👋 Claro que sí, aquí tienes nuestro catálogo oficial en vivo donde puedes ver todas las referencias activas con fotos reales y tallas disponibles: ${finalUrl}`;
+        }
+      } else if (currentFormat === "bio") {
+        if (copyLabel) copyLabel.textContent = "🌐 Texto recomendado para tu Biografía de Instagram / TikTok:";
+        if (currentType === "product" && prodObj) {
+          copyText = `👟 Compra directa ${prodObj.name} con envíos y contraentrega nacional 👇`;
+        } else {
+          copyText = `🛍️ Catálogo Oficial & Pedidos Contraentrega a toda Colombia 👇`;
+        }
+      }
+
+      suggestedCopy.textContent = copyText;
+
+      // Actualizar botón de compartir en WhatsApp
+      if (waShareBtn) {
+        const waMsg = encodeURIComponent(`${copyText}\n\n👉 Entra aquí: ${finalUrl}`);
+        waShareBtn.href = `https://wa.me/?text=${waMsg}`;
+      }
+
+      // Previsualización directa
+      if (btnPreview) {
+        btnPreview.onclick = () => window.open(finalUrl, "_blank");
+      }
+    }
+
+    // Exponer función global para abrir desde el modal de producto
+    window.openSneakerLinkCreator = (prodId) => {
+      populateProductSelect();
+      if (prodId) {
+        currentType = "product";
+        selectedProductId = prodId;
+        if (productSelect) productSelect.value = prodId;
+        if (productSelectContainer) productSelectContainer.style.display = "block";
+        if (btnTypeProduct) {
+          btnTypeProduct.classList.add("active");
+          btnTypeProduct.style.background = "#0f172a";
+          btnTypeProduct.style.color = "#ffffff";
+        }
+        if (btnTypeStore) {
+          btnTypeStore.classList.remove("active");
+          btnTypeStore.style.background = "";
+          btnTypeStore.style.color = "";
+        }
+      }
+      generateLinkAndCopy();
+      modal?.classList.add("open");
+    };
+
+    // Disparadores en panel y tienda
+    [triggerStorefront, triggerPartnerHeader, triggerPartnerBanner, triggerSupplierBanner].forEach(btn => {
+      if (btn) {
+        btn.onclick = () => {
+          populateProductSelect();
+          generateLinkAndCopy();
+          modal?.classList.add("open");
+        };
+      }
+    });
+
+    if (btnClose) {
+      btnClose.onclick = () => modal?.classList.remove("open");
+    }
+
+    // Cambio de tipo (tienda vs producto puntual)
+    if (btnTypeStore) {
+      btnTypeStore.onclick = () => {
+        currentType = "store";
+        btnTypeStore.classList.add("active");
+        btnTypeStore.style.background = "#0f172a";
+        btnTypeStore.style.color = "#ffffff";
+        if (btnTypeProduct) {
+          btnTypeProduct.classList.remove("active");
+          btnTypeProduct.style.background = "";
+          btnTypeProduct.style.color = "";
+        }
+        if (productSelectContainer) productSelectContainer.style.display = "none";
+        generateLinkAndCopy();
+      };
+    }
+
+    if (btnTypeProduct) {
+      btnTypeProduct.onclick = () => {
+        currentType = "product";
+        btnTypeProduct.classList.add("active");
+        btnTypeProduct.style.background = "#0f172a";
+        btnTypeProduct.style.color = "#ffffff";
+        if (btnTypeStore) {
+          btnTypeStore.classList.remove("active");
+          btnTypeStore.style.background = "";
+          btnTypeStore.style.color = "";
+        }
+        if (productSelectContainer) productSelectContainer.style.display = "block";
+        populateProductSelect();
+        generateLinkAndCopy();
+      };
+    }
+
+    if (productSelect) {
+      productSelect.onchange = () => {
+        selectedProductId = productSelect.value;
+        generateLinkAndCopy();
+      };
+    }
+
+    // Cambio de formato (story, chat, bio)
+    const fmtButtons = [
+      { btn: btnFmtStory, fmt: "story" },
+      { btn: btnFmtChat, fmt: "chat" },
+      { btn: btnFmtBio, fmt: "bio" }
+    ];
+
+    fmtButtons.forEach(item => {
+      if (item.btn) {
+        item.btn.onclick = () => {
+          currentFormat = item.fmt;
+          fmtButtons.forEach(b => {
+            if (b.btn) {
+              b.btn.classList.remove("active");
+              b.btn.style.background = "";
+              b.btn.style.color = "";
+              b.btn.style.borderColor = "";
+            }
+          });
+          item.btn.classList.add("active");
+          item.btn.style.background = "#fff0f1";
+          item.btn.style.color = "#e6192e";
+          item.btn.style.borderColor = "#e6192e";
+          generateLinkAndCopy();
+        };
+      }
+    });
+
+    // Copiar enlace generado
+    if (btnCopyLink && urlInput) {
+      btnCopyLink.onclick = () => {
+        urlInput.select();
+        navigator.clipboard.writeText(urlInput.value).then(() => {
+          const original = btnCopyLink.textContent;
+          btnCopyLink.textContent = "✅ ¡Copiado!";
+          showToast("🔗 Enlace copiado al portapapeles listo para pegar en tu Sticker o chat.");
+          setTimeout(() => btnCopyLink.textContent = original, 2500);
+        });
+      };
+    }
+
+    // Copiar texto gancho sugerido
+    if (btnCopyText && suggestedCopy) {
+      btnCopyText.onclick = () => {
+        navigator.clipboard.writeText(suggestedCopy.textContent.trim()).then(() => {
+          const original = btnCopyText.textContent;
+          btnCopyText.textContent = "✅ ¡Copiado!";
+          showToast("📋 Texto para Historias copiado con éxito.");
+          setTimeout(() => btnCopyText.textContent = original, 2500);
+        });
+      };
+    }
   }
 
   // =========================================================================
