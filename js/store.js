@@ -47,6 +47,39 @@ class ShoesStoreManager {
       localStorage.setItem(DB_KEYS.ACCOUNTS, JSON.stringify(DEMO_ACCOUNTS));
       localStorage.setItem("sneakerworld_stores_vanessa_cali_only", "true");
     }
+    // Migración para sincronizar precios y visibilidad activa en Bodega Central
+    if (!localStorage.getItem("sneakerworld_sync_supplier_prices_v2")) {
+      try {
+        const rawMaster = localStorage.getItem(DB_KEYS.MASTER_PRODUCTS);
+        if (rawMaster) {
+          const masterProds = JSON.parse(rawMaster);
+          masterProds.forEach(mp => {
+            if (mp.active === undefined) mp.active = true;
+          });
+          localStorage.setItem(DB_KEYS.MASTER_PRODUCTS, JSON.stringify(masterProds));
+
+          const rawStores = localStorage.getItem(DB_KEYS.STORES);
+          if (rawStores) {
+            const stores = JSON.parse(rawStores);
+            stores.forEach(st => {
+              if (st.isSupplierStore && Array.isArray(st.products)) {
+                st.products.forEach(sp => {
+                  const mp = masterProds.find(p => p.id === sp.productId);
+                  if (mp) {
+                    sp.customPrice = mp.suggestedRetailPrice;
+                    sp.active = mp.active !== false;
+                  }
+                });
+              }
+            });
+            localStorage.setItem(DB_KEYS.STORES, JSON.stringify(stores));
+          }
+        }
+      } catch (e) {
+        console.warn("Error en migración sneakerworld_sync_supplier_prices_v2:", e);
+      }
+      localStorage.setItem("sneakerworld_sync_supplier_prices_v2", "true");
+    }
     if (!localStorage.getItem(DB_KEYS.STORES)) {
       localStorage.setItem(DB_KEYS.STORES, JSON.stringify(INITIAL_STORES));
     }
@@ -331,7 +364,7 @@ class ShoesStoreManager {
       st.products.unshift({
         productId: newProduct.id,
         customPrice: newProduct.suggestedRetailPrice,
-        active: true,
+        active: newProduct.active,
         availableSizes: [...newProduct.sizes]
       });
     });
@@ -360,10 +393,10 @@ class ShoesStoreManager {
 
     localStorage.setItem(DB_KEYS.MASTER_PRODUCTS, JSON.stringify(products));
 
-    // Sincronizar badges de campaña o tallas en las tiendas asociadas
+    // Sincronizar precios, visibilidad, badges y tallas en todas las tiendas asociadas
     const stores = this.getStores();
     stores.forEach(st => {
-      const pIdx = st.products.findIndex(sp => sp.productId === productId);
+      let pIdx = (st.products || []).findIndex(sp => sp.productId === productId);
       if (pIdx !== -1) {
         if (updatedFields.campaignBadge !== undefined) {
           st.products[pIdx].campaignBadge = updatedFields.campaignBadge;
@@ -371,6 +404,21 @@ class ShoesStoreManager {
         if (updatedFields.sizes) {
           st.products[pIdx].availableSizes = [...updatedFields.sizes];
         }
+        if (updatedFields.active !== undefined) {
+          st.products[pIdx].active = products[index].active;
+        }
+        // En la vitrina de Bodega Matriz el precio de venta al público siempre se actualiza al nuevo precio sugerido
+        if (st.isSupplierStore && updatedFields.suggestedRetailPrice !== undefined) {
+          st.products[pIdx].customPrice = products[index].suggestedRetailPrice;
+        }
+      } else {
+        if (!st.products) st.products = [];
+        st.products.push({
+          productId,
+          customPrice: products[index].suggestedRetailPrice,
+          active: products[index].active,
+          availableSizes: [...products[index].sizes]
+        });
       }
     });
     localStorage.setItem(DB_KEYS.STORES, JSON.stringify(stores));
@@ -388,6 +436,25 @@ class ShoesStoreManager {
     prod.updatedAt = new Date().toISOString().split("T")[0];
 
     localStorage.setItem(DB_KEYS.MASTER_PRODUCTS, JSON.stringify(products));
+
+    // Sincronizar estado en todas las tiendas asociadas de la red
+    const stores = this.getStores();
+    stores.forEach(st => {
+      let p = (st.products || []).find(item => item.productId === productId);
+      if (p) {
+        p.active = prod.active;
+      } else {
+        if (!st.products) st.products = [];
+        st.products.push({
+          productId,
+          customPrice: prod.suggestedRetailPrice,
+          active: prod.active,
+          availableSizes: [...prod.sizes]
+        });
+      }
+    });
+    localStorage.setItem(DB_KEYS.STORES, JSON.stringify(stores));
+
     return prod.active;
   }
 
@@ -527,26 +594,32 @@ class ShoesStoreManager {
   }
 
   getStorefrontProducts(store) {
+    const activeStore = store || this.getCurrentStore();
     const master = this.getMasterProducts(false);
     return master
       .filter(mp => {
         // Si la referencia está pausada/inhabilitada en Bodega Central (agotada o fuera de temporada), no se muestra en vitrina
         if (mp.active === false) return false;
 
-        const sp = (store.products || []).find(p => p.productId === mp.id);
-        if (store.isSupplierStore) {
+        if (!activeStore) return true;
+
+        const sp = (activeStore.products || []).find(p => p.productId === mp.id);
+        if (activeStore.isSupplierStore) {
           return !sp || sp.active !== false;
         }
         return sp && sp.active !== false && sp.availableSizes && sp.availableSizes.length > 0;
       })
       .map(mp => {
-        const sp = (store.products || []).find(p => p.productId === mp.id);
+        const sp = activeStore ? (activeStore.products || []).find(p => p.productId === mp.id) : null;
         const { wholesalePrice, ...safeMp } = mp;
         return {
           ...safeMp,
           wholesalePrice: mp.wholesalePrice,
           suggestedRetailPrice: mp.suggestedRetailPrice,
-          storeRetailPrice: (sp && sp.customPrice) ? sp.customPrice : mp.suggestedRetailPrice,
+          // Para Bodega Matriz el precio en vitrina es siempre el precio de venta sugerido/fijado en bodega
+          storeRetailPrice: (activeStore && activeStore.isSupplierStore)
+            ? mp.suggestedRetailPrice
+            : ((sp && sp.customPrice) ? sp.customPrice : mp.suggestedRetailPrice),
           storeAvailableSizes: (sp && sp.availableSizes) ? sp.availableSizes : mp.sizes
         };
       });
@@ -1051,3 +1124,6 @@ ${dispatchText}
 
 // Instancia global del manejador
 const db = new ShoesStoreManager();
+if (typeof window !== "undefined") {
+  window.db = db;
+}

@@ -13,6 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let sortOrder = "default";
   let directoryRoleFilter = "all";
   let directorySearchQuery = "";
+  let currentSupplierFilter = "all";
   
   // Carrito de compras Multi-Par
   let cart = [];
@@ -1246,10 +1247,31 @@ document.addEventListener("DOMContentLoaded", () => {
     const orders = db.getOrders();
 
     const activeCount = products.filter(p => p.active !== false).length;
+    const inactiveCount = products.length - activeCount;
     const statProds = document.getElementById("stat-supplier-total-prods");
     if (statProds) {
       statProds.innerHTML = `${activeCount} <span style="font-size: 13px; font-weight: 600; color: var(--text-muted);">/ ${products.length}</span>`;
     }
+
+    // Actualizar contadores en la barra de filtros de bodega
+    const countAllEl = document.getElementById("count-supplier-all");
+    if (countAllEl) countAllEl.textContent = products.length;
+    const countActiveEl = document.getElementById("count-supplier-active");
+    if (countActiveEl) countActiveEl.textContent = activeCount;
+    const countInactiveEl = document.getElementById("count-supplier-inactive");
+    if (countInactiveEl) countInactiveEl.textContent = inactiveCount;
+
+    // Configurar listeners de la barra de filtros (Todas, Habilitadas, Ocultas)
+    document.querySelectorAll(".btn-supplier-filter").forEach(btn => {
+      const isCurrent = btn.dataset.filter === currentSupplierFilter;
+      btn.classList.toggle("active", isCurrent);
+      btn.style.borderColor = isCurrent ? "var(--primary-red)" : "var(--border-subtle)";
+      btn.style.boxShadow = isCurrent ? "0 0 0 2px rgba(230, 25, 46, 0.25)" : "none";
+      btn.onclick = () => {
+        currentSupplierFilter = btn.dataset.filter;
+        renderSupplierAdmin();
+      };
+    });
 
     // Actualizar título dinámico y logo de la Bodega Central si cambia de nombre
     const headingTitle = document.querySelector("#view-supplier .admin-heading-title");
@@ -1265,82 +1287,102 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
+    // Filtrar productos según la selección activa
+    const filteredProducts = products.filter(p => {
+      const isActive = p.active !== false;
+      if (currentSupplierFilter === "active") return isActive;
+      if (currentSupplierFilter === "inactive") return !isActive;
+      return true;
+    });
+
     // 1. Tabla de Catálogo Maestro & Precios en Caliente
     const masterTbody = document.getElementById("supplier-master-products-table");
     if (masterTbody) {
-      masterTbody.innerHTML = products.map(p => {
-        const campaign = p.campaignBadge || "";
-        const isActive = p.active !== false;
-        return `
-          <tr style="${isActive ? '' : 'background: rgba(245, 245, 245, 0.6);'}">
-            <td>
-              <div style="display: flex; align-items: center; gap: 10px;">
-                <img src="${p.image}" alt="${p.name}" style="width: 44px; height: 44px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border-subtle); ${isActive ? '' : 'filter: grayscale(0.5); opacity: 0.7;'}">
-                <div>
-                  <div style="font-weight: 800; color: var(--text-primary); font-size: 13px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-                    <span>${p.name}</span>
-                    ${isActive ? '' : '<span style="font-size: 10px; font-weight: 800; color: #b45309; background: #fef3c7; border: 1px solid #fde68a; border-radius: 4px; padding: 1px 6px;">Agotado / Pausado</span>'}
-                  </div>
-                  <div style="font-size: 10px; color: var(--text-muted); font-family: monospace;">SKU: ${p.sku}</div>
-                </div>
-              </div>
-            </td>
-            <td><span class="badge-verified" style="background: var(--bg-surface-elevated); color: var(--text-secondary); border-color: var(--border-subtle);">${p.category}</span></td>
-            <td>
-              <div style="display: flex; align-items: center; gap: 4px;">
-                <span style="font-size: 11px; color: var(--text-muted);">$</span>
-                <input type="number" class="form-input supplier-wholesale-input" data-prod-id="${p.id}" value="${p.wholesalePrice}" style="width: 100px; padding: 4px 6px; font-weight: 700; font-size: 12px;" step="1000">
-              </div>
-            </td>
-            <td>
-              <div style="display: flex; align-items: center; gap: 4px;">
-                <span style="font-size: 11px; color: var(--text-muted);">$</span>
-                <input type="number" class="form-input supplier-retail-input" data-prod-id="${p.id}" value="${p.suggestedRetailPrice}" style="width: 100px; padding: 4px 6px; font-weight: 800; color: var(--primary-red); font-size: 12px;" step="1000">
-              </div>
-            </td>
-            <td>
-              <select class="form-select supplier-campaign-select" data-prod-id="${p.id}" style="font-size: 11px; padding: 4px 8px; font-weight: 700; max-width: 140px;">
-                <option value="" ${campaign === "" ? "selected" : ""}>Precio Regular</option>
-                <option value="🔥 Promo Fin de Semana" ${campaign.includes("Promo") ? "selected" : ""}>🔥 Promo Fin de Semana</option>
-                <option value="⚡ Liquidación Tallas" ${campaign.includes("Liquidación") ? "selected" : ""}>⚡ Liquidación Tallas</option>
-                <option value="🌟 Nuevo Drop 2026" ${campaign.includes("Drop") ? "selected" : ""}>🌟 Nuevo Drop</option>
-                <option value="👑 Más Vendido" ${campaign.includes("Vendido") ? "selected" : ""}>👑 Más Vendido</option>
-              </select>
-            </td>
-            <td>
-              <button type="button" class="btn-action-sm btn-open-stock-modal" data-prod-id="${p.id}" style="font-size: 11px; padding: 4px 8px; font-weight: 800; color: #15803d; background: #f0fdf4; border-color: #86efac; border-radius: 6px; white-space: nowrap; cursor: pointer;" title="Ver y Editar Stock por Color y Talla">
-                📊 ${db.getProductTotalStock(p.id)} pares
-              </button>
-            </td>
-            <td>
-              <span style="font-size: 11px; font-weight: 600; color: var(--text-secondary);">${p.sizes.join(", ")}</span>
-            </td>
-            <td>
-              <button type="button" class="btn-action-sm btn-toggle-master-active" data-prod-id="${p.id}" data-prod-name="${p.name}" style="font-size: 11px; padding: 5px 9px; font-weight: 800; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; ${isActive ? 'color: #15803d; background: #f0fdf4; border: 1px solid #86efac;' : 'color: #b45309; background: #fffbeb; border: 1px solid #fcd34d;'}" title="${isActive ? 'Referencia Habilitada. Clic para Inhabilitar / Pausar (cuando se agote el stock o pase de moda)' : 'Referencia Inhabilitada / Pausada. Clic para Habilitar y publicar de nuevo en vitrinas'}">
-                <span>${isActive ? '🟢 Habilitada' : '⏸️ Inactiva'}</span>
-              </button>
-            </td>
-            <td>
-              <div style="display: flex; gap: 6px;">
-                <button type="button" class="btn-action-sm btn-edit-master-modal" data-prod-id="${p.id}" style="font-size: 11px; padding: 5px 8px; font-weight: 700;" title="Editar Ficha Completa">
-                  ✏️ Ficha
-                </button>
-                <button type="button" class="btn-action-sm btn-save-single-master" data-prod-id="${p.id}" style="font-size: 11px; padding: 5px 8px; font-weight: 700; color: #16a34a; border-color: #86efac; background: #f0fdf4;" title="Guardar Cambios">
-                  💾
-                </button>
-                <button type="button" class="btn-action-sm btn-delete-master-prod" data-prod-id="${p.id}" data-prod-name="${p.name}" style="font-size: 11px; padding: 5px 8px; font-weight: 700; color: #dc2626; border-color: #fca5a5; background: #fef2f2; cursor: pointer;" title="Eliminar Referencia del Catálogo">
-                  🗑️
-                </button>
-              </div>
+      if (filteredProducts.length === 0) {
+        masterTbody.innerHTML = `
+          <tr>
+            <td colspan="9" style="text-align: center; padding: 32px 16px; color: var(--text-muted); font-size: 13px; font-weight: 700;">
+              ${currentSupplierFilter === "inactive" ? "🎉 No tienes ninguna referencia pausada u oculta. Todas están activas en vitrinas." : "No se encontraron referencias con este filtro."}
             </td>
           </tr>
         `;
-      }).join("");
+      } else {
+        masterTbody.innerHTML = filteredProducts.map(p => {
+          const campaign = p.campaignBadge || "";
+          const isActive = p.active !== false;
+          return `
+            <tr style="${isActive ? '' : 'background: rgba(245, 245, 245, 0.6);'}">
+              <td>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <img src="${p.image}" alt="${p.name}" style="width: 44px; height: 44px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border-subtle); ${isActive ? '' : 'filter: grayscale(0.85); opacity: 0.55;'}">
+                  <div>
+                    <div style="font-weight: 800; color: var(--text-primary); font-size: 13px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                      <span>${p.name}</span>
+                      ${isActive ? '' : '<span style="font-size: 10px; font-weight: 800; color: #dc2626; background: #fee2e2; border: 1px solid #fca5a5; border-radius: 4px; padding: 1px 6px;">🚫 OCULTA EN VITRINA</span>'}
+                    </div>
+                    <div style="font-size: 10px; color: var(--text-muted); font-family: monospace;">SKU: ${p.sku}</div>
+                  </div>
+                </div>
+              </td>
+              <td><span class="badge-verified" style="background: var(--bg-surface-elevated); color: var(--text-secondary); border-color: var(--border-subtle);">${p.category}</span></td>
+              <td>
+                <div style="display: flex; align-items: center; gap: 4px;">
+                  <span style="font-size: 11px; color: var(--text-muted); font-weight: 700;">$</span>
+                  <input type="number" class="form-input supplier-wholesale-input" data-prod-id="${p.id}" value="${p.wholesalePrice}" style="width: 100px; padding: 5px 6px; font-weight: 700; font-size: 12px; transition: all 0.2s ease; border-radius: 6px;" step="1000" title="Costo mayorista de bodega">
+                </div>
+              </td>
+              <td>
+                <div style="display: flex; align-items: center; gap: 4px;">
+                  <span style="font-size: 11px; color: var(--text-muted); font-weight: 700;">$</span>
+                  <input type="number" class="form-input supplier-retail-input" data-prod-id="${p.id}" value="${p.suggestedRetailPrice}" style="width: 100px; padding: 5px 6px; font-weight: 800; color: var(--primary-red); font-size: 12px; transition: all 0.2s ease; border-radius: 6px;" step="1000" title="Precio de venta sugerido al público">
+                </div>
+              </td>
+              <td>
+                <select class="form-select supplier-campaign-select" data-prod-id="${p.id}" style="font-size: 11px; padding: 4px 8px; font-weight: 700; max-width: 140px;">
+                  <option value="" ${campaign === "" ? "selected" : ""}>Precio Regular</option>
+                  <option value="🔥 Promo Fin de Semana" ${campaign.includes("Promo") ? "selected" : ""}>🔥 Promo Fin de Semana</option>
+                  <option value="⚡ Liquidación Tallas" ${campaign.includes("Liquidación") ? "selected" : ""}>⚡ Liquidación Tallas</option>
+                  <option value="🌟 Nuevo Drop 2026" ${campaign.includes("Drop") ? "selected" : ""}>🌟 Nuevo Drop</option>
+                  <option value="👑 Más Vendido" ${campaign.includes("Vendido") ? "selected" : ""}>👑 Más Vendido</option>
+                </select>
+              </td>
+              <td>
+                <button type="button" class="btn-action-sm btn-open-stock-modal" data-prod-id="${p.id}" style="font-size: 11px; padding: 4px 8px; font-weight: 800; color: #15803d; background: #f0fdf4; border-color: #86efac; border-radius: 6px; white-space: nowrap; cursor: pointer;" title="Ver y Editar Stock por Color y Talla">
+                  📊 ${db.getProductTotalStock(p.id)} pares
+                </button>
+              </td>
+              <td>
+                <span style="font-size: 11px; font-weight: 600; color: var(--text-secondary);">${p.sizes.join(", ")}</span>
+              </td>
+              <td>
+                <button type="button" class="btn-action-sm btn-toggle-master-active" data-prod-id="${p.id}" data-prod-name="${p.name}" style="font-size: 11px; padding: 6px 10px; font-weight: 800; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: all 0.2s ease; ${isActive ? 'color: #15803d; background: #f0fdf4; border: 1px solid #86efac;' : 'color: #dc2626; background: #fef2f2; border: 1px solid #fca5a5;'}" title="${isActive ? 'Visible en vitrina. Clic para Ocultar / Pausar' : 'Oculta en vitrinas. Clic para Habilitar y Mostrar'}">
+                  <span>${isActive ? '🟢 Visible (Pausar)' : '🚫 Oculta (Activar)'}</span>
+                </button>
+              </td>
+              <td>
+                <div style="display: flex; gap: 6px;">
+                  <button type="button" class="btn-action-sm btn-edit-master-modal" data-prod-id="${p.id}" style="font-size: 11px; padding: 5px 8px; font-weight: 700;" title="Editar Ficha Completa">
+                    ✏️ Ficha
+                  </button>
+                  <button type="button" class="btn-action-sm btn-save-single-master" data-prod-id="${p.id}" style="font-size: 11px; padding: 5px 8px; font-weight: 700; color: #16a34a; border-color: #86efac; background: #f0fdf4; cursor: pointer; transition: all 0.2s ease;" title="Guardar Cambios de Precio">
+                    💾
+                  </button>
+                  <button type="button" class="btn-action-sm btn-delete-master-prod" data-prod-id="${p.id}" data-prod-name="${p.name}" style="font-size: 11px; padding: 5px 8px; font-weight: 700; color: #dc2626; border-color: #fca5a5; background: #fef2f2; cursor: pointer;" title="Eliminar Referencia Permanentemente">
+                    🗑️
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join("");
+      }
 
+      const rowDebounceTimers = {};
       const saveMasterRow = (prodId, showNotification = false) => {
         const wholesaleInput = masterTbody.querySelector(`.supplier-wholesale-input[data-prod-id="${prodId}"]`);
         const retailInput = masterTbody.querySelector(`.supplier-retail-input[data-prod-id="${prodId}"]`);
         const campaignSelect = masterTbody.querySelector(`.supplier-campaign-select[data-prod-id="${prodId}"]`);
+        const saveBtn = masterTbody.querySelector(`.btn-save-single-master[data-prod-id="${prodId}"]`);
 
         if (wholesaleInput && retailInput) {
           const wholesale = Number(wholesaleInput.value) || 0;
@@ -1353,15 +1395,56 @@ document.addEventListener("DOMContentLoaded", () => {
             campaignBadge: campaign
           });
 
+          // Indicador visual de éxito en verde esmeralda
+          wholesaleInput.style.borderColor = "#22c55e";
+          retailInput.style.borderColor = "#22c55e";
+          wholesaleInput.style.backgroundColor = "#f0fdf4";
+          retailInput.style.backgroundColor = "#f0fdf4";
+          if (saveBtn) {
+            saveBtn.textContent = "✓";
+            saveBtn.style.background = "#16a34a";
+            saveBtn.style.color = "#ffffff";
+            saveBtn.style.borderColor = "#16a34a";
+          }
+          setTimeout(() => {
+            if (wholesaleInput) {
+              wholesaleInput.style.borderColor = "";
+              wholesaleInput.style.backgroundColor = "";
+            }
+            if (retailInput) {
+              retailInput.style.borderColor = "";
+              retailInput.style.backgroundColor = "";
+            }
+            if (saveBtn) {
+              saveBtn.textContent = "💾";
+              saveBtn.style.background = "#f0fdf4";
+              saveBtn.style.color = "#16a34a";
+              saveBtn.style.borderColor = "#86efac";
+            }
+          }, 1200);
+
           if (showNotification) {
-            showToast("✅ Precio de bodega guardado y sincronizado con toda la red.");
+            showToast(`✅ Precio guardado: $ ${db.formatCOP(retail)} COP (Sincronizado en toda la red).`);
           }
         }
       };
 
-      // Auto-guardado en tiempo real al modificar o cambiar de celda
+      // Auto-guardado en tiempo real al modificar o cambiar de celda con feedback visual
       masterTbody.querySelectorAll(".supplier-wholesale-input, .supplier-retail-input").forEach(input => {
         const prodId = input.dataset.prodId;
+        input.addEventListener("input", () => {
+          input.style.borderColor = "#e6192e";
+          const saveBtn = masterTbody.querySelector(`.btn-save-single-master[data-prod-id="${prodId}"]`);
+          if (saveBtn) {
+            saveBtn.style.background = "#fee2e2";
+            saveBtn.style.color = "#dc2626";
+            saveBtn.style.borderColor = "#fca5a5";
+          }
+          clearTimeout(rowDebounceTimers[prodId]);
+          rowDebounceTimers[prodId] = setTimeout(() => {
+            saveMasterRow(prodId, false);
+          }, 350);
+        });
         input.addEventListener("change", () => saveMasterRow(prodId, true));
         input.addEventListener("blur", () => saveMasterRow(prodId, false));
         input.addEventListener("keydown", (e) => {
@@ -1392,9 +1475,9 @@ document.addEventListener("DOMContentLoaded", () => {
           const newActiveState = db.toggleMasterProductActive(prodId);
           renderSupplierAdmin();
           if (newActiveState) {
-            showToast(`🟢 Referencia "${prodName}" habilitada. Visible nuevamente en vitrinas.`);
+            showToast(`🟢 Referencia "${prodName}" HABILITADA. Ahora está visible en todas las vitrinas.`);
           } else {
-            showToast(`⏸️ Referencia "${prodName}" inhabilitada. Pausada en vitrinas por stock agotado o fuera de moda.`);
+            showToast(`🚫 Referencia "${prodName}" PAUSADA y OCULTADA de todas las vitrinas públicas.`);
           }
         };
       });
@@ -1428,13 +1511,17 @@ document.addEventListener("DOMContentLoaded", () => {
           document.getElementById("add-prod-wholesale").value = prod.wholesalePrice;
           document.getElementById("add-prod-retail").value = prod.suggestedRetailPrice;
           document.getElementById("add-prod-sizes").value = prod.sizes.join(", ");
-          document.getElementById("add-prod-desc").value = prod.description || "";
-          document.getElementById("add-prod-campaign").value = prod.campaignBadge || "";
+          document.getElementById("add-prod-desc").value = prod.tagline || prod.description || "";
+          
+          const campaignSelect = document.getElementById("add-prod-campaign");
+          if (campaignSelect) {
+            campaignSelect.value = prod.campaignBadge || "";
+          }
 
-          // Estado activo/inactivo en el selector del modal
+          // Estado activo / inactivo en el modal
           const statusSelect = document.getElementById("add-prod-status");
           if (statusSelect) {
-            statusSelect.value = prod.active === false ? "inactive" : "active";
+            statusSelect.value = (prod.active === false) ? "inactive" : "active";
           }
 
           // Mostrar botón de eliminar referencia en el modal al editar
@@ -1472,11 +1559,21 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
 
+    // Botón directo para Ver Vitrina Digital en Bodega
+    const btnSupplierStorefront = document.getElementById("btn-supplier-view-storefront");
+    if (btnSupplierStorefront) {
+      btnSupplierStorefront.onclick = () => {
+        const supStore = db.getStores().find(s => s.isSupplierStore) || db.getCurrentStore();
+        window.open(`?store=${encodeURIComponent(supStore?.id || "store-001")}&view=storefront`, "_blank");
+      };
+    }
+
     // Botón Guardar Todos los Cambios en Lote
     const btnSaveAll = document.getElementById("btn-save-all-supplier-prices");
     if (btnSaveAll) {
       btnSaveAll.onclick = () => {
         const rows = masterTbody.querySelectorAll("tr");
+        let count = 0;
         rows.forEach(tr => {
           const wholesaleInput = tr.querySelector(".supplier-wholesale-input");
           const retailInput = tr.querySelector(".supplier-retail-input");
@@ -1489,9 +1586,11 @@ document.addEventListener("DOMContentLoaded", () => {
               suggestedRetailPrice: Number(retailInput.value),
               campaignBadge: campaignSelect?.value || ""
             });
+            count++;
           }
         });
-        showToast("✅ Todos los precios y campañas guardados para la red SNEAKER WORLD.");
+        showToast(`✅ ${count} referencias modificadas y sincronizadas con toda la red.`);
+        renderSupplierAdmin();
       };
     }
 

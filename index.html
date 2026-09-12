@@ -365,6 +365,9 @@
             </div>
           </div>
           <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <button type="button" id="btn-supplier-view-storefront" class="btn-primary" style="font-weight: 700; font-size: 13px; background: #059669; border-color: #047857; cursor: pointer;" title="Abrir la vitrina digital pública de Bodega Central en una nueva pestaña">
+              <span>🛒 Ver Vitrina Digital</span>
+            </button>
             <button type="button" id="btn-open-supplier-reports" class="btn-primary" style="font-weight: 700; font-size: 13px; background: #0f172a; border-color: #0f172a; cursor: pointer;">
               <span>📊 Centro Contable & Excel/PDF</span>
             </button>
@@ -454,6 +457,25 @@
               <button type="button" id="btn-save-all-supplier-prices" class="btn-primary" style="font-size: 12px; padding: 7px 16px; background: #16a34a; border-color: #15803d; cursor: pointer;">
                 💾 Guardar Modificaciones
               </button>
+            </div>
+          </div>
+
+          <!-- Filtros de Estado en Bodega: Todas / Solo Habilitadas / Ocultas o Pausadas -->
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px; background: #f8fafc; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border-subtle);">
+            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;" id="supplier-table-filters">
+              <span style="font-size: 12px; font-weight: 700; color: var(--text-secondary);">Filtrar lista:</span>
+              <button type="button" class="btn-supplier-filter active" data-filter="all" style="font-size: 11px; padding: 5px 12px; border-radius: 999px; font-weight: 700; border: 1px solid var(--border-subtle); background: #ffffff; cursor: pointer; transition: all 0.2s ease;">
+                Todas (<span id="count-supplier-all">18</span>)
+              </button>
+              <button type="button" class="btn-supplier-filter" data-filter="active" style="font-size: 11px; padding: 5px 12px; border-radius: 999px; font-weight: 700; border: 1px solid #86efac; background: #f0fdf4; color: #16a34a; cursor: pointer; transition: all 0.2s ease;">
+                🟢 Solo Habilitadas (<span id="count-supplier-active">18</span>)
+              </button>
+              <button type="button" class="btn-supplier-filter" data-filter="inactive" style="font-size: 11px; padding: 5px 12px; border-radius: 999px; font-weight: 700; border: 1px solid #fcd34d; background: #fffbeb; color: #b45309; cursor: pointer; transition: all 0.2s ease;">
+                ⏸️ Ocultas / Pausadas (<span id="count-supplier-inactive">0</span>)
+              </button>
+            </div>
+            <div style="font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 6px;">
+              <span>⚡ Edita precios y presiona Enter o fuera de la celda para guardar</span>
             </div>
           </div>
           <div class="table-responsive-box">
