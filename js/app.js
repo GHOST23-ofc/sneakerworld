@@ -1317,11 +1317,14 @@ document.addEventListener("DOMContentLoaded", () => {
             </td>
             <td>
               <div style="display: flex; gap: 6px;">
-                <button type="button" class="btn-action-sm btn-edit-master-modal" data-prod-id="${p.id}" style="font-size: 11px; padding: 5px 10px; font-weight: 700;" title="Editar Ficha Completa">
+                <button type="button" class="btn-action-sm btn-edit-master-modal" data-prod-id="${p.id}" style="font-size: 11px; padding: 5px 8px; font-weight: 700;" title="Editar Ficha Completa">
                   ✏️ Ficha
                 </button>
-                <button type="button" class="btn-action-sm btn-save-single-master" data-prod-id="${p.id}" style="font-size: 11px; padding: 5px 10px; font-weight: 700; color: #16a34a; border-color: #86efac; background: #f0fdf4;" title="Guardar Cambios">
+                <button type="button" class="btn-action-sm btn-save-single-master" data-prod-id="${p.id}" style="font-size: 11px; padding: 5px 8px; font-weight: 700; color: #16a34a; border-color: #86efac; background: #f0fdf4;" title="Guardar Cambios">
                   💾
+                </button>
+                <button type="button" class="btn-action-sm btn-delete-master-prod" data-prod-id="${p.id}" data-prod-name="${p.name}" style="font-size: 11px; padding: 5px 8px; font-weight: 700; color: #dc2626; border-color: #fca5a5; background: #fef2f2; cursor: pointer;" title="Eliminar Referencia del Catálogo">
+                  🗑️
                 </button>
               </div>
             </td>
@@ -1376,6 +1379,20 @@ document.addEventListener("DOMContentLoaded", () => {
         };
       });
 
+      // Handlers de Eliminar Referencia directamente desde la fila
+      masterTbody.querySelectorAll(".btn-delete-master-prod").forEach(btn => {
+        btn.onclick = () => {
+          const prodId = btn.dataset.prodId;
+          const prodName = btn.dataset.prodName || "esta referencia";
+          const confirmed = confirm(`¿Estás seguro de que deseas eliminar permanentemente "${prodName}"?\n\nEsta acción eliminará el calzado del catálogo central de bodega y de las vitrinas de todos los aliados comerciales.`);
+          if (confirmed) {
+            db.deleteMasterProduct(prodId);
+            renderSupplierAdmin();
+            showToast(`🗑️ Referencia "${prodName}" eliminada correctamente del catálogo.`);
+          }
+        };
+      });
+
       // Handlers de Editar Ficha Completa en Modal
       masterTbody.querySelectorAll(".btn-edit-master-modal").forEach(btn => {
         btn.onclick = () => {
@@ -1393,6 +1410,14 @@ document.addEventListener("DOMContentLoaded", () => {
           document.getElementById("add-prod-sizes").value = prod.sizes.join(", ");
           document.getElementById("add-prod-desc").value = prod.description || "";
           document.getElementById("add-prod-campaign").value = prod.campaignBadge || "";
+
+          // Mostrar botón de eliminar referencia en el modal al editar
+          const deleteBtnModal = document.getElementById("btn-delete-from-modal");
+          if (deleteBtnModal) {
+            deleteBtnModal.style.display = "inline-flex";
+            deleteBtnModal.dataset.prodId = prod.id;
+            deleteBtnModal.dataset.prodName = prod.name;
+          }
 
           // Cargar foto existente en preview
           const finalImgInput = document.getElementById("add-prod-image-final");
@@ -1595,6 +1620,12 @@ document.addEventListener("DOMContentLoaded", () => {
       document.getElementById("btn-submit-product-form").textContent = "Publicar a Todas las Tiendas";
       form.reset();
       document.getElementById("add-prod-id").value = "";
+      const deleteBtnModal = document.getElementById("btn-delete-from-modal");
+      if (deleteBtnModal) {
+        deleteBtnModal.style.display = "none";
+        deleteBtnModal.dataset.prodId = "";
+        deleteBtnModal.dataset.prodName = "";
+      }
       if (imageFinal) imageFinal.value = "";
       if (imageUrlInput) imageUrlInput.value = "";
       if (previewImg && placeholder) {
@@ -1608,6 +1639,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
     btnClose.onclick = () => modal.classList.remove("open");
     btnCancel.onclick = () => modal.classList.remove("open");
+
+    const btnDeleteModal = document.getElementById("btn-delete-from-modal");
+    if (btnDeleteModal) {
+      btnDeleteModal.onclick = () => {
+        const prodId = document.getElementById("add-prod-id").value;
+        const prodName = document.getElementById("add-prod-name").value || "esta referencia";
+        if (!prodId) return;
+
+        const confirmed = confirm(`¿Estás seguro de que deseas eliminar permanentemente "${prodName}"?\n\nEsta acción eliminará el calzado del catálogo central de bodega y de las vitrinas de todos los aliados comerciales.`);
+        if (confirmed) {
+          db.deleteMasterProduct(prodId);
+          modal.classList.remove("open");
+          form.reset();
+          renderSupplierAdmin();
+          showToast(`🗑️ Referencia "${prodName}" eliminada correctamente del catálogo.`);
+        }
+      };
+    }
 
     form.onsubmit = (e) => {
       e.preventDefault();

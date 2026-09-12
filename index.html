@@ -745,9 +745,16 @@
             <label class="form-label">Descripción / Detalles de Confección:</label>
             <textarea id="add-prod-desc" class="form-textarea" rows="2" placeholder="Material, amortiguación y detalles..."></textarea>
           </div>
-          <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
-            <button type="button" class="btn-secondary" id="btn-cancel-add-product">Cancelar</button>
-            <button type="submit" class="btn-primary" id="btn-submit-product-form">Publicar Referencia</button>
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 20px; flex-wrap: wrap;">
+            <div>
+              <button type="button" class="btn-secondary" id="btn-delete-from-modal" style="display: none; color: #dc2626; border-color: #fca5a5; background: #fef2f2; cursor: pointer; font-weight: 700; font-size: 13px; padding: 8px 14px;">
+                🗑️ Eliminar Referencia
+              </button>
+            </div>
+            <div style="display: flex; gap: 10px; margin-left: auto;">
+              <button type="button" class="btn-secondary" id="btn-cancel-add-product">Cancelar</button>
+              <button type="submit" class="btn-primary" id="btn-submit-product-form">Publicar Referencia</button>
+            </div>
           </div>
         </form>
       </div>

@@ -376,6 +376,37 @@ class ShoesStoreManager {
     return products[index];
   }
 
+  deleteMasterProduct(productId) {
+    let products = this.getMasterProducts(false);
+    products = products.filter(p => p.id !== productId);
+    localStorage.setItem(DB_KEYS.MASTER_PRODUCTS, JSON.stringify(products));
+
+    // Eliminar de todas las tiendas de la red de aliados
+    const stores = this.getStores();
+    stores.forEach(st => {
+      if (st.products && Array.isArray(st.products)) {
+        st.products = st.products.filter(sp => sp.productId !== productId);
+      }
+    });
+    localStorage.setItem(DB_KEYS.STORES, JSON.stringify(stores));
+
+    // Limpiar matriz de inventario
+    const stockRaw = localStorage.getItem(DB_KEYS.STOCK_MATRIX);
+    if (stockRaw) {
+      try {
+        const stockMatrix = JSON.parse(stockRaw);
+        if (stockMatrix[productId]) {
+          delete stockMatrix[productId];
+          localStorage.setItem(DB_KEYS.STOCK_MATRIX, JSON.stringify(stockMatrix));
+        }
+      } catch (e) {
+        console.error("Error al limpiar matriz de stock:", e);
+      }
+    }
+
+    return true;
+  }
+
   // =========================================================================
   // GESTIÓN DE TIENDAS Y VITRINAS
   // =========================================================================
