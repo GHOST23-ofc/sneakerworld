@@ -317,6 +317,7 @@ class ShoesStoreManager {
       colorways: productData.colorways && productData.colorways.length > 0 
         ? productData.colorways 
         : [{ name: "Tono Principal", image: productData.image || "assets/images/nike_initiator_babyblue.jpg", sku: productData.sku || "NK-01" }],
+      active: productData.active !== undefined ? Boolean(productData.active) : true,
       supplierId: "sup-001",
       supplierName: "Vanessa Castellar Shoes (Bodega Central)",
       createdAt: new Date().toISOString().split("T")[0]
@@ -349,6 +350,7 @@ class ShoesStoreManager {
       ...updatedFields,
       wholesalePrice: updatedFields.wholesalePrice !== undefined ? Number(updatedFields.wholesalePrice) : products[index].wholesalePrice,
       suggestedRetailPrice: updatedFields.suggestedRetailPrice !== undefined ? Number(updatedFields.suggestedRetailPrice) : products[index].suggestedRetailPrice,
+      active: updatedFields.active !== undefined ? Boolean(updatedFields.active) : (products[index].active !== false),
       updatedAt: new Date().toISOString().split("T")[0]
     };
 
@@ -374,6 +376,19 @@ class ShoesStoreManager {
     localStorage.setItem(DB_KEYS.STORES, JSON.stringify(stores));
 
     return products[index];
+  }
+
+  toggleMasterProductActive(productId) {
+    const products = this.getMasterProducts(false);
+    const prod = products.find(p => p.id === productId);
+    if (!prod) return null;
+
+    // Si prod.active es undefined o true, pasa a false. Si es false, pasa a true.
+    prod.active = prod.active === false ? true : false;
+    prod.updatedAt = new Date().toISOString().split("T")[0];
+
+    localStorage.setItem(DB_KEYS.MASTER_PRODUCTS, JSON.stringify(products));
+    return prod.active;
   }
 
   deleteMasterProduct(productId) {
@@ -515,6 +530,9 @@ class ShoesStoreManager {
     const master = this.getMasterProducts(false);
     return master
       .filter(mp => {
+        // Si la referencia está pausada/inhabilitada en Bodega Central (agotada o fuera de temporada), no se muestra en vitrina
+        if (mp.active === false) return false;
+
         const sp = (store.products || []).find(p => p.productId === mp.id);
         if (store.isSupplierStore) {
           return !sp || sp.active !== false;

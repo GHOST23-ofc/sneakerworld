@@ -1123,13 +1123,18 @@ document.addEventListener("DOMContentLoaded", () => {
         return `<span class="table-size-tag ${isAvail ? 'active' : 'inactive'}" data-prod="${mp.id}" data-size="${sz}">${sz}</span>`;
       }).join("");
 
+      const isMasterPaused = mp.active === false;
+
       return `
-        <tr>
+        <tr style="${isMasterPaused ? 'background: rgba(245, 245, 245, 0.6);' : ''}">
           <td>
             <div class="td-product-cell">
-              <img src="${mp.image}" alt="${mp.name}" class="td-product-thumb">
+              <img src="${mp.image}" alt="${mp.name}" class="td-product-thumb" style="${isMasterPaused ? 'filter: grayscale(0.5); opacity: 0.7;' : ''}">
               <div>
-                <div class="td-product-name">${mp.name}</div>
+                <div class="td-product-name">
+                  <span>${mp.name}</span>
+                  ${isMasterPaused ? '<span style="font-size: 9px; font-weight: 800; color: #b45309; background: #fef3c7; border: 1px solid #fde68a; border-radius: 4px; padding: 1px 5px; margin-left: 5px;">Agotado en Bodega</span>' : ''}
+                </div>
                 <div class="td-product-sku">${mp.sku} • ${mp.category}</div>
               </div>
             </div>
@@ -1145,7 +1150,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <td>
             <div style="display: flex; align-items: center; gap: 4px;">
               <span style="font-size: 11px; color: var(--text-muted);">$</span>
-              <input type="number" class="table-input-price input-store-price" data-prod="${mp.id}" data-wholesale="${mp.wholesalePrice}" value="${retailPrice}" step="5000" style="width: 105px; font-weight: 800; color: var(--primary-red); font-size: 13px;" title="Fija tu precio de venta al público">
+              <input type="number" class="table-input-price input-store-price" data-prod="${mp.id}" data-wholesale="${mp.wholesalePrice}" value="${retailPrice}" step="5000" style="width: 105px; font-weight: 800; color: var(--primary-red); font-size: 13px;" title="Fija tu precio de venta al público" ${isMasterPaused ? 'disabled' : ''}>
             </div>
           </td>
           <td>
@@ -1160,10 +1165,13 @@ document.addEventListener("DOMContentLoaded", () => {
             <div class="table-sizes-list">${sizeBadges}</div>
           </td>
           <td>
-            <label class="switch-toggle">
-              <input type="checkbox" class="toggle-store-active" data-prod="${mp.id}" ${sp.active ? 'checked' : ''}>
-              <span class="slider-round"></span>
-            </label>
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+              <label class="switch-toggle" title="${isMasterPaused ? 'Referencia pausada en Bodega por stock agotado o fuera de temporada' : 'Activar o desactivar en tu vitrina'}">
+                <input type="checkbox" class="toggle-store-active" data-prod="${mp.id}" ${(sp.active && !isMasterPaused) ? 'checked' : ''} ${isMasterPaused ? 'disabled' : ''}>
+                <span class="slider-round" style="${isMasterPaused ? 'opacity: 0.5; cursor: not-allowed;' : ''}"></span>
+              </label>
+              ${isMasterPaused ? '<span style="font-size: 9px; color: #b45309; font-weight: 700; white-space: nowrap;">Pausado Bodega</span>' : ''}
+            </div>
           </td>
         </tr>
       `;
@@ -1253,7 +1261,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const products = db.getMasterProducts(false);
     const orders = db.getOrders();
 
-    document.getElementById("stat-supplier-total-prods").textContent = products.length;
+    const activeCount = products.filter(p => p.active !== false).length;
+    const statProds = document.getElementById("stat-supplier-total-prods");
+    if (statProds) {
+      statProds.innerHTML = `${activeCount} <span style="font-size: 13px; font-weight: 600; color: var(--text-muted);">/ ${products.length}</span>`;
+    }
 
     // Actualizar título dinámico y logo de la Bodega Central si cambia de nombre
     const headingTitle = document.querySelector("#view-supplier .admin-heading-title");
@@ -1274,13 +1286,17 @@ document.addEventListener("DOMContentLoaded", () => {
     if (masterTbody) {
       masterTbody.innerHTML = products.map(p => {
         const campaign = p.campaignBadge || "";
+        const isActive = p.active !== false;
         return `
-          <tr>
+          <tr style="${isActive ? '' : 'background: rgba(245, 245, 245, 0.6);'}">
             <td>
               <div style="display: flex; align-items: center; gap: 10px;">
-                <img src="${p.image}" alt="${p.name}" style="width: 44px; height: 44px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border-subtle);">
+                <img src="${p.image}" alt="${p.name}" style="width: 44px; height: 44px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border-subtle); ${isActive ? '' : 'filter: grayscale(0.5); opacity: 0.7;'}">
                 <div>
-                  <div style="font-weight: 800; color: var(--text-primary); font-size: 13px;">${p.name}</div>
+                  <div style="font-weight: 800; color: var(--text-primary); font-size: 13px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                    <span>${p.name}</span>
+                    ${isActive ? '' : '<span style="font-size: 10px; font-weight: 800; color: #b45309; background: #fef3c7; border: 1px solid #fde68a; border-radius: 4px; padding: 1px 6px;">Agotado / Pausado</span>'}
+                  </div>
                   <div style="font-size: 10px; color: var(--text-muted); font-family: monospace;">SKU: ${p.sku}</div>
                 </div>
               </div>
@@ -1314,6 +1330,11 @@ document.addEventListener("DOMContentLoaded", () => {
             </td>
             <td>
               <span style="font-size: 11px; font-weight: 600; color: var(--text-secondary);">${p.sizes.join(", ")}</span>
+            </td>
+            <td>
+              <button type="button" class="btn-action-sm btn-toggle-master-active" data-prod-id="${p.id}" data-prod-name="${p.name}" style="font-size: 11px; padding: 5px 9px; font-weight: 800; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; ${isActive ? 'color: #15803d; background: #f0fdf4; border: 1px solid #86efac;' : 'color: #b45309; background: #fffbeb; border: 1px solid #fcd34d;'}" title="${isActive ? 'Referencia Habilitada. Clic para Inhabilitar / Pausar (cuando se agote el stock o pase de moda)' : 'Referencia Inhabilitada / Pausada. Clic para Habilitar y publicar de nuevo en vitrinas'}">
+                <span>${isActive ? '🟢 Habilitada' : '⏸️ Inactiva'}</span>
+              </button>
             </td>
             <td>
               <div style="display: flex; gap: 6px;">
@@ -1379,6 +1400,21 @@ document.addEventListener("DOMContentLoaded", () => {
         };
       });
 
+      // Handlers de Habilitar / Inhabilitar Referencia (Toggle estado)
+      masterTbody.querySelectorAll(".btn-toggle-master-active").forEach(btn => {
+        btn.onclick = () => {
+          const prodId = btn.dataset.prodId;
+          const prodName = btn.dataset.prodName || "esta referencia";
+          const newActiveState = db.toggleMasterProductActive(prodId);
+          renderSupplierAdmin();
+          if (newActiveState) {
+            showToast(`🟢 Referencia "${prodName}" habilitada. Visible nuevamente en vitrinas.`);
+          } else {
+            showToast(`⏸️ Referencia "${prodName}" inhabilitada. Pausada en vitrinas por stock agotado o fuera de moda.`);
+          }
+        };
+      });
+
       // Handlers de Eliminar Referencia directamente desde la fila
       masterTbody.querySelectorAll(".btn-delete-master-prod").forEach(btn => {
         btn.onclick = () => {
@@ -1410,6 +1446,12 @@ document.addEventListener("DOMContentLoaded", () => {
           document.getElementById("add-prod-sizes").value = prod.sizes.join(", ");
           document.getElementById("add-prod-desc").value = prod.description || "";
           document.getElementById("add-prod-campaign").value = prod.campaignBadge || "";
+
+          // Estado activo/inactivo en el selector del modal
+          const statusSelect = document.getElementById("add-prod-status");
+          if (statusSelect) {
+            statusSelect.value = prod.active === false ? "inactive" : "active";
+          }
 
           // Mostrar botón de eliminar referencia en el modal al editar
           const deleteBtnModal = document.getElementById("btn-delete-from-modal");
@@ -1620,6 +1662,8 @@ document.addEventListener("DOMContentLoaded", () => {
       document.getElementById("btn-submit-product-form").textContent = "Publicar a Todas las Tiendas";
       form.reset();
       document.getElementById("add-prod-id").value = "";
+      const statusSelect = document.getElementById("add-prod-status");
+      if (statusSelect) statusSelect.value = "active";
       const deleteBtnModal = document.getElementById("btn-delete-from-modal");
       if (deleteBtnModal) {
         deleteBtnModal.style.display = "none";
@@ -1669,6 +1713,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const desc = document.getElementById("add-prod-desc").value.trim();
       const campaign = document.getElementById("add-prod-campaign").value;
       const finalImage = imageFinal?.value || imageUrlInput?.value.trim() || "";
+      const statusVal = document.getElementById("add-prod-status")?.value;
+      const isActive = statusVal !== "inactive";
 
       const sizes = sizesStr.split(",").map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n));
 
@@ -1681,13 +1727,14 @@ document.addEventListener("DOMContentLoaded", () => {
           suggestedRetailPrice: retail,
           sizes,
           description: desc,
-          campaignBadge: campaign
+          campaignBadge: campaign,
+          active: isActive
         };
         if (finalImage) {
           updatePayload.image = finalImage;
         }
         db.updateMasterProduct(prodId, updatePayload);
-        showToast(`✅ Referencia ${name} modificada con éxito.`);
+        showToast(`✅ Referencia ${name} modificada con éxito (${isActive ? 'Habilitada' : 'Inhabilitada/Pausada'}).`);
       } else {
         // Modo Creación
         db.addMasterProduct({
@@ -1698,6 +1745,7 @@ document.addEventListener("DOMContentLoaded", () => {
           sizes,
           description: desc,
           campaignBadge: campaign,
+          active: isActive,
           image: finalImage || "assets/images/nike_initiator_babyblue.jpg"
         });
         showToast(`✅ ¡Nueva referencia ${name} publicada a toda la red!`);
