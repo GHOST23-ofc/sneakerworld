@@ -600,7 +600,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 <span class="price-label">
                   PRECIO VENTA AL PÚBLICO
                 </span>
-                <span class="price-val">$ ${formattedPrice}</span>
+                <span class="price-val">${formattedPrice}</span>
                 <div style="font-size: 10px; color: var(--text-muted); font-weight: 600; margin-top: 1px;">
                   ⚡ Entrega Inmediata en Cali
                 </div>
@@ -741,14 +741,14 @@ document.addEventListener("DOMContentLoaded", () => {
             <div style="font-size: 11px; font-weight: 800; color: var(--primary-red); text-transform: uppercase;">${product.category} • SKU: ${product.sku}</div>
             <h4 style="font-size: 18px; font-weight: 900; color: var(--text-primary); margin: 4px 0 6px;">${product.name}</h4>
             <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px;">
-              <div style="font-size: 22px; font-weight: 900; color: var(--primary-red);">$ ${formattedPrice}</div>
+              <div style="font-size: 22px; font-weight: 900; color: var(--primary-red);">${formattedPrice}</div>
               <span style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">
                 • Precio de Venta al Detal
               </span>
             </div>
             ${currentView !== "storefront" && session.authenticated && session.role === "supplier" ? `
               <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 8px; background: #f0fdf4; padding: 5px 10px; border-radius: 6px; border: 1px solid #bbf7d0;">
-                💡 <strong>Margen sugerido para revendedor:</strong> Si se vende al detal a <strong>$ ${db.formatCOP(product.suggestedRetailPrice)}</strong>, el Sneaker Partner gana <strong>+${db.formatCOP(product.suggestedRetailPrice - (product.wholesalePrice || 85000))} COP</strong> netos por par.
+                💡 <strong>Margen sugerido para revendedor:</strong> Si se vende al detal a <strong>${db.formatCOP(product.suggestedRetailPrice)}</strong>, el Sneaker Partner gana <strong>+${db.formatCOP(product.suggestedRetailPrice - (product.wholesalePrice || 85000))} COP</strong> netos por par.
               </div>
             ` : ''}
             
@@ -1126,7 +1126,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <td>
             <div style="display: flex; align-items: center; gap: 6px;">
               <span class="cost-badge" style="font-weight: 800; color: var(--text-secondary); font-size: 13px; font-family: monospace; background: var(--bg-surface-elevated); padding: 5px 10px; border-radius: 6px; border: 1px solid var(--border-subtle); letter-spacing: 0.3px;" title="Costo Mayorista fijado por la Bodega Matriz (Automatizado y sincronizado)">
-                $ ${db.formatCOP(mp.wholesalePrice)}
+                ${db.formatCOP(mp.wholesalePrice)}
               </span>
               <span style="font-size: 10px; color: #16a34a; font-weight: 800;" title="Sincronizado en tiempo real con Bodega Central">🔒 Fijo</span>
             </div>
@@ -3172,7 +3172,7 @@ ${itemsText}
           const found = products.filter(p => p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q));
           if (found.length > 0) {
             const listHtml = found.slice(0, 3).map(p => `
-              • <strong>${p.name}</strong> ($${db.formatCOP(p.suggestedRetailPrice)}) — Tallas: ${(p.storeAvailableSizes || [37,38,39,40,41,42]).join(", ")}
+              • <strong>${p.name}</strong> (${db.formatCOP(p.suggestedRetailPrice)}) — Tallas: ${(p.storeAvailableSizes || [37,38,39,40,41,42]).join(", ")}
             `).join("<br>");
             appendChatMessage("bot", `
               👟 <strong>Encontré estas referencias activas en bodega:</strong><br><br>
@@ -3311,7 +3311,7 @@ ${itemsText}
       const prods = db.getStorefrontProducts(currentStore);
       productSelect.innerHTML = prods.map(p => `
         <option value="${p.id}" ${p.id === selectedProductId ? 'selected' : ''}>
-          ${p.name} — $${db.formatCOP(p.storeRetailPrice || p.suggestedRetailPrice)}
+          ${p.name} — ${db.formatCOP(p.storeRetailPrice || p.suggestedRetailPrice)}
         </option>
       `).join("");
       if (!selectedProductId && prods.length > 0) {
@@ -3349,7 +3349,7 @@ ${itemsText}
 
       // Generar copy persuasivo según la tienda activa y el formato
       let copyText = "";
-      const priceFmt = prodObj ? `$${db.formatCOP(prodObj.storeRetailPrice || prodObj.suggestedRetailPrice)} COP` : "";
+      const priceFmt = prodObj ? `${db.formatCOP(prodObj.storeRetailPrice || prodObj.suggestedRetailPrice)} COP` : "";
       const sName = currentStore ? currentStore.name : "nuestra tienda";
 
       if (currentFormat === "story") {
