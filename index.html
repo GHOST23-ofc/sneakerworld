@@ -152,9 +152,6 @@
             </div>
           </div>
           <div class="store-header-cta" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-            <button type="button" id="btn-storefront-open-link-creator" class="btn-action-sm" style="background: #ffffff; color: var(--text-primary); border: 1.5px solid var(--border-subtle); font-weight: 800; font-size: 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 999px;">
-              <span>🔗 Crear Enlace (Historias & Clientes)</span>
-            </button>
             <a href="#" id="storefront-wa-direct" target="_blank" rel="noopener" class="btn-wa-header">
               <span>💬 WhatsApp Dueño Bodega</span>
             </a>
@@ -626,10 +623,10 @@
         <h3 style="font-size: 20px; font-weight: 900; color: var(--text-primary); margin-bottom: 6px;" id="auth-modal-title">Acceso Protegido</h3>
         <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;" id="auth-modal-desc">Ingresa el PIN de seguridad para acceder a los costos mayoristas y gestión de inventario.</p>
 
-        <form id="form-auth-pin">
+        <form id="form-auth-pin" autocomplete="off">
           <input type="hidden" id="auth-target-role" value="supplier">
           <div class="form-group">
-            <input type="password" id="auth-pin-input" class="form-input" placeholder="Ingresa tu PIN (ej. 8820)" maxlength="8" style="text-align: center; font-size: 20px; letter-spacing: 4px; font-weight: 800;" autofocus required>
+            <input type="password" id="auth-pin-input" class="form-input" placeholder="Ingresa tu PIN (ej. 8820)" maxlength="8" style="text-align: center; font-size: 20px; letter-spacing: 4px; font-weight: 800;" autocomplete="off" required>
           </div>
           <div id="auth-error-msg" style="color: #ef4444; font-size: 12px; font-weight: 700; margin-bottom: 14px; display: none;">PIN incorrecto. Intenta de nuevo.</div>
           

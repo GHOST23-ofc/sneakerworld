@@ -145,9 +145,8 @@ document.addEventListener("DOMContentLoaded", () => {
       if (paramSupplier) {
         localStorage.setItem("sneakerworld_active_supplier_id", paramSupplier);
       }
-      if (paramView && ["storefront", "store-admin", "supplier", "directory"].includes(paramView)) {
-        currentView = paramView;
-      }
+      // Enlace para cliente final: siempre vitrina digital pura de compra
+      currentView = "storefront";
     }
 
     // Cierre intuitivo de modales con clic en el fondo o tecla Escape
@@ -197,14 +196,21 @@ document.addEventListener("DOMContentLoaded", () => {
     const clientHud = document.getElementById("client-auth-hud");
     const isSuperAdmin = session.role === "super-admin" || paramDemo === "admin" || paramDemo === "superadmin" || paramDemo === "true";
 
+    // Ocultar barras por defecto
     if (masterHud) masterHud.style.display = "none";
     if (clientHud) clientHud.style.display = "none";
+
+    // EN LA VITRINA PÚBLICA DE CARA AL CLIENTE FINAL:
+    // Cero botones o barras de administración para que la experiencia sea 100% limpia para comprar
+    if (currentView === "storefront") {
+      return;
+    }
 
     if (isSuperAdmin) {
       // SOLO EL DUEÑO DEL SAAS (GHOST / BASTION AI) VE EL PANEL SUPREMO COMPLETO
       if (masterHud) masterHud.style.display = "block";
     } else if (session.authenticated && (session.role === "supplier" || session.role === "store-admin")) {
-      // EL CLIENTE (VANESSA O SNEAKER PARTNER) VE SOLO SU BARRA CORPORATIVA PRIVADA
+      // EL COMERCIANTE (VANESSA O SNEAKER PARTNER) VE SU BARRA PRIVADA ÚNICAMENTE EN SU PANEL
       if (clientHud) {
         clientHud.style.display = "block";
         const titleEl = document.getElementById("client-hud-title");
@@ -216,27 +222,19 @@ document.addEventListener("DOMContentLoaded", () => {
         if (session.role === "supplier") {
           if (iconEl) iconEl.textContent = "📦";
           if (titleEl) titleEl.textContent = (currentStore?.name || session.user?.name || "Vanessa Castellar Shoes") + " (Bodega Matriz)";
-          if (subtitleEl) subtitleEl.textContent = currentView === "storefront"
-            ? "👁️ CATÁLOGO MAYORISTA B2B: Precios de Proveedor ($85K - $95K) para Revendedores"
-            : "🟢 Panel Privado B2B • Inventario & Sneaker Partners";
-          if (toggleBtn) toggleBtn.textContent = currentView === "storefront" ? "📦 Volver al Panel Bodega" : "🛒 Ver Catálogo Mayorista";
+          if (subtitleEl) subtitleEl.textContent = "🟢 Panel Privado B2B • Inventario & Sneaker Partners";
+          if (toggleBtn) toggleBtn.textContent = "🛒 Ver Vitrina Pública";
         } else {
           if (iconEl) iconEl.textContent = "🏪";
           if (titleEl) titleEl.textContent = (currentStore?.name || session.user?.name || "Cali Shoes") + " (Sneaker Partner)";
-          if (subtitleEl) subtitleEl.textContent = currentView === "storefront"
-            ? "👁️ VISTA PREVIA: Así ve tu cliente final tu Tienda Online (Tus precios al detal con margen)"
-            : "🟢 Margen Propio & Catálogo Sincronizado";
-          if (toggleBtn) toggleBtn.textContent = currentView === "storefront" ? "🏪 Volver a Mi Panel Tienda" : "🛒 Ver Mi Tienda Online";
+          if (subtitleEl) subtitleEl.textContent = "🟢 Margen Propio & Catálogo Sincronizado";
+          if (toggleBtn) toggleBtn.textContent = "🛒 Ver Mi Tienda Online";
         }
 
-        // Toggle entre panel privado y vitrina
+        // Abrir la vitrina limpia de cara al cliente
         if (toggleBtn) {
           toggleBtn.onclick = () => {
-            if (currentView === "storefront") {
-              switchView(session.role);
-            } else {
-              switchView("storefront");
-            }
+            window.open(`?store=${encodeURIComponent(currentStore?.id || "store-001")}&view=storefront`, "_blank");
           };
         }
 
@@ -356,24 +354,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     renderHudStores();
-
-    // Actualizar texto del botón de vitrina y subtítulo en la barra del cliente
-    const toggleBtn = document.getElementById("btn-client-toggle-view");
-    const subtitleEl = document.getElementById("client-hud-subtitle");
-    const session = db.getAuthSession();
-    if (session.authenticated) {
-      if (session.role === "supplier") {
-        if (toggleBtn) toggleBtn.textContent = currentView === "storefront" ? "📦 Volver al Panel Bodega" : "🛒 Ver Catálogo Mayorista";
-        if (subtitleEl) subtitleEl.textContent = currentView === "storefront"
-          ? "👁️ CATÁLOGO MAYORISTA B2B: Precios de Proveedor ($85K - $95K) para Revendedores"
-          : "🟢 Panel Privado B2B • Inventario & Sneaker Partners";
-      } else {
-        if (toggleBtn) toggleBtn.textContent = currentView === "storefront" ? "🏪 Volver a Mi Panel Tienda" : "🛒 Ver Mi Tienda Online";
-        if (subtitleEl) subtitleEl.textContent = currentView === "storefront"
-          ? "👁️ VISTA PREVIA: Así ve tu cliente final tu Tienda Online (Tus precios al detal con margen)"
-          : "🟢 Margen Propio & Catálogo Sincronizado";
-      }
-    }
+    setupHeadersAndRoleIsolation();
 
     window.scrollTo({ top: 0, behavior: "smooth" });
     renderCurrentView();
