@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Portal de Acceso B2B | SNEAKER WORLD MLS</title>
-  <meta name="description" content="Portal de inicio de sesión seguro multi-tenant para Vanessa Castellar y Sneaker Partners autorizados en Cali.">
+  <meta name="description" content="Portal de inicio de sesión seguro multi-tenant para Bodega 1 y Sneaker Partners autorizados en Cali.">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon-32.png">
   <link rel="apple-touch-icon" href="assets/images/favicon.png">
   <meta name="theme-color" content="#e6192e">
@@ -140,17 +140,17 @@
 
         <!-- 2 Escenarios Oficiales en Producción con 1 Clic -->
         <div class="scenario-quick-grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));">
-          <!-- Escenario 1: Vanessa Castellar (Bodega Matriz) -->
+          <!-- Escenario 1: Bodega 1 (Bodega Matriz) -->
           <button type="button" class="scenario-btn" id="btn-quick-vanessa">
             <span class="scenario-badge">👑 Bodega Matriz</span>
-            <span class="scenario-title">Vanessa Castellar Shoes</span>
-            <span class="scenario-meta">vanessa@castellarshoes.com</span>
+            <span class="scenario-title">Bodega 1</span>
+            <span class="scenario-meta">bodega1@calzado.com</span>
             <span style="font-size: 10px; color: var(--primary-red); font-weight: 700;">Panel Bodega & 10 WhatsApps →</span>
           </button>
 
           <!-- Sneaker Partner Oficial: Cali Shoes Distribuidora -->
           <button type="button" class="scenario-btn" id="btn-quick-calishoes">
-            <span class="scenario-badge" style="color: var(--accent-blue);">👟 Sneaker Partner (Afiliado a Vanessa)</span>
+            <span class="scenario-badge" style="color: var(--accent-blue);">👟 Sneaker Partner (Afiliado a Bodega 1)</span>
             <span class="scenario-title">Cali Shoes Distribuidora</span>
             <span class="scenario-meta">contacto@calishoes.com</span>
             <span style="font-size: 10px; color: var(--accent-blue); font-weight: 700;">Ciudad Jardín / Sur Cali →</span>
@@ -165,7 +165,7 @@
         <form id="form-login-auth" style="text-align: left;">
           <div class="form-group">
             <label class="form-label">Correo Electrónico o Usuario:</label>
-            <input type="text" id="auth-email" class="form-input" placeholder="vanessa@castellarshoes.com" value="vanessa@castellarshoes.com" required>
+            <input type="text" id="auth-email" class="form-input" placeholder="bodega1@calzado.com" value="bodega1@calzado.com" required>
           </div>
 
           <div class="form-group">
@@ -190,11 +190,11 @@
             <span style="font-size: 10px; background: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-weight: 700;">Anti-Pérdida de Data</span>
           </div>
           <p style="color: var(--text-secondary); margin-bottom: 10px; font-size: 11px; line-height: 1.35;">
-            Si Vanessa cambia su clave y la olvida, puedes ingresar con tu Llave Maestra o restaurar su acceso instantáneamente a <code>Calishoes2026</code> sin perder ningún producto ni pedido.
+            Si el administrador de Bodega 1 cambia su clave y la olvida, puedes ingresar con tu Llave Maestra o restaurar su acceso instantáneamente a <code>Calishoes2026</code> sin perder ningún producto ni pedido.
           </p>
           <div style="display: flex; gap: 8px; flex-wrap: wrap;">
             <button type="button" class="btn-secondary" id="btn-rescue-vanessa" style="font-size: 11px; padding: 5px 10px;">
-              🔄 Restablecer Clave Vanessa a 'Calishoes2026'
+              🔄 Restablecer Clave Bodega 1 a 'Calishoes2026'
             </button>
             <button type="button" class="btn-secondary" id="btn-login-master" style="font-size: 11px; padding: 5px 10px; color: var(--primary-red); border-color: rgba(230,25,46,0.3);">
               ⚡ Entrar con Llave Maestra Owner
@@ -259,10 +259,10 @@
     // 1-Click: Escenario 1 Vanessa
     document.getElementById("btn-quick-vanessa").onclick = () => {
       const acc = db.getAccounts().vanessa || {};
-      emailInput.value = acc.email || "vanessa@castellarshoes.com";
+      emailInput.value = acc.email || "bodega1@calzado.com";
       passInput.value = acc.password || "Calishoes2026";
       errorMsg.style.display = "none";
-      showToast(`Credenciales de ${acc.name || 'Vanessa Castellar'} cargadas.`);
+      showToast(`Credenciales de ${acc.name || 'Bodega 1'} cargadas.`);
     };
 
     // 1-Click: Sneaker Partner Oficial: Cali Shoes
@@ -277,9 +277,9 @@
     // Botón de Rescate Super-Admin para Vanessa
     document.getElementById("btn-rescue-vanessa").onclick = () => {
       const res = db.superAdminResetPassword("vanessa", "Calishoes2026");
-      emailInput.value = "vanessa@castellarshoes.com";
+      emailInput.value = "bodega1@calzado.com";
       passInput.value = "Calishoes2026";
-      showToast("✅ Clave de Vanessa restaurada a 'Calishoes2026'. Data intacta.");
+      showToast("✅ Clave de Bodega 1 restaurada a 'Calishoes2026'. Data intacta.");
     };
 
     // Botón de Acceso Rápido Llave Maestra Owner

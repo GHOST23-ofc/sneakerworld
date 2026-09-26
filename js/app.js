@@ -127,8 +127,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const paramDemo = urlParams.get("demo");
 
     // Auto-login y enrutamiento con links directos y parámetros de vista/rol
-    if (paramDemo === "vanessa" || paramView === "supplier" || paramRole === "supplier" || paramDemo === "bodega") {
-      db.loginWithCredentials("vanessa@castellarshoes.com", "Calishoes2026");
+    if (paramDemo === "vanessa" || paramDemo === "bodega" || paramDemo === "bodega1" || paramView === "supplier" || paramRole === "supplier" || paramDemo === "bodega") {
+      db.loginWithCredentials("bodega1@calzado.com", "Calishoes2026");
       db.setCurrentStoreId("store-001");
       currentView = "supplier";
     } else if (paramDemo === "calishoes" || paramView === "store-admin" || paramRole === "partner" || paramRole === "store-admin") {
@@ -222,7 +222,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const currentStore = db.getCurrentStore();
         if (session.role === "supplier") {
           if (iconEl) iconEl.textContent = "📦";
-          if (titleEl) titleEl.textContent = (currentStore?.name || session.user?.name || "Vanessa Castellar Shoes") + " (Bodega Matriz)";
+          if (titleEl) titleEl.textContent = (currentStore?.name || session.user?.name || "Bodega 1") + " (Bodega Matriz)";
           if (subtitleEl) subtitleEl.textContent = "🟢 Panel Privado B2B • Inventario & Sneaker Partners";
           if (toggleBtn) toggleBtn.textContent = "🛒 Ver Vitrina Pública";
         } else {
@@ -263,7 +263,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const btnCopyPartner = document.getElementById("btn-copy-partner-link");
     if (btnCopyPartner) {
       btnCopyPartner.onclick = () => {
-        const link = window.location.origin + "/admin.html?partner=vanessa";
+        const link = window.location.origin + "/admin.html?partner=bodega1";
         copyToClipboard(link, "🔗 Enlace copiado: " + link, "Copia este enlace de invitación para tu nuevo Sneaker Partner:");
       };
     }
@@ -345,7 +345,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       }
     } else if (viewName === "supplier") {
-      // Panel Bodega Matriz: SOLO BODEGAS MATRICES (ej. Vanessa Castellar)
+      // Panel Bodega Matriz: SOLO BODEGAS MATRICES (ej. Bodega 1)
       if (!currentStore || !currentStore.isSupplierStore) {
         const supplier = allStores.find(s => s.isSupplierStore) || allStores[0];
         if (supplier) {
@@ -425,7 +425,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (targetRole === "supplier") {
       title.textContent = "Acceso a Bodega Central";
-      desc.textContent = "Ingresa el PIN de seguridad de Vanessa Castellar (PIN: 8820) para gestionar costos mayoristas e inventario matriz.";
+      desc.textContent = "Ingresa el PIN de seguridad de Bodega 1 (PIN: 8820) para gestionar costos mayoristas e inventario matriz.";
     } else {
       title.textContent = "Acceso a Panel de Sneaker Partner";
       desc.textContent = "Ingresa el PIN de tu vitrina aliada (PIN: 1234) para modificar precios y margen de ganancia.";
@@ -449,7 +449,7 @@ document.addEventListener("DOMContentLoaded", () => {
       visibleStores = allStores.filter(s => !s.isSupplierStore);
       if (label) label.textContent = "Partner:";
     } else if (currentView === "supplier") {
-      // Panel Bodega Matriz: SOLO Bodegas Matrices (Vanessa Castellar, Calzado Imperial...)
+      // Panel Bodega Matriz: SOLO Bodegas Matrices (Bodega 1, Calzado Imperial...)
       visibleStores = allStores.filter(s => s.isSupplierStore);
       if (label) label.textContent = "Bodega:";
     } else if (currentView === "storefront") {
@@ -1283,7 +1283,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (currentStore.logo) {
         supplierLogo.innerHTML = `<img src="${currentStore.logo}" alt="${currentStore.name}" style="width: 100%; height: 100%; object-fit: cover; border-radius: inherit;">`;
       } else {
-        supplierLogo.textContent = (currentStore.name || "VC").split(" ").filter(Boolean).map(w => w[0]).slice(0, 2).join("").toUpperCase();
+        supplierLogo.textContent = (currentStore.name || "B1").split(" ").filter(Boolean).map(w => w[0]).slice(0, 2).join("").toUpperCase();
       }
     }
 
@@ -2817,7 +2817,7 @@ ${itemsText}
         wholesale,
         margin,
         `"${o.status || 'En Alistamiento'}"`,
-        `"${o.supplierName || 'Vanessa Castellar Shoes'}"`
+        `"${o.supplierName || 'Bodega 1'}"`
       ].join(";");
     });
 
@@ -2910,7 +2910,7 @@ ${itemsText}
           <div>
             <div style="font-size: 11px; font-weight: 900; color: #e6192e; letter-spacing: 1px;">SNEAKER WORLD MLS • BASTION AI</div>
             <h1 class="title">${title}</h1>
-            <div class="subtitle">${storeFilter ? 'Entidad: <strong>' + storeFilter + '</strong>' : 'Consolidado Red Cali (Bodega Vanessa Castellar & Partners)'}</div>
+            <div class="subtitle">${storeFilter ? 'Entidad: <strong>' + storeFilter + '</strong>' : 'Consolidado Red Cali (Bodega Bodega 1 & Partners)'}</div>
           </div>
           <div style="text-align: right; font-size: 11px;">
             <div>Fecha de Emisión: <strong>${formattedDate}</strong></div>
@@ -3248,7 +3248,7 @@ ${itemsText}
             💰 <strong>¿Cómo ganar dinero como revendedor?</strong><br><br>
             1. No necesitas comprar inventario por adelantado.<br>
             2. Tomas las fotos de nuestro catálogo en la nube (alta resolución sin saturar tu celular).<br>
-            3. Tú compras a costo de Bodega Vanessa ($115.000 COP aprox.) y vendes al detal ($185.000 COP).<br>
+            3. Tú compras a costo de Bodega 1 ($115.000 COP aprox.) y vendes al detal ($185.000 COP).<br>
             👉 <strong>Te ganas entre $50.000 y $80.000 COP limpios por cada par</strong>.<br><br>
             Tú solo nos pasas los datos del cliente y nosotros despachamos por ti.
           `);
@@ -3261,9 +3261,9 @@ ${itemsText}
           `);
         } else if (q.includes("whatsapp") || q.includes("contacto") || q.includes("telefono") || q.includes("celular") || q.includes("asesor") || q.includes("humano")) {
           appendChatMessage("bot", `
-            📲 <strong>Línea Directa de Vanessa Castellar Shoes:</strong><br><br>
+            📲 <strong>Línea Directa de Bodega 1:</strong><br><br>
             Puedes escribir directamente a nuestra línea de despachos mayoristas en WhatsApp:<br>
-            👉 <a href="https://wa.me/573505337256?text=Hola%20Vanessa,%20estoy%20viendo%20tu%20catálogo%20y%20quiero%20confirmar%20un%20pedido." target="_blank" style="color: #e6192e; font-weight: 800; text-decoration: underline;">Tocar aquí para abrir WhatsApp (+57 350 533 7256)</a>
+            👉 <a href="https://wa.me/573505337256?text=Hola%20Bodega%201,%20estoy%20viendo%20tu%20catálogo%20y%20quiero%20confirmar%20un%20pedido." target="_blank" style="color: #e6192e; font-weight: 800; text-decoration: underline;">Tocar aquí para abrir WhatsApp (+57 350 533 7256)</a>
           `);
         } else {
           // Búsqueda inteligente en el catálogo si el usuario pregunta por un modelo
@@ -3280,8 +3280,8 @@ ${itemsText}
             `);
           } else {
             appendChatMessage("bot", `
-              🤖 Entendido. Para esa consulta puntual o apartar un modelo exclusivo, te conecto de inmediato con la línea de WhatsApp de Vanessa Castellar Shoes para que te atiendan personalmente:<br><br>
-              👉 <a href="https://wa.me/573505337256?text=Hola%20Vanessa,%20tengo%20una%20consulta%20sobre:%20${encodeURIComponent(query)}" target="_blank" style="color: #e6192e; font-weight: 800; text-decoration: underline;">Abrir WhatsApp de Despachos (+57 350 533 7256)</a>
+              🤖 Entendido. Para esa consulta puntual o apartar un modelo exclusivo, te conecto de inmediato con la línea de WhatsApp de Bodega 1 para que te atiendan personalmente:<br><br>
+              👉 <a href="https://wa.me/573505337256?text=Hola%20Bodega%201,%20tengo%20una%20consulta%20sobre:%20${encodeURIComponent(query)}" target="_blank" style="color: #e6192e; font-weight: 800; text-decoration: underline;">Abrir WhatsApp de Despachos (+57 350 533 7256)</a>
             `);
           }
         }
@@ -3308,7 +3308,7 @@ ${itemsText}
         else if (ask === "envios") processEmpleadoQuery("¿Cuáles son los tiempos de envío y costos de fletes?");
         else if (ask === "revendedor") processEmpleadoQuery("¿Cómo ganar dinero revendiendo este calzado?");
         else if (ask === "garantia") processEmpleadoQuery("¿Qué garantía tienen los tenis y cómo son los cambios?");
-        else if (ask === "whatsapp") processEmpleadoQuery("Hablar con Vanessa por WhatsApp");
+        else if (ask === "whatsapp") processEmpleadoQuery("Hablar con Bodega 1 por WhatsApp");
       });
     });
   }

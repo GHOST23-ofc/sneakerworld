@@ -1,9 +1,9 @@
 // Base de datos oficial - Catálogo Maestro SNEAKER WORLD MLS Cali (Bastion AI)
-// 18 Referencias reales ordenadas exactamente según la vitrina matriz de Vanessa Castellar Shoes
-// Con las 10 líneas oficiales de atención de Vanessa Castellar
+// 18 Referencias reales ordenadas exactamente según la vitrina matriz de Bodega 1
+// Con las 10 líneas oficiales de atención de Bodega 1
 
 const VANESSA_WHATSAPP_LINES = [
-  { id: "line-1", phone: "573505337256", name: "Línea 1 - Vanessa Directo", active: true },
+  { id: "line-1", phone: "573505337256", name: "Línea 1 - Bodega 1 Directo", active: true },
   { id: "line-2", phone: "573505292624", name: "Línea 2 - Asesoría Cali", active: true },
   { id: "line-3", phone: "573505332700", name: "Línea 3 - Mayoristas Nacional", active: true },
   { id: "line-4", phone: "573505292805", name: "Línea 4 - Despachos Hoy", active: true },
@@ -34,7 +34,7 @@ const INITIAL_MASTER_PRODUCTS = [
     suggestedRetailPrice: 185000,
     sizes: [35, 36, 37, 38, 39, 40],
     supplierId: "sup-001",
-    supplierName: "Vanessa Castellar Shoes (Bodega Central)",
+    supplierName: "Bodega 1 (Bodega Central)",
     createdAt: "2026-09-01"
   },
 
@@ -55,7 +55,7 @@ const INITIAL_MASTER_PRODUCTS = [
     suggestedRetailPrice: 200000,
     sizes: [38, 39, 40, 41, 42, 43],
     supplierId: "sup-001",
-    supplierName: "Vanessa Castellar Shoes (Bodega Central)",
+    supplierName: "Bodega 1 (Bodega Central)",
     createdAt: "2026-09-01"
   },
 
@@ -76,7 +76,7 @@ const INITIAL_MASTER_PRODUCTS = [
     suggestedRetailPrice: 220000,
     sizes: [36, 37, 38, 39, 40, 41, 42, 43],
     supplierId: "sup-001",
-    supplierName: "Vanessa Castellar Shoes (Bodega Central)",
+    supplierName: "Bodega 1 (Bodega Central)",
     createdAt: "2026-09-01"
   },
 
@@ -97,7 +97,7 @@ const INITIAL_MASTER_PRODUCTS = [
     suggestedRetailPrice: 235000,
     sizes: [38, 39, 40, 41, 42, 43, 44],
     supplierId: "sup-001",
-    supplierName: "Vanessa Castellar Shoes (Bodega Central)",
+    supplierName: "Bodega 1 (Bodega Central)",
     createdAt: "2026-09-01"
   },
 
@@ -117,7 +117,7 @@ const INITIAL_MASTER_PRODUCTS = [
     suggestedRetailPrice: 250000,
     sizes: [38, 39, 40, 41, 42, 43],
     supplierId: "sup-001",
-    supplierName: "Vanessa Castellar Shoes (Bodega Central)",
+    supplierName: "Bodega 1 (Bodega Central)",
     createdAt: "2026-09-01"
   },
 
@@ -137,7 +137,7 @@ const INITIAL_MASTER_PRODUCTS = [
     suggestedRetailPrice: 230000,
     sizes: [36, 37, 38, 39, 40, 41],
     supplierId: "sup-001",
-    supplierName: "Vanessa Castellar Shoes (Bodega Central)",
+    supplierName: "Bodega 1 (Bodega Central)",
     createdAt: "2026-09-01"
   },
 
@@ -157,7 +157,7 @@ const INITIAL_MASTER_PRODUCTS = [
     suggestedRetailPrice: 215000,
     sizes: [37, 38, 39, 40, 41, 42, 43],
     supplierId: "sup-001",
-    supplierName: "Vanessa Castellar Shoes (Bodega Central)",
+    supplierName: "Bodega 1 (Bodega Central)",
     createdAt: "2026-09-01"
   },
 
@@ -177,7 +177,7 @@ const INITIAL_MASTER_PRODUCTS = [
     suggestedRetailPrice: 195000,
     sizes: [35, 36, 37, 38, 39],
     supplierId: "sup-001",
-    supplierName: "Vanessa Castellar Shoes (Bodega Central)",
+    supplierName: "Bodega 1 (Bodega Central)",
     createdAt: "2026-09-01"
   },
 
@@ -197,7 +197,7 @@ const INITIAL_MASTER_PRODUCTS = [
     suggestedRetailPrice: 210000,
     sizes: [36, 37, 38, 39, 40, 41, 42, 43],
     supplierId: "sup-001",
-    supplierName: "Vanessa Castellar Shoes (Bodega Central)",
+    supplierName: "Bodega 1 (Bodega Central)",
     createdAt: "2026-09-01"
   },
 
@@ -217,7 +217,7 @@ const INITIAL_MASTER_PRODUCTS = [
     suggestedRetailPrice: 195000,
     sizes: [38, 39, 40, 41, 42, 43],
     supplierId: "sup-001",
-    supplierName: "Vanessa Castellar Shoes (Bodega Central)",
+    supplierName: "Bodega 1 (Bodega Central)",
     createdAt: "2026-09-01"
   },
 
@@ -237,7 +237,7 @@ const INITIAL_MASTER_PRODUCTS = [
     suggestedRetailPrice: 200000,
     sizes: [38, 39, 40, 41, 42, 43],
     supplierId: "sup-001",
-    supplierName: "Vanessa Castellar Shoes (Bodega Central)",
+    supplierName: "Bodega 1 (Bodega Central)",
     createdAt: "2026-09-01"
   },
 
@@ -257,7 +257,7 @@ const INITIAL_MASTER_PRODUCTS = [
     suggestedRetailPrice: 200000,
     sizes: [38, 39, 40, 41, 42, 43, 44],
     supplierId: "sup-001",
-    supplierName: "Vanessa Castellar Shoes (Bodega Central)",
+    supplierName: "Bodega 1 (Bodega Central)",
     createdAt: "2026-09-01"
   },
 
@@ -277,7 +277,7 @@ const INITIAL_MASTER_PRODUCTS = [
     suggestedRetailPrice: 180000,
     sizes: [35, 36, 37, 38, 39],
     supplierId: "sup-001",
-    supplierName: "Vanessa Castellar Shoes (Bodega Central)",
+    supplierName: "Bodega 1 (Bodega Central)",
     createdAt: "2026-09-01"
   },
 
@@ -297,7 +297,7 @@ const INITIAL_MASTER_PRODUCTS = [
     suggestedRetailPrice: 320000,
     sizes: [39, 40, 41, 42, 43],
     supplierId: "sup-001",
-    supplierName: "Vanessa Castellar Shoes (Bodega Central)",
+    supplierName: "Bodega 1 (Bodega Central)",
     createdAt: "2026-09-01"
   },
 
@@ -317,7 +317,7 @@ const INITIAL_MASTER_PRODUCTS = [
     suggestedRetailPrice: 250000,
     sizes: [38, 39, 40, 41, 42, 43],
     supplierId: "sup-001",
-    supplierName: "Vanessa Castellar Shoes (Bodega Central)",
+    supplierName: "Bodega 1 (Bodega Central)",
     createdAt: "2026-09-01"
   },
 
@@ -337,7 +337,7 @@ const INITIAL_MASTER_PRODUCTS = [
     suggestedRetailPrice: 260000,
     sizes: [39, 40, 41, 42, 43],
     supplierId: "sup-001",
-    supplierName: "Vanessa Castellar Shoes (Bodega Central)",
+    supplierName: "Bodega 1 (Bodega Central)",
     createdAt: "2026-09-01"
   },
 
@@ -357,7 +357,7 @@ const INITIAL_MASTER_PRODUCTS = [
     suggestedRetailPrice: 235000,
     sizes: [38, 39, 40, 41, 42, 43],
     supplierId: "sup-001",
-    supplierName: "Vanessa Castellar Shoes (Bodega Central)",
+    supplierName: "Bodega 1 (Bodega Central)",
     createdAt: "2026-09-01"
   },
 
@@ -377,7 +377,7 @@ const INITIAL_MASTER_PRODUCTS = [
     suggestedRetailPrice: 220000,
     sizes: [36, 37, 38, 39, 40, 41, 42],
     supplierId: "sup-001",
-    supplierName: "Vanessa Castellar Shoes (Bodega Central)",
+    supplierName: "Bodega 1 (Bodega Central)",
     createdAt: "2026-09-01"
   }
 ];
@@ -386,15 +386,15 @@ const INITIAL_MASTER_PRODUCTS = [
 // SISTEMA DE AUTENTICACIÓN & ESCENARIOS EN PRODUCCIÓN (CRM BASTION / GHOST)
 // =========================================================================
 const DEMO_ACCOUNTS = {
-  // COMERCIO 1: Vanessa Castellar (Bodega Matriz Cali - Cliente Objetivo Cerrado)
+  // COMERCIO 1: Bodega 1 (Bodega Matriz Cali - Cliente Objetivo Cerrado)
   vanessa: {
     id: "user-vanessa-01",
     tenantId: "sup-001",
     storeId: "store-001",
     role: "supplier",
-    name: "Vanessa Castellar Shoes",
-    businessName: "Vanessa Castellar Shoes (San Andresito de la 38, Cali)",
-    email: "vanessa@castellarshoes.com",
+    name: "Bodega 1",
+    businessName: "Bodega 1 (San Andresito de la 38, Cali)",
+    email: "bodega1@calzado.com",
     username: "vanessa",
     password: "Calishoes2026",
     pin: "8820",
@@ -418,7 +418,7 @@ const DEMO_ACCOUNTS = {
     phone: "573155551234",
     role: "store-admin",
     isMasterSupplier: false,
-    securityNote: "Sneaker Partner Oficial de Vanessa en Cali."
+    securityNote: "Sneaker Partner Oficial de Bodega 1 en Cali."
   }
 };
 
@@ -435,7 +435,7 @@ const SUPER_ADMIN_CONFIG = {
 const INITIAL_STORES = [
   {
     id: "store-001",
-    name: "Vanessa Castellar Shoes",
+    name: "Bodega 1",
     tagline: "Bodega Matriz Mayorista — San Andresito de la 38, Cali.",
     phone: "573505337256",
     whatsappLines: VANESSA_WHATSAPP_LINES,
@@ -466,7 +466,7 @@ const INITIAL_STORES = [
   {
     id: "store-002",
     name: "Cali Shoes Distribuidora",
-    tagline: "Boutique especializada en calzado importado exclusivo en el Sur de Cali (Afiliada a Vanessa).",
+    tagline: "Boutique especializada en calzado importado exclusivo en el Sur de Cali (Afiliada a Bodega 1).",
     phone: "573154443322",
     neighborhood: "Ciudad Jardín / Valle del Lili, Cali",
     isSupplierStore: false,
@@ -512,7 +512,7 @@ const INITIAL_ORDERS = [
     units: 4,
     totalWholesale: 620000,
     status: "En Preparación",
-    supplierName: "Vanessa Castellar Shoes (Bodega Central)"
+    supplierName: "Bodega 1 (Bodega Central)"
   },
   {
     id: "ord-8811",
@@ -525,6 +525,6 @@ const INITIAL_ORDERS = [
     units: 6,
     totalWholesale: 690000,
     status: "Despachado en Moto",
-    supplierName: "Vanessa Castellar Shoes (Bodega Central)"
+    supplierName: "Bodega 1 (Bodega Central)"
   }
 ];

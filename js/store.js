@@ -41,13 +41,58 @@ class ShoesStoreManager {
       }
       localStorage.setItem("sneakerworld_pricing_calibrated_85k_95k", "true");
     }
-    // Migración para forzar únicamente a Vanessa Castellar y Cali Shoes Distribuidora
+    // Migración para forzar únicamente a Bodega 1 y Cali Shoes Distribuidora
     if (!localStorage.getItem("sneakerworld_stores_vanessa_cali_only")) {
       localStorage.setItem(DB_KEYS.STORES, JSON.stringify(INITIAL_STORES));
       localStorage.setItem(DB_KEYS.ACCOUNTS, JSON.stringify(DEMO_ACCOUNTS));
       localStorage.setItem("sneakerworld_stores_vanessa_cali_only", "true");
     }
     // Migración para sincronizar precios y visibilidad activa en Bodega Central
+    // Migración para renombrar a Bodega 1 en navegadores con cache previa
+    if (!localStorage.getItem("sneakerworld_renamed_to_bodega1_v2")) {
+      try {
+        const rawStores = localStorage.getItem(DB_KEYS.STORES);
+        if (rawStores) {
+          const stores = JSON.parse(rawStores);
+          stores.forEach(st => {
+            if (st.id === "store-001" || st.isSupplierStore) {
+              st.name = "Bodega 1";
+              st.tagline = "Bodega Matriz Mayorista — San Andresito de la 38, Cali.";
+              if (Array.isArray(st.whatsappLines) && st.whatsappLines[0]) {
+                st.whatsappLines[0].name = "Línea 1 - Bodega 1 Directo";
+              }
+            }
+          });
+          localStorage.setItem(DB_KEYS.STORES, JSON.stringify(stores));
+        }
+
+        const rawAccounts = localStorage.getItem(DB_KEYS.ACCOUNTS);
+        if (rawAccounts) {
+          const accs = JSON.parse(rawAccounts);
+          if (accs.vanessa) {
+            accs.vanessa.name = "Bodega 1";
+            accs.vanessa.businessName = "Bodega 1 (San Andresito de la 38, Cali)";
+            accs.vanessa.email = "bodega1@calzado.com";
+            accs.vanessa.username = "bodega1";
+          }
+          accs.bodega1 = { ...(accs.vanessa || {}), name: "Bodega 1", username: "bodega1", email: "bodega1@calzado.com" };
+          localStorage.setItem(DB_KEYS.ACCOUNTS, JSON.stringify(accs));
+        }
+
+        const rawMaster = localStorage.getItem(DB_KEYS.MASTER_PRODUCTS);
+        if (rawMaster) {
+          const prods = JSON.parse(rawMaster);
+          prods.forEach(p => {
+            p.supplierName = "Bodega 1 (Bodega Central)";
+          });
+          localStorage.setItem(DB_KEYS.MASTER_PRODUCTS, JSON.stringify(prods));
+        }
+      } catch (e) {
+        console.warn("Error en migracion bodega1:", e);
+      }
+      localStorage.setItem("sneakerworld_renamed_to_bodega1_v2", "true");
+    }
+
     if (!localStorage.getItem("sneakerworld_sync_supplier_prices_v2")) {
       try {
         const rawMaster = localStorage.getItem(DB_KEYS.MASTER_PRODUCTS);
@@ -161,7 +206,8 @@ class ShoesStoreManager {
         cleanInput === acc.email.toLowerCase() ||
         cleanInput === acc.username.toLowerCase() ||
         cleanInput === acc.phone ||
-        cleanInput === key
+        cleanInput === key ||
+        (key === "vanessa" && (cleanInput === "vanessa@castellarshoes.com" || cleanInput === "bodega1" || cleanInput === "bodega1@calzado.com" || cleanInput === "bodega"))
       );
 
       const matchPassword = (
@@ -204,7 +250,7 @@ class ShoesStoreManager {
 
     return {
       success: false,
-      message: "Credenciales no válidas. Prueba correo: vanessa@castellarshoes.com y contraseña: Calishoes2026"
+      message: "Credenciales no válidas. Prueba correo: bodega1@calzado.com y contraseña: Calishoes2026"
     };
   }
 
@@ -352,7 +398,7 @@ class ShoesStoreManager {
         : [{ name: "Tono Principal", image: productData.image || "assets/images/nike_initiator_babyblue.jpg", sku: productData.sku || "NK-01" }],
       active: productData.active !== undefined ? Boolean(productData.active) : true,
       supplierId: "sup-001",
-      supplierName: "Vanessa Castellar Shoes (Bodega Central)",
+      supplierName: "Bodega 1 (Bodega Central)",
       createdAt: new Date().toISOString().split("T")[0]
     };
     products.unshift(newProduct);
@@ -647,7 +693,7 @@ class ShoesStoreManager {
       units: Number(orderData.units) || 1,
       totalWholesale: Number(orderData.totalWholesale) || 0,
       status: "En Alistamiento",
-      supplierName: orderData.supplierName || "Vanessa Castellar Shoes (Bodega Central)"
+      supplierName: orderData.supplierName || "Bodega 1 (Bodega Central)"
     };
     orders.unshift(newOrder);
     localStorage.setItem(DB_KEYS.ORDERS, JSON.stringify(orders));
@@ -793,7 +839,7 @@ class ShoesStoreManager {
       // Pedido B2B de un Sneaker Partner o comprador mayorista hacia la Bodega Central
       text = `📦 *PEDIDO AL POR MAYOR B2B — BODEGA ${store.name.toUpperCase()}*
 
-👋 ¡Hola Vanessa! Soy Sneaker Partner de la red y requiero despacho mayorista de este modelo:
+👋 ¡Hola Bodega 1! Soy Sneaker Partner de la red y requiero despacho mayorista de este modelo:
 
 👟 *MODELO:* ${product.name}
 🔖 *SKU:* ${product.sku}
@@ -1073,14 +1119,14 @@ ${dispatchText}
         `📥 *RECOGER DEL CLIENTE:* Talla ${returnSize} (caja y suela sin pisadas)\n` +
         `🛵 *Flete Mensajero:* ${shippingCost > 0 ? this.formatCOP(shippingCost) + ` (Cobra a: ${shippingPayer})` : 'CUBIERTO POR GARANTÍA (GRATIS)'}\n` +
         `📍 *Dirección:* ${data.clientAddress || 'Confirmar con cliente en WhatsApp'}\n` +
-        `✨ *Despacho:* Vanessa Castellar Shoes (Bodega San Andresito de la 38)`;
+        `✨ *Despacho:* Bodega 1 (Bodega San Andresito de la 38)`;
     } else if (actionType === "warranty") {
       waText = `🛡️ *GUÍA DE SERVICIO: GARANTÍA DE FÁBRICA*\n` +
         `📦 *Orden:* #${order.id}\n` +
         `👟 *Modelo:* ${order.productName} (${colorway}) Talla ${newSize}\n` +
         `⚠️ *Motivo Garantía:* ${data.defectReason || 'Defecto de costura / pegue'}\n` +
         `🛵 *Flete:* $0 COP (Asumido por Bodega Central)\n` +
-        `✨ *Despacho asegurado:* Vanessa Castellar Shoes`;
+        `✨ *Despacho asegurado:* Bodega 1`;
     } else {
       waText = `📦 *REPORTE DE INVENTARIO BODEGA: RETORNO DE STOCK*\n` +
         `Orden #${order.id} procesada con reingreso de ${units} par(es) Talla ${returnSize} a bodega central.`;
